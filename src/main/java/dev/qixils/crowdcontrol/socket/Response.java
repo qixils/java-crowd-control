@@ -170,5 +170,22 @@ public class Response {
 		public String getMessage() {
 			return message;
 		}
+
+		/**
+		 * A successful result.
+		 */
+		public static Result SUCCESS = new Result(ResultType.SUCCESS);
+		/**
+		 * A failing result.
+		 */
+		public static Result FAILURE = new Result(ResultType.FAILURE);
+		/**
+		 * A result for an unavailable command.
+		 */
+		public static Result UNAVAILABLE = new Result(ResultType.UNAVAILABLE);
+		/**
+		 * A result for retrying a command.
+		 */
+		public static Result RETRY = new Result(ResultType.RETRY);
 	}
 }
