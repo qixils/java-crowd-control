@@ -13,7 +13,7 @@ import java.util.Objects;
 public class Response {
 	private final int id;
 	@SerializedName("status")
-	private ResultType result;
+	private ResultType type;
 	private String message;
 
 	/**
@@ -30,28 +30,28 @@ public class Response {
 	 * @param result result of execution
 	 */
 	public Response(int id, @NotNull Response.Result result) {
-		this(id, Objects.requireNonNull(result, "result").getResult(), result.getMessage());
+		this(id, Objects.requireNonNull(result, "result").getType(), result.getMessage());
 	}
 
 	/**
 	 * Constructs a response to a {@link Request} given its ID and the result of executing the effect.
 	 * @param id Request ID
-	 * @param result result of execution
+	 * @param type result of execution
 	 */
-	public Response(int id, @NotNull Response.ResultType result) {
-		this(id, Objects.requireNonNull(result, "status"), result.name());
+	public Response(int id, @NotNull Response.ResultType type) {
+		this(id, Objects.requireNonNull(type, "type"), type.name());
 	}
 
 	/**
 	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
 	 * and an associated message.
 	 * @param id Request ID
-	 * @param result result of execution
+	 * @param type result of execution
 	 * @param message result message
 	 */
-	public Response(int id, @NotNull Response.ResultType result, @NotNull String message) {
+	public Response(int id, @NotNull Response.ResultType type, @NotNull String message) {
 		this.id = id;
-		this.result = Objects.requireNonNull(result, "status");
+		this.type = Objects.requireNonNull(type, "type");
 		this.message = Objects.requireNonNull(message, "message");
 	}
 
@@ -68,8 +68,8 @@ public class Response {
 	 * @return effect result
 	 */
 	@NotNull
-	public Response.ResultType getResult() {
-		return result;
+	public Response.ResultType getResultType() {
+		return type;
 	}
 
 	/**
@@ -83,10 +83,10 @@ public class Response {
 
 	/**
 	 * Sets the result from executing an effect.
-	 * @param result effect result
+	 * @param type effect result
 	 */
-	public void setResult(@NotNull Response.ResultType result) {
-		this.result = Objects.requireNonNull(result, "result");
+	public void setResultType(@NotNull Response.ResultType type) {
+		this.type = Objects.requireNonNull(type, "result");
 	}
 
 	/**
@@ -132,24 +132,24 @@ public class Response {
 	 * The result of executing a {@link Request}.
 	 */
 	public static class Result {
-		private final ResultType result;
+		private final ResultType type;
 		private final String message;
 
 		/**
 		 * Creates a wrapper with a result and a message defaulting to the name of the result.
-		 * @param result effect result
+		 * @param type effect result
 		 */
-		public Result(@NotNull Response.ResultType result) {
-			this(Objects.requireNonNull(result, "result"), result.name());
+		public Result(@NotNull Response.ResultType type) {
+			this(Objects.requireNonNull(type, "type"), type.name());
 		}
 
 		/**
 		 * Creates a wrapper with a result and a message.
-		 * @param result effect result
+		 * @param type effect result
 		 * @param message effect message
 		 */
-		public Result(@NotNull Response.ResultType result, String message) {
-			this.result = Objects.requireNonNull(result, "result");
+		public Result(@NotNull Response.ResultType type, String message) {
+			this.type = Objects.requireNonNull(type, "type");
 			this.message = Objects.requireNonNull(message, "message");
 		}
 
@@ -158,8 +158,8 @@ public class Response {
 		 * @return effect result
 		 */
 		@NotNull
-		public Response.ResultType getResult() {
-			return result;
+		public Response.ResultType getType() {
+			return type;
 		}
 
 		/**
