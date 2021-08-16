@@ -13,23 +13,23 @@ import java.util.Objects;
 public class Response {
 	private final int id;
 	@SerializedName("status")
-	private Result result;
+	private ResultType result;
 	private String message;
 
 	/**
-	 * Constructs a response to a {@link Request} given its ID. Defaults to {@link Result#UNAVAILABLE}.
+	 * Constructs a response to a {@link Request} given its ID. Defaults to {@link ResultType#UNAVAILABLE}.
 	 * @param id Request ID
 	 */
 	public Response(int id) {
-		this(id, Result.UNAVAILABLE);
+		this(id, ResultType.UNAVAILABLE);
 	}
 
 	/**
-	 * Constructs a response to a {@link Request} given its ID and a {@link ResultWrapper}.
+	 * Constructs a response to a {@link Request} given its ID and a {@link Result}.
 	 * @param id Request ID
 	 * @param result result of execution
 	 */
-	public Response(int id, @NotNull ResultWrapper result) {
+	public Response(int id, @NotNull Response.Result result) {
 		this(id, Objects.requireNonNull(result, "result").getResult(), result.getMessage());
 	}
 
@@ -38,7 +38,7 @@ public class Response {
 	 * @param id Request ID
 	 * @param result result of execution
 	 */
-	public Response(int id, @NotNull Result result) {
+	public Response(int id, @NotNull Response.ResultType result) {
 		this(id, Objects.requireNonNull(result, "status"), result.name());
 	}
 
@@ -49,7 +49,7 @@ public class Response {
 	 * @param result result of execution
 	 * @param message result message
 	 */
-	public Response(int id, @NotNull Result result, @NotNull String message) {
+	public Response(int id, @NotNull Response.ResultType result, @NotNull String message) {
 		this.id = id;
 		this.result = Objects.requireNonNull(result, "status");
 		this.message = Objects.requireNonNull(message, "message");
@@ -68,7 +68,7 @@ public class Response {
 	 * @return effect result
 	 */
 	@NotNull
-	public Result getResult() {
+	public Response.ResultType getResult() {
 		return result;
 	}
 
@@ -85,7 +85,7 @@ public class Response {
 	 * Sets the result from executing an effect.
 	 * @param result effect result
 	 */
-	public void setResult(@NotNull Result result) {
+	public void setResult(@NotNull Response.ResultType result) {
 		this.result = Objects.requireNonNull(result, "result");
 	}
 
@@ -109,7 +109,7 @@ public class Response {
 	/**
 	 * The result of processing an incoming packet.
 	 */
-	public enum Result {
+	public enum ResultType {
 		/**
 		 * The effect was applied successfully.
 		 */
@@ -129,17 +129,17 @@ public class Response {
 	}
 
 	/**
-	 * A wrapper around {@link Result} which includes a message.
+	 * The result of executing a {@link Request}.
 	 */
-	public static class ResultWrapper {
-		private final Response.Result result;
+	public static class Result {
+		private final ResultType result;
 		private final String message;
 
 		/**
 		 * Creates a wrapper with a result and a message defaulting to the name of the result.
 		 * @param result effect result
 		 */
-		public ResultWrapper(@NotNull Response.Result result) {
+		public Result(@NotNull Response.ResultType result) {
 			this(Objects.requireNonNull(result, "result"), result.name());
 		}
 
@@ -148,7 +148,7 @@ public class Response {
 		 * @param result effect result
 		 * @param message effect message
 		 */
-		public ResultWrapper(@NotNull Response.Result result, String message) {
+		public Result(@NotNull Response.ResultType result, String message) {
 			this.result = Objects.requireNonNull(result, "result");
 			this.message = Objects.requireNonNull(message, "message");
 		}
@@ -158,7 +158,7 @@ public class Response {
 		 * @return effect result
 		 */
 		@NotNull
-		public Response.Result getResult() {
+		public Response.ResultType getResult() {
 			return result;
 		}
 

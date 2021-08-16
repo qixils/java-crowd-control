@@ -48,7 +48,7 @@ final class SocketManager {
 					Request request = Request.fromJSON(sb.toString());
 
 					// process request
-					Response.ResultWrapper result = crowdControl.handle(request);
+					Response.Result result = crowdControl.handle(request);
 					Response response = new Response(request.getId(), result);
 					String outJSON = response.toJSON() + (byte) 0x00; // TODO: ensure this functions
 					output.write(outJSON.getBytes(StandardCharsets.UTF_8));
