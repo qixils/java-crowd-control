@@ -9,9 +9,14 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 
 public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
+	private final Class<T> enumClass;
+	public EnumOrdinalAdapter(Class<T> enumClass) {
+		this.enumClass = enumClass;
+	}
+
 	@Override
 	public void write(JsonWriter out, T value) throws IOException {
-		if (value == null || !value.getClass().isEnum()) {
+		if (value == null) {
 			out.nullValue();
 			return;
 		}
@@ -21,9 +26,8 @@ public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 
 	@Override
 	public T read(JsonReader in) throws IOException {
-		Type type = new TypeToken<T>(){}.getType(); // magic??
 		try {
-			return ((T[]) type.getClass().getMethod("values").invoke(null))[in.nextInt()];
+			return ((T[]) enumClass.getDeclaredMethod("values").invoke(null))[in.nextInt()];
 		} catch (Exception e) {
 			throw new IOException("Could not read enum value", e);
 		}

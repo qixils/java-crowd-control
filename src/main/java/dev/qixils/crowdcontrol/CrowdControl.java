@@ -35,8 +35,8 @@ public class CrowdControl {
 	private final SocketManager socketManager;
 	private static final Logger logger = Logger.getLogger("CC-Core");
 	public static final Gson GSON = new GsonBuilder()
-			.registerTypeAdapter(Request.Type.class, new EnumOrdinalAdapter<>())
-			.registerTypeAdapter(Response.ResultType.class, new EnumOrdinalAdapter<>())
+			.registerTypeAdapter(Request.Type.class, new EnumOrdinalAdapter<>(Request.Type.class))
+			.registerTypeAdapter(Response.ResultType.class, new EnumOrdinalAdapter<>(Response.ResultType.class))
 			.create();
 
 	/**
