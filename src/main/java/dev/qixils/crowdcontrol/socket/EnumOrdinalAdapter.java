@@ -1,12 +1,10 @@
 package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 
 public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 	private final Class<T> enumClass;
