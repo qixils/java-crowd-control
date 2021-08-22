@@ -11,12 +11,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -126,11 +121,12 @@ public class CrowdControl {
 		effectHandlers.put(effect, Objects.requireNonNull(handler, "handler"));
 	}
 
+	// TODO: add method for registering checks in a class
 	/**
 	 * Registers a check which will be called for every incoming {@link Request}.
 	 * A resulting value of {@code false} will result in an {@link Response.ResultType#UNAVAILABLE UNAVAILABLE} response packet.
 	 * <p>
-	 * This is used for validating that your service is accepting requests, and should return false if,
+	 * This is used for validating that your service is accepting requests, and should return {@code false} if,
 	 * for example, the game has not fully initialized or no players are connected.
 	 */
 	public void registerCheck(@NotNull Supplier<Boolean> check) {

@@ -57,8 +57,8 @@ final class SocketManager {
 					// process request
 					Response.Result result = crowdControl.handle(request);
 					Response response = new Response(request.getId(), result);
-					String outJSON = response.toJSON() + (byte) 0x00; // TODO: ensure this functions
-					output.write(outJSON.getBytes(StandardCharsets.UTF_8));
+					output.write(response.toJSON().getBytes(StandardCharsets.UTF_8));
+					output.write(0x00);
 				}
 
 				logger.info("Crowd Control socket shutting down");
