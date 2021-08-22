@@ -25,7 +25,7 @@ public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 		try {
 			return ((T[]) type.getClass().getMethod("values").invoke(null))[in.nextInt()];
 		} catch (Exception e) {
-			throw new IOException("Could not read enum value");
+			throw new IOException("Could not read enum value", e);
 		}
 	}
 }
