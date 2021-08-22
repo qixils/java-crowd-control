@@ -25,6 +25,7 @@ public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 	@Override
 	public T read(JsonReader in) throws IOException {
 		try {
+			//noinspection unchecked
 			return ((T[]) enumClass.getDeclaredMethod("values").invoke(null))[in.nextInt()];
 		} catch (Exception e) {
 			throw new IOException("Could not read enum value", e);
