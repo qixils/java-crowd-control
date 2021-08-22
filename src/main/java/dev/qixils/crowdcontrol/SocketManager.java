@@ -45,7 +45,14 @@ final class SocketManager {
 						sb.append(results[0]);
 						bytes_read = input.read(results);
 					}
-					Request request = Request.fromJSON(sb.toString());
+					String inJSON = sb.toString();
+					Request request;
+					try {
+						request = Request.fromJSON(inJSON);
+					} catch (Exception exc) {
+						logger.log(Level.SEVERE, "Could not parse request " + inJSON, exc);
+						break;
+					}
 
 					// process request
 					Response.Result result = crowdControl.handle(request);
