@@ -6,7 +6,7 @@
 
     <groupId>dev.qixils</groupId>
     <artifactId>java-crowd-control</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>16</maven.compiler.source>

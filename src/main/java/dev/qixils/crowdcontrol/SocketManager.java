@@ -55,10 +55,14 @@ final class SocketManager {
 					}
 
 					// process request
-					Response.Result result = crowdControl.handle(request);
-					Response response = new Response(request.getId(), result);
-					output.write(response.toJSON().getBytes(StandardCharsets.UTF_8));
-					output.write(0x00);
+					try {
+						Response.Result result = crowdControl.handle(request);
+						Response response = new Response(request.getId(), result);
+						output.write(response.toJSON().getBytes(StandardCharsets.UTF_8));
+						output.write(0x00);
+					} catch (Exception e) {
+						logger.log(Level.WARNING, "Request handler threw an exception", e);
+					}
 				}
 
 				logger.info("Crowd Control socket shutting down");
