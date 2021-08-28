@@ -11,7 +11,12 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -166,7 +171,7 @@ public class CrowdControl {
 		try {
 			socketManager.shutdown();
 		} catch (IOException e) {
-			logger.log(Level.WARNING, "Encounted an exception while shutting down socket", e);
+			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
 		}
 	}
 
