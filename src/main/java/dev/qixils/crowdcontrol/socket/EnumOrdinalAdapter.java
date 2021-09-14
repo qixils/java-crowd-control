@@ -5,11 +5,17 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
-	private final Class<T> enumClass;
+	private final T[] values;
 	public EnumOrdinalAdapter(Class<T> enumClass) {
-		this.enumClass = enumClass;
+		try {
+			//noinspection unchecked
+			values = (T[]) enumClass.getDeclaredMethod("values").invoke(null);
+		} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+			throw new IllegalArgumentException("Could not access 'values' method of enum", e);
+		}
 	}
 
 	@Override
@@ -24,11 +30,6 @@ public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 
 	@Override
 	public T read(JsonReader in) throws IOException {
-		try {
-			//noinspection unchecked
-			return ((T[]) enumClass.getDeclaredMethod("values").invoke(null))[in.nextInt()];
-		} catch (Exception e) {
-			throw new IOException("Could not read enum value", e);
-		}
+		return values[in.nextInt()];
 	}
 }
