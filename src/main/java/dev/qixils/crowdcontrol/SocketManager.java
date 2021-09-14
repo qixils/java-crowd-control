@@ -22,6 +22,8 @@ final class SocketManager {
 	private Socket socket;
 	private volatile boolean running = true;
 	private static final Logger logger = Logger.getLogger("CC-Socket");
+	private int sleep = 1;
+	private boolean connected = false;
 
 	SocketManager(CrowdControl crowdControl) {
 		this.crowdControl = crowdControl;
@@ -32,8 +34,10 @@ final class SocketManager {
 		while (running) {
 			try {
 				socket = new Socket(crowdControl.getIP(), crowdControl.getPort());
-				logger.info("Connected to Crowd Control");
-				InputStreamReader input = new InputStreamReader(socket.getInputStream()); // TODO: might need to go in while loop
+				logger.info("Connected to Crowd Control server");
+				sleep = 1;
+				connected = true;
+				InputStreamReader input = new InputStreamReader(socket.getInputStream());
 				OutputStream output = socket.getOutputStream();
 
 				while (running) {
@@ -67,11 +71,21 @@ final class SocketManager {
 
 				logger.info("Crowd Control socket shutting down");
 			} catch (IOException e) {
-				logger.log(Level.WARNING, "Socket loop encountered an error", e);
+				String error = connected ? "Socket loop encountered an error" : "Could not connect to the Crowd Control server";
+				Throwable exc = connected ? e : null;
+				logger.log(Level.WARNING, error + ". Reconnecting in " + sleep + "s", exc);
+				try {
+					Thread.sleep(sleep*1000L);
+				} catch (InterruptedException ignored) {}
+				sleep *= 2;
 			}
 		}
 	}
 
+	/**
+	 * Shuts down the Crowd Control server socket.
+	 * @throws IOException an I/O exception occurred while trying to close the socket
+	 */
 	public void shutdown() throws IOException {
 		running = false;
 		if (socket != null)
