@@ -1,8 +1,5 @@
 package dev.qixils.crowdcontrol;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import dev.qixils.crowdcontrol.socket.EnumOrdinalAdapter;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +31,6 @@ public class CrowdControl {
 	private final int port;
 	private final SocketManager socketManager;
 	private static final Logger logger = Logger.getLogger("CC-Core");
-	public static final Gson GSON = new GsonBuilder()
-			.registerTypeAdapter(Request.Type.class, new EnumOrdinalAdapter<>(Request.Type.class))
-			.registerTypeAdapter(Response.ResultType.class, new EnumOrdinalAdapter<>(Response.ResultType.class))
-			.create();
 
 	/**
 	 * Creates a CrowdControl API instance which listens to the local server.
@@ -133,6 +126,7 @@ public class CrowdControl {
 	 * <p>
 	 * This is used for validating that your service is accepting requests, and should return {@code false} if,
 	 * for example, the game has not fully initialized or no players are connected.
+	 * @param check global check to register
 	 */
 	public void registerCheck(@NotNull Supplier<Boolean> check) {
 		globalChecks.add(Objects.requireNonNull(check, "check"));

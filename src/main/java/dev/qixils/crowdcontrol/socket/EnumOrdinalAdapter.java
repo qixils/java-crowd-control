@@ -1,5 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -7,7 +9,12 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-public class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
+final class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
+	static final Gson GSON = new GsonBuilder()
+			.registerTypeAdapter(Request.Type.class, new EnumOrdinalAdapter<>(Request.Type.class))
+			.registerTypeAdapter(Response.ResultType.class, new EnumOrdinalAdapter<>(Response.ResultType.class))
+			.create();
+
 	private final T[] values;
 	public EnumOrdinalAdapter(Class<T> enumClass) {
 		try {

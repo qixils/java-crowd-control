@@ -2,7 +2,6 @@ package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
-import dev.qixils.crowdcontrol.CrowdControl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -76,7 +75,7 @@ public class Request {
 	 */
 	@NotNull
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
-		return CrowdControl.GSON.fromJson(Objects.requireNonNull(json, "json"), Request.class);
+		return EnumOrdinalAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Request.class);
 	}
 
 	/**

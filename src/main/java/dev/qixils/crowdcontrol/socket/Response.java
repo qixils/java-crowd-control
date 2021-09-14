@@ -1,7 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.annotations.SerializedName;
-import dev.qixils.crowdcontrol.CrowdControl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -103,7 +102,7 @@ public class Response {
 	 */
 	@NotNull
 	public String toJSON() {
-		return CrowdControl.GSON.toJson(this);
+		return EnumOrdinalAdapter.GSON.toJson(this);
 	}
 
 	/**
