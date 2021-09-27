@@ -69,7 +69,7 @@ public class CrowdControl {
 	}
 
 	/**
-	 * Registers all methods inside of a class with:
+	 * Registers all public methods inside of a class with:
 	 * <ul>
 	 *     <li>the {@link Subscribe} annotation</li>
 	 *     <li>one parameter of type {@link Request}</li>
