@@ -71,11 +71,14 @@ final class SocketManager {
 
 				logger.info("Crowd Control socket shutting down");
 			} catch (IOException e) {
+				if (!running)
+					continue;
+
 				String error = connected ? "Socket loop encountered an error" : "Could not connect to the Crowd Control server";
 				Throwable exc = connected ? e : null;
 				logger.log(Level.WARNING, error + ". Reconnecting in " + sleep + "s", exc);
 				try {
-					Thread.sleep(sleep*1000L);
+					Thread.sleep(sleep * 1000L);
 				} catch (InterruptedException ignored) {}
 				sleep *= 2;
 			}
