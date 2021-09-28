@@ -58,4 +58,12 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub qixils Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/qixils/java-crowd-control</url>
+        </repository>
+    </distributionManagement>
+
 </project>
