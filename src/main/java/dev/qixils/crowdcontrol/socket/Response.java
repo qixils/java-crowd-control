@@ -1,8 +1,15 @@
 package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.CheckReturnValue;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.util.Objects;
 
 /**
@@ -12,34 +19,9 @@ import java.util.Objects;
 public class Response {
 	private final int id;
 	@SerializedName("status")
-	private ResultType type;
-	private String message;
-
-	/**
-	 * Constructs a response to a {@link Request} given its ID. Defaults to {@link ResultType#UNAVAILABLE}.
-	 * @param id Request ID
-	 */
-	public Response(int id) {
-		this(id, ResultType.UNAVAILABLE);
-	}
-
-	/**
-	 * Constructs a response to a {@link Request} given its ID and a {@link Result}.
-	 * @param id Request ID
-	 * @param result result of execution
-	 */
-	public Response(int id, @NotNull Response.Result result) {
-		this(id, Objects.requireNonNull(result, "result").getType(), result.getMessage());
-	}
-
-	/**
-	 * Constructs a response to a {@link Request} given its ID and the result of executing the effect.
-	 * @param id Request ID
-	 * @param type result of execution
-	 */
-	public Response(int id, @NotNull Response.ResultType type) {
-		this(id, Objects.requireNonNull(type, "type"), type.name());
-	}
+	private final ResultType type;
+	private final String message;
+	private final long timeRemaining; // millis
 
 	/**
 	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
@@ -47,17 +29,21 @@ public class Response {
 	 * @param id Request ID
 	 * @param type result of execution
 	 * @param message result message
+	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
 	 */
-	public Response(int id, @NotNull Response.ResultType type, @NotNull String message) {
+	@CheckReturnValue
+	public Response(int id, @NotNull Response.ResultType type, @NotNull String message, long timeRemaining) {
 		this.id = id;
 		this.type = Objects.requireNonNull(type, "type");
 		this.message = Objects.requireNonNull(message, "message");
+		this.timeRemaining = timeRemaining;
 	}
 
 	/**
 	 * Gets the ID of the outgoing packet. Corresponds to a unique transaction.
 	 * @return packet ID
 	 */
+	@CheckReturnValue
 	public int getId() {
 		return id;
 	}
@@ -67,6 +53,7 @@ public class Response {
 	 * @return effect result
 	 */
 	@NotNull
+	@CheckReturnValue
 	public Response.ResultType getResultType() {
 		return type;
 	}
@@ -76,24 +63,18 @@ public class Response {
 	 * @return result message
 	 */
 	@NotNull
+	@CheckReturnValue
 	public String getMessage() {
 		return message;
 	}
 
 	/**
-	 * Sets the result from executing an effect.
-	 * @param type effect result
+	 * Gets the milliseconds left until the referenced effect ends.
+	 * @return effect duration in milliseconds
 	 */
-	public void setResultType(@NotNull Response.ResultType type) {
-		this.type = Objects.requireNonNull(type, "result");
-	}
-
-	/**
-	 * Sets the message that will be delivered along with the result.
-	 * @param message result message
-	 */
-	public void setMessage(@NotNull String message) {
-		this.message = Objects.requireNonNull(message, "message");
+	@CheckReturnValue
+	public long getTimeRemaining() {
+		return timeRemaining;
 	}
 
 	/**
@@ -101,8 +82,29 @@ public class Response {
 	 * @return JSON string
 	 */
 	@NotNull
+	@CheckReturnValue
 	public String toJSON() {
 		return EnumOrdinalAdapter.GSON.toJson(this);
+	}
+
+	/**
+	 * Gets a mutable {@link Builder} representing this Response.
+	 * @return new builder
+	 */
+	@NotNull
+	@CheckReturnValue
+	public Builder toBuilder() {
+		return new Builder(this);
+	}
+
+	/**
+	 * Creates an empty {@link Builder} representing a Response.
+	 * @return new empty builder
+	 */
+	@NotNull
+	@CheckReturnValue
+	public static Builder builder() {
+		return new Builder();
 	}
 
 	/**
@@ -118,73 +120,169 @@ public class Response {
 		 */
 		FAILURE,
 		/**
-		 * The effect is currently unavailable. Treated the same as {@link #FAILURE} by Crowd Control.
+		 * The effect is unavailable for use. Treated the same as {@link #FAILURE} by Crowd Control.
 		 */
 		UNAVAILABLE,
 		/**
 		 * The effect is momentarily unavailable but may be retried in a few seconds.
 		 */
-		RETRY
+		RETRY,
+		/**
+		 * The effect has been queued for execution after the current one ends.
+		 */
+		QUEUE,
+		/**
+		 * The effect triggered successfully and is now active until it ends.
+		 * <p>
+		 * <i>This value is intended for use by the library only. {@link #SUCCESS} is generally suitable.</i>
+		 */
+		RUNNING,
+		/**
+		 * The timed effect has been paused and is now waiting.
+		 */
+		PAUSED,
+		/**
+		 * The timed effect has been resumed and is counting down again.
+		 */
+		RESUMED,
+		/**
+		 * The timed effect has finished.
+		 */
+		FINISHED
 	}
 
 	/**
-	 * The result of executing a {@link Request}.
+	 * Mutable builder for the immutable {@link Response} class.
 	 */
-	public static class Result {
-		private final ResultType type;
-		private final String message;
+	public static class Builder {
+		private int id;
+		private ResultType type;
+		private String message;
+		private long timeRemaining;
 
 		/**
-		 * Creates a wrapper with a result and a message defaulting to the name of the result.
-		 * @param type effect result
+		 * Instantiates an empty builder.
+		 * @see Builder
 		 */
-		public Result(@NotNull Response.ResultType type) {
-			this(Objects.requireNonNull(type, "type"), type.name());
+		@CheckReturnValue
+		public Builder(){}
+
+		/**
+		 * Creates a new builder using the data from a {@link Response}.
+		 * @param source source for a new builder
+		 */
+		@CheckReturnValue
+		public Builder(@NotNull Response source) {
+			Objects.requireNonNull(source, "source cannot be null");
+			this.id = source.id;
+			this.message = source.message;
+			this.type = source.type;
+			this.timeRemaining = source.timeRemaining;
 		}
 
 		/**
-		 * Creates a wrapper with a result and a message.
-		 * @param type effect result
-		 * @param message effect message
+		 * Creates a new builder representing the {@link Response} to a {@link Request}.
+		 * @param request request to respond to
 		 */
-		public Result(@NotNull Response.ResultType type, String message) {
-			this.type = Objects.requireNonNull(type, "type");
-			this.message = Objects.requireNonNull(message, "message");
+		@CheckReturnValue
+		public Builder(@NotNull Request request) {
+			this.id = Objects.requireNonNull(request, "request cannot be null").id;
 		}
 
 		/**
-		 * Gets the result of the effect.
-		 * @return effect result
+		 * Creates a new builder representing the {@link Response} to a request ID.
+		 * @param id request to respond to
+		 */
+		@CheckReturnValue
+		public Builder(int id) {
+			this.id = id;
+		}
+
+		/**
+		 * Sets the ID of the request being responded to.
+		 * @param id request ID
+		 * @return this builder
 		 */
 		@NotNull
-		public Response.ResultType getType() {
-			return type;
+		@Contract("_ -> this")
+		public Builder id(int id) {
+			this.id = id;
+			return this;
 		}
 
 		/**
-		 * Gets the message associated with the effect's result.
-		 * @return result message
+		 * Sets the type of result being returned.
+		 * @param type result type
+		 * @return this builder
 		 */
 		@NotNull
-		public String getMessage() {
-			return message;
+		@Contract("_ -> this")
+		public Builder type(@Nullable ResultType type) {
+			this.type = type;
+			if (type != null && message == null)
+				message = type.name();
+			return this;
 		}
 
 		/**
-		 * A successful result.
+		 * Sets the message describing or explaining the response.
+		 * <br>Useful for explaining why an effect failed to apply.
+		 * @param message response message
+		 * @return this builder
 		 */
-		public static Result SUCCESS = new Result(ResultType.SUCCESS);
+		@NotNull
+		@Contract("_ -> this")
+		public Builder message(@Nullable String message) {
+			this.message = message;
+			return this;
+		}
+
 		/**
-		 * A failing result.
+		 * Sets the time left on the referenced effect in milliseconds.
+		 * @param timeRemaining time in milliseconds
+		 * @return this builder
 		 */
-		public static Result FAILURE = new Result(ResultType.FAILURE);
+		@NotNull
+		@Contract("_ -> this")
+		public Builder timeRemaining(long timeRemaining) {
+			if (timeRemaining < 0)
+				throw new IllegalArgumentException("'timeRemaining' must be positive");
+			this.timeRemaining = timeRemaining;
+			return this;
+		}
+
 		/**
-		 * A result for an unavailable command.
+		 * Sets the time left on the referenced effect.
+		 * @param timeRemaining effect duration
+		 * @return this builder
 		 */
-		public static Result UNAVAILABLE = new Result(ResultType.UNAVAILABLE);
+		@NotNull
+		@Contract("_ -> this")
+		public Builder timeRemaining(@Nullable Duration timeRemaining) {
+			return timeRemaining != null ? timeRemaining(timeRemaining.toMillis()) : this;
+		}
+
 		/**
-		 * A result for retrying a command.
+		 * Sets the time at which the referenced effect will end.
+		 * @param endEffectAt time to end effect
+		 * @return this builder
 		 */
-		public static Result RETRY = new Result(ResultType.RETRY);
+		@NotNull
+		@Contract("_ -> this")
+		public Builder timeRemaining(@Nullable Temporal endEffectAt) {
+			return endEffectAt != null
+					? timeRemaining(ChronoUnit.MILLIS.between(LocalDateTime.now(), endEffectAt))
+					: this;
+		}
+
+		/**
+		 * Builds a new {@link Response} object.
+		 * @return new Response
+		 */
+		@NotNull
+		@CheckReturnValue
+		public Response build() {
+			return new Response(id, type, message, timeRemaining);
+		}
 	}
 }

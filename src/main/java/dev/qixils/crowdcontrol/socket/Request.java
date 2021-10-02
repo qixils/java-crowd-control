@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol.socket;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -15,20 +16,26 @@ public class Request {
 	protected int id;
 	@SerializedName("code")
 	protected String effect; // more sensible variable name for this library
+	protected Object[] parameters; // dunno what this is for atm
 	protected String viewer;
+	protected Integer cost; // i believe this is nullable
 	protected Type type;
 
 	/**
 	 * Instantiates a basic request packet which represents an effect to be played.
 	 * @param id ID of the packet
 	 * @param effect name of the effect to play
+	 * @param parameters arguments supplied by the C# Crowd Control pack
 	 * @param viewer viewer who triggered the effect
+	 * @param cost optional cost of the effect
 	 * @param type type of request
 	 */
-	public Request(int id, @NotNull String effect, @NotNull String viewer, @NotNull Type type) {
+	public Request(int id, @NotNull String effect, @Nullable Object[] parameters, @NotNull String viewer, @Nullable Integer cost, @NotNull Type type) {
 		this.id = id;
 		this.effect = Objects.requireNonNull(effect, "effect");
+		this.parameters = Objects.requireNonNullElseGet(parameters, () -> new Object[0]);
 		this.viewer = Objects.requireNonNull(viewer, "viewer");
+		this.cost = cost;
 		this.type = Objects.requireNonNull(type, "type");
 	}
 
@@ -50,12 +57,30 @@ public class Request {
 	}
 
 	/**
+	 * Gets the arguments supplied by the C# Crowd Control pack
+	 * @return effect parameters
+	 */
+	@NotNull
+	public Object[] getParameters() {
+		return parameters;
+	}
+
+	/**
 	 * Gets the name of the viewer who triggered the effect.
 	 * @return viewer name
 	 */
 	@NotNull
 	public String getViewer() {
 		return viewer;
+	}
+
+	/**
+	 * Gets the cost of the effect specified in this Request.
+	 * @return effect cost
+	 */
+	@Nullable
+	public Integer getCost() {
+		return cost;
 	}
 
 	/**

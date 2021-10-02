@@ -60,8 +60,7 @@ final class SocketManager {
 
 					// process request
 					try {
-						Response.Result result = crowdControl.handle(request);
-						Response response = new Response(request.getId(), result);
+						Response response = crowdControl.handle(request);
 						output.write(response.toJSON().getBytes(StandardCharsets.UTF_8));
 						output.write(0x00);
 					} catch (Exception e) {

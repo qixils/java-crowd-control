@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * You should only ever create one instance of this class.
  */
 public class CrowdControl {
-	private final Map<String, Function<Request, Response.Result>> effectHandlers = new HashMap<>();
+	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final List<Supplier<Boolean>> globalChecks = new ArrayList<>();
 	private final String IP;
 	private final int port;
@@ -68,6 +68,12 @@ public class CrowdControl {
 		return port;
 	}
 
+	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS = Map.of(
+			Response.class, response -> (Response) response,
+			Response.ResultType.class, type -> Response.builder().type((Response.ResultType) type).build(),
+			Response.Builder.class, builder -> ((Response.Builder) builder).build()
+	);
+
 	/**
 	 * Registers all public methods inside a class with:
 	 * <ul>
@@ -80,25 +86,22 @@ public class CrowdControl {
 	public void registerHandlers(@NotNull Object object) {
 		Class<?> clazz = Objects.requireNonNull(object, "object").getClass();
 		for (Method method : clazz.getMethods()) {
+			Class<?> returnType = method.getReturnType();
 			if (Modifier.isPublic(method.getModifiers()) // ensure method is public
-					&& (method.getReturnType() == Response.ResultType.class || method.getReturnType() == Response.Result.class) // validate return type
+					&& RETURN_TYPE_PARSERS.containsKey(returnType) // validate return type
 					&& method.getParameterCount() == 1 && method.getParameters()[0].getType() == Request.class // validate parameter
 					&& method.isAnnotationPresent(Subscribe.class)) { // validate it is an event handler
 				String effect = method.getAnnotation(Subscribe.class).effect();
 				registerHandler(effect, request -> {
-					Response.Result output;
+					Response output;
 					try {
 						Object result = method.invoke(object, request);
-						if (result instanceof Response.ResultType res) {
-							output = new Response.Result(res);
-						} else if (result instanceof Response.Result wrap) {
-							output = wrap;
-						} else {
-							output = new Response.Result(Response.ResultType.UNAVAILABLE, "Unknown result type");
-						}
+						output = result == null
+								? Response.builder().type(Response.ResultType.FAILURE).message("Effect handler returned a null response").build()
+								: RETURN_TYPE_PARSERS.get(returnType).apply(result);
 					} catch (IllegalAccessException | InvocationTargetException e) {
-						logger.log( Level.WARNING,"Failed to invoke method handler for effect \"" + effect + "\"", e);
-						output = new Response.Result(Response.ResultType.FAILURE, "Failed to invoke method handler");
+						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
+						output = Response.builder().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build();
 					}
 					return output;
 				});
@@ -111,7 +114,7 @@ public class CrowdControl {
 	 * @param effect name of the effect to handle
 	 * @param handler function to handle the effect
 	 */
-	public void registerHandler(@NotNull String effect, @NotNull Function<Request, Response.Result> handler) {
+	public void registerHandler(@NotNull String effect, @NotNull Function<Request, Response> handler) {
 		effect = Objects.requireNonNull(effect, "effect").toLowerCase(Locale.ENGLISH);
 		if (effectHandlers.containsKey(effect)) {
 			throw new IllegalArgumentException("The effect \"" + effect + "\" already has a handler.");
@@ -138,23 +141,23 @@ public class CrowdControl {
 	 * @return the result of handling the request
 	 */
 	@NotNull
-	public Response.Result handle(@NotNull Request request) {
+	public Response handle(@NotNull Request request) {
 		for (Supplier<Boolean> check : globalChecks) {
 			if (!check.get()) {
-				return new Response.Result(Response.ResultType.UNAVAILABLE, "The game is unavailable");
+				return Response.builder().type(Response.ResultType.FAILURE).message("The game is unavailable").build();
 			}
 		}
 
 		String effect = Objects.requireNonNull(request, "request").getEffect();
 		if (!effectHandlers.containsKey(effect)) {
-			return new Response.Result(Response.ResultType.UNAVAILABLE, "The effect couldn't be found");
+			return Response.builder().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").build();
 		}
 
 		try {
 			return effectHandlers.get(effect).apply(request);
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
-			return new Response.Result(Response.ResultType.FAILURE, "The effect encountered an exception");
+			return Response.builder().type(Response.ResultType.FAILURE).message("The effect encountered an exception").build();
 		}
 	}
 
