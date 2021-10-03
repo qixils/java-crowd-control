@@ -194,7 +194,7 @@ public class Response {
 		 */
 		@CheckReturnValue
 		public Builder(@NotNull Request request) {
-			this.id = Objects.requireNonNull(request, "request cannot be null").id;
+			this.id = Objects.requireNonNull(request, "request cannot be null").getId();
 		}
 
 		/**
