@@ -16,7 +16,7 @@ final class EnumOrdinalAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 			.create();
 
 	private final T[] values;
-	public EnumOrdinalAdapter(Class<T> enumClass) {
+	EnumOrdinalAdapter(Class<T> enumClass) {
 		try {
 			//noinspection unchecked
 			values = (T[]) enumClass.getDeclaredMethod("values").invoke(null);

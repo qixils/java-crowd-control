@@ -12,14 +12,21 @@ import java.util.Objects;
  * An incoming packet from the Crowd Control TCP server which represents an effect to be played.
  * @see Response
  */
-public class Request {
-	protected int id;
+public final class Request {
+	private int id;
 	@SerializedName("code")
-	protected String effect; // more sensible variable name for this library
-	protected Object[] parameters; // dunno what this is for atm
-	protected String viewer;
-	protected Integer cost; // i believe this is nullable
-	protected Type type;
+	private String effect; // more sensible variable name for this library
+	private Object[] parameters; // dunno what this is for atm
+	private String viewer;
+	private Integer cost; // i believe this is nullable
+	private Type type;
+
+	/**
+	 * Instantiates an empty Request.
+	 * <p>
+	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
+	 */
+	Request(){}
 
 	/**
 	 * Instantiates a basic request packet which represents an effect to be played.
