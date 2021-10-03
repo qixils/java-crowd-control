@@ -2,12 +2,16 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +23,9 @@ import java.util.logging.Logger;
 final class SocketManager {
 	private final CrowdControl crowdControl;
 	private final Thread thread = new Thread(this::loop, "crowdcontrol-socket-loop");
+	private final Executor effectPool = Executors.newCachedThreadPool();
 	private Socket socket;
+	private OutputStream output;
 	private volatile boolean running = true;
 	private static final Logger logger = Logger.getLogger("CC-Socket");
 	private int sleep = 1;
@@ -38,7 +44,7 @@ final class SocketManager {
 				sleep = 1;
 				connected = true;
 				InputStreamReader input = new InputStreamReader(socket.getInputStream());
-				OutputStream output = socket.getOutputStream();
+				output = socket.getOutputStream();
 
 				while (running) {
 					// get incoming data
@@ -59,13 +65,14 @@ final class SocketManager {
 					}
 
 					// process request
-					try {
-						Response response = crowdControl.handle(request);
-						output.write(response.toJSON().getBytes(StandardCharsets.UTF_8));
-						output.write(0x00);
-					} catch (Exception e) {
-						logger.log(Level.WARNING, "Request handler threw an exception", e);
-					}
+					effectPool.execute(() -> {
+						try {
+							crowdControl.handle(request);
+						} catch (Exception e) {
+							logger.log(Level.WARNING, "Request handler threw an exception", e);
+							sendResponse(Response.builder().type(Response.ResultType.FAILURE).message("Request handler threw an exception").build());
+						}
+					});
 				}
 
 				logger.info("Crowd Control socket shutting down");
@@ -73,6 +80,8 @@ final class SocketManager {
 				if (!running)
 					continue;
 
+				socket = null;
+				output = null;
 				String error = connected ? "Socket loop encountered an error" : "Could not connect to the Crowd Control server";
 				Throwable exc = connected ? e : null;
 				logger.log(Level.WARNING, error + ". Reconnecting in " + sleep + "s", exc);
@@ -84,11 +93,28 @@ final class SocketManager {
 		}
 	}
 
+	boolean acceptingResponses() {
+		return output != null;
+	}
+
+	void sendResponse(@NotNull Response response) {
+		Objects.requireNonNull(response, "response cannot be null");
+		if (output == null)
+			throw new IllegalStateException("Socket output is unavailable");
+
+		try {
+			output.write(response.toJSON().getBytes(StandardCharsets.UTF_8));
+			output.write(0x00);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Failed to write response to socket");
+		}
+	}
+
 	/**
 	 * Shuts down the Crowd Control server socket.
 	 * @throws IOException an I/O exception occurred while trying to close the socket
 	 */
-	public void shutdown() throws IOException {
+	void shutdown() throws IOException {
 		running = false;
 		if (socket != null)
 			socket.close();

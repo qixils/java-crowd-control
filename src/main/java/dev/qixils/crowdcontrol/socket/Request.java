@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.CheckReturnValue;
 import java.util.Objects;
 
 /**
@@ -12,7 +13,6 @@ import java.util.Objects;
  * @see Response
  */
 public class Request {
-	// TODO: test if these can be final, or if that causes serialization to fail
 	protected int id;
 	@SerializedName("code")
 	protected String effect; // more sensible variable name for this library
@@ -30,6 +30,7 @@ public class Request {
 	 * @param cost optional cost of the effect
 	 * @param type type of request
 	 */
+	@CheckReturnValue
 	public Request(int id, @NotNull String effect, @Nullable Object[] parameters, @NotNull String viewer, @Nullable Integer cost, @NotNull Type type) {
 		this.id = id;
 		this.effect = Objects.requireNonNull(effect, "effect");
@@ -43,6 +44,7 @@ public class Request {
 	 * Gets the ID of the incoming packet. Corresponds to a unique transaction.
 	 * @return packet ID
 	 */
+	@CheckReturnValue
 	public int getId() {
 		return id;
 	}
@@ -52,6 +54,7 @@ public class Request {
 	 * @return effect name
 	 */
 	@NotNull
+	@CheckReturnValue
 	public String getEffect() {
 		return effect;
 	}
@@ -61,6 +64,7 @@ public class Request {
 	 * @return effect parameters
 	 */
 	@NotNull
+	@CheckReturnValue
 	public Object[] getParameters() {
 		return parameters;
 	}
@@ -70,6 +74,7 @@ public class Request {
 	 * @return viewer name
 	 */
 	@NotNull
+	@CheckReturnValue
 	public String getViewer() {
 		return viewer;
 	}
@@ -79,6 +84,7 @@ public class Request {
 	 * @return effect cost
 	 */
 	@Nullable
+	@CheckReturnValue
 	public Integer getCost() {
 		return cost;
 	}
@@ -88,6 +94,7 @@ public class Request {
 	 * @return request type
 	 */
 	@NotNull
+	@CheckReturnValue
 	public Type getType() {
 		return type;
 	}
@@ -99,6 +106,7 @@ public class Request {
 	 * @throws JsonSyntaxException the JSON failed to be parsed
 	 */
 	@NotNull
+	@CheckReturnValue
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
 		return EnumOrdinalAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Request.class);
 	}

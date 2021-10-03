@@ -129,24 +129,32 @@ public class Response {
 		RETRY,
 		/**
 		 * The effect has been queued for execution after the current one ends.
+		 * <p>
+		 * <i>This value is intended for use by the library.</i>
 		 */
 		QUEUE,
 		/**
 		 * The effect triggered successfully and is now active until it ends.
 		 * <p>
-		 * <i>This value is intended for use by the library only. {@link #SUCCESS} is generally suitable.</i>
+		 * <i>This value is intended for use by the library only. {@link #SUCCESS} should generally be used instead.</i>
 		 */
 		RUNNING,
 		/**
 		 * The timed effect has been paused and is now waiting.
+		 * <p>
+		 * <i>This value is intended for use by the library.</i>
 		 */
 		PAUSED,
 		/**
 		 * The timed effect has been resumed and is counting down again.
+		 * <p>
+		 * <i>This value is intended for use by the library.</i>
 		 */
 		RESUMED,
 		/**
 		 * The timed effect has finished.
+		 * <p>
+		 * <i>This value is intended for use by the library.</i>
 		 */
 		FINISHED
 	}
