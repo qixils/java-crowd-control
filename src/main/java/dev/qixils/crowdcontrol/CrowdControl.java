@@ -4,6 +4,7 @@ import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,7 +27,7 @@ import java.util.logging.Logger;
  * <p>
  * You should only ever create one instance of this class.
  */
-public class CrowdControl {
+public final class CrowdControl {
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();
 	private final List<Supplier<Boolean>> globalChecks = new ArrayList<>();
@@ -39,6 +40,7 @@ public class CrowdControl {
 	 * Creates a CrowdControl API instance which listens to the local server.
 	 * @param port local port to listen on
 	 */
+	@CheckReturnValue
 	public CrowdControl(int port) {
 		this("localhost", port);
 	}
@@ -48,6 +50,7 @@ public class CrowdControl {
 	 * @param IP IP to listen on
 	 * @param port port to listen on
 	 */
+	@CheckReturnValue
 	public CrowdControl(@NotNull String IP, int port) {
 		this.IP = Objects.requireNonNull(IP, "IP");
 		this.port = port;
@@ -59,6 +62,7 @@ public class CrowdControl {
 	 * @return IP
 	 */
 	@NotNull
+	@CheckReturnValue
 	public String getIP() {
 		return IP;
 	}
@@ -67,6 +71,7 @@ public class CrowdControl {
 	 * Returns the port that the {@link SocketManager} will listen on.
 	 * @return IP port
 	 */
+	@CheckReturnValue
 	public int getPort() {
 		return port;
 	}

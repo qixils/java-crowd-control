@@ -16,7 +16,7 @@ import java.util.Objects;
  * An outgoing packet to the Crowd Control TCP server carrying information in response to an {@link Request incoming packet}.
  * @see Request
  */
-public class Response {
+public final class Response {
 	private final int id;
 	@SerializedName("status")
 	private final ResultType type;
