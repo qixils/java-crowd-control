@@ -97,7 +97,7 @@ final class SocketManager {
 		return output != null;
 	}
 
-	void sendResponse(@NotNull Response response) {
+	synchronized void sendResponse(@NotNull Response response) {
 		Objects.requireNonNull(response, "response cannot be null");
 		if (output == null)
 			throw new IllegalStateException("Socket output is unavailable");
