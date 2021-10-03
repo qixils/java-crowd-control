@@ -195,7 +195,7 @@ public class CrowdControl {
 
 	/**
 	 * Registers a check which will be called for every incoming {@link Request}.
-	 * A resulting value of {@code false} will result in an {@link Response.ResultType#UNAVAILABLE UNAVAILABLE} response packet.
+	 * A resulting value of {@code false} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
 	 * <p>
 	 * This is used for validating that your service is accepting requests, and should return {@code false} if,
 	 * for example, the game has not fully initialized or no players are connected.
