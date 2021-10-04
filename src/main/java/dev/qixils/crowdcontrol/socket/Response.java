@@ -168,6 +168,10 @@ public final class Response {
 		private String message;
 		private long timeRemaining;
 
+		// used to determine if a message has been manually set.
+		// false means a message has not been set or it has only been set by #type
+		private boolean messageSet = false;
+
 		/**
 		 * Instantiates an empty builder.
 		 * @see Builder
@@ -227,7 +231,7 @@ public final class Response {
 		@Contract("_ -> this")
 		public Builder type(@Nullable ResultType type) {
 			this.type = type;
-			if (type != null && message == null)
+			if (type != null && !messageSet)
 				message = type.name();
 			return this;
 		}
@@ -241,6 +245,7 @@ public final class Response {
 		@NotNull
 		@Contract("_ -> this")
 		public Builder message(@Nullable String message) {
+			messageSet = true;
 			this.message = message;
 			return this;
 		}
