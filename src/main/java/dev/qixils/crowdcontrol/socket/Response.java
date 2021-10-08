@@ -162,7 +162,7 @@ public final class Response {
 	/**
 	 * Mutable builder for the immutable {@link Response} class.
 	 */
-	public static class Builder {
+	public static class Builder implements Cloneable {
 		private int id;
 		private ResultType type;
 		private String message;
@@ -296,6 +296,16 @@ public final class Response {
 		@CheckReturnValue
 		public Response build() {
 			return new Response(id, type, message, timeRemaining);
+		}
+
+		/**
+		 * Creates a new {@link Builder} object with the same parameters.
+		 * @return cloned builder
+		 */
+		@SuppressWarnings("MethodDoesntCallSuperMethod")
+		@Override
+		public Builder clone() {
+			return new Builder().id(id).timeRemaining(timeRemaining).message(message).type(type);
 		}
 	}
 }
