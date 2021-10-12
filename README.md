@@ -1,5 +1,6 @@
 # java-crowd-control
-A Java library for interacting with a [crowdcontrol.live](https://crowdcontrol.live) server.
+A Java library for interacting with a [crowdcontrol.live](https://crowdcontrol.live) server
+which allows easy handling of requests, queuing effects to only allow one of a given type to run at once, etc.
 
 ## Installation
 
@@ -74,6 +75,6 @@ public class VideoGameHere: SimpleTCPPack
 
 The project's API documentation can be viewed [here](https://crowdcontrol.qixils.dev/apidocs/).
 
-## LICENSE
+## License
 
 This project is licensed under the MIT license. The license is available to view [here](https://github.com/qixils/java-crowd-control/blob/master/LICENSE).
