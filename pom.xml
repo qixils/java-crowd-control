@@ -8,6 +8,42 @@
     <artifactId>java-crowd-control</artifactId>
     <version>2.1.0</version>
 
+    <name>java-crowd-control</name>
+    <description>Library for interacting with a crowdcontrol.live server</description>
+    <url>https://github.com/qixils/java-crowd-control</url>
+    <scm>
+        <connection>scm:git:https://github.com/qixils/java-crowd-control</connection>
+        <developerConnection>scm:git:https://github.com/qixils/java-crowd-control</developerConnection>
+        <url>https://github.com/qixils/java-crowd-control.git</url>
+        <tag>HEAD</tag>
+    </scm>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://github.com/qixils/java-crowd-control/blob/master/LICENSE</url>
+            <distribution>repo</distribution>
+            <comments>A short and simple permissive license</comments>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>qixils</id>
+            <name>Lexi Larkin</name>
+            <email>lexi@qixils.dev</email>
+            <url>https://qixils.dev/</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>America/New_York</timezone>
+            <properties>
+                <picUrl>https://i.qixils.dev/avatar.png</picUrl>
+                <twitter>lexikiq</twitter>
+                <github>qixils</github>
+                <gitlab>lexikiq</gitlab>
+            </properties>
+        </developer>
+    </developers>
+
     <properties>
         <java.version>11</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
