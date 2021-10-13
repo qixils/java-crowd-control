@@ -11,7 +11,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 ```xml
 <groupId>dev.qixils.crowdcontrol</groupId>
 <artifactId>java-crowd-control</artifactId>
-<version>2.1.0</version>
+<version>2.1.1</version>
 ```
 
 ### Gradle
