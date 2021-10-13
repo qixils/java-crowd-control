@@ -1,4 +1,5 @@
-# java-crowd-control
+# java-crowd-control [![Build Status](https://img.shields.io/github/workflow/status/qixils/java-crowd-control/Java%20CI%20with%20Maven?event=push&color=orange)](https://github.com/qixils/java-crowd-control/actions/workflows/maven.yml) [![Release](https://img.shields.io/maven-central/v/dev.qixils.crowdcontrol/java-crowd-control?color=orange)](https://search.maven.org/artifact/dev.qixils.crowdcontrol/java-crowd-control) [![License](https://img.shields.io/github/license/qixils/java-crowd-control?color=darkviolet)](https://github.com/qixils/java-crowd-control/blob/master/LICENSE) [![Javadocs](https://img.shields.io/badge/javadocs-informational)](https://crowdcontrol.qixils.dev/apidocs/)
+
 A Java library for interacting with a [crowdcontrol.live](https://crowdcontrol.live) server
 which allows easy handling of requests, queuing effects to only allow one of a given type to run at once, etc.
 
