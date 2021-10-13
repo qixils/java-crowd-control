@@ -90,15 +90,16 @@ public final class TimedEffect {
         if (startedAt != -1)
             throw new IllegalStateException("Effect has already started");
 
-        if (!ACTIVE_EFFECTS.containsKey(effect)) {
+        TimedEffect activeEffect = ACTIVE_EFFECTS.get(effect);
+
+        if (activeEffect == null || (activeEffect.isComplete() && (!QUEUED_EFFECTS.containsKey(effect) || QUEUED_EFFECTS.get(effect).isEmpty()))) {
             start();
             return;
         }
 
         Queue<TimedEffect> queue = QUEUED_EFFECTS.computeIfAbsent(effect, $ -> new ConcurrentLinkedQueue<>());
-        if (!queue.isEmpty())
-            cc.dispatchResponse(Response.builder().id(id).type(Response.ResultType.QUEUE).build());
         queue.add(this);
+        cc.dispatchResponse(Response.builder().id(id).type(Response.ResultType.QUEUE).build());
     }
 
     private void start() {
