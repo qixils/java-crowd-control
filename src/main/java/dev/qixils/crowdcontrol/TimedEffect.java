@@ -137,7 +137,7 @@ public final class TimedEffect {
     private void start() {
         ACTIVE_EFFECTS.put(effect, this);
         startedAt = System.currentTimeMillis();
-        cc.dispatchResponse(Response.builder().id(id).type(Response.ResultType.RUNNING).timeRemaining(duration).build());
+        cc.dispatchResponse(Response.builder().id(id).type(Response.ResultType.SUCCESS).timeRemaining(duration).build());
         try {
             callback.accept(this);
         } catch (Exception exception) {
