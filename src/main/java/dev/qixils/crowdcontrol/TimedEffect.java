@@ -22,6 +22,9 @@ import java.util.logging.Logger;
 /**
  * A wrapper for safely executing exclusive timed effects.
  * Effects with the same {@link #getEffect() key} will run one after another.
+ * <p>
+ * To enqueue this effect, execute {@link #queue()} after instantiating a new object.
+ * Similarly, the effect can be {@link #pause() paused}, {@link #resume() resumed}, or {@link #complete() stopped}.
  */
 public final class TimedEffect {
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
@@ -40,32 +43,60 @@ public final class TimedEffect {
     private final @Nullable Consumer<TimedEffect> completionCallback;
 
     /**
-     * Creates a new timed effect.
+     * Creates a new {@link TimedEffect}.
      * @param ccAPI Crowd Control API
-     * @param request request that triggered this effect
+     * @param requestId ID of the {@link Request} that triggered this effect
+     * @param effect name of this effect, or of a grouped queue
+     * @param duration duration of the effect in milliseconds
+     * @param callback method to call once the effect is started
+     * @param completionCallback optional method to call once the effect is completed
+     */
+    @CheckReturnValue
+    public TimedEffect(@NotNull CrowdControl ccAPI, int requestId, @NotNull String effect, long duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
+        this.cc = Objects.requireNonNull(ccAPI, "ccAPI cannot be null");
+        this.callback = Objects.requireNonNull(callback, "callback cannot be null");
+        this.completionCallback = completionCallback;
+        this.duration = duration;
+        this.effect = Objects.requireNonNull(effect, "effect cannot be null");
+        this.id = requestId;
+    }
+
+    /**
+     * Creates a new {@link TimedEffect}.
+     * @param ccAPI Crowd Control API
+     * @param request {@link Request} that triggered this effect
      * @param duration duration of the effect in milliseconds
      * @param callback method to call once the effect is started
      * @param completionCallback optional method to call once the effect is completed
      */
     @CheckReturnValue
     public TimedEffect(@NotNull CrowdControl ccAPI, @NotNull Request request, long duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
-        Objects.requireNonNull(request, "request cannot be null");
-        this.cc = Objects.requireNonNull(ccAPI, "ccAPI cannot be null");
-        this.callback = Objects.requireNonNull(callback, "callback cannot be null");
-        this.completionCallback = completionCallback;
-        this.duration = duration;
-        this.effect = request.getEffect();
-        this.id = request.getId();
+        this(ccAPI, Objects.requireNonNull(request, "request cannot be null").getId(), request.getEffect(), duration, callback, completionCallback);
     }
 
     /**
-     * Creates a new timed effect.
+     * Creates a new {@link TimedEffect}.
+     * @param ccAPI Crowd Control API
+     * @param requestId ID of the {@link Request} that triggered this effect
+     * @param effect name of this effect, or of a grouped queue
+     * @param duration duration of the effect
+     * @param callback method to call once the effect is started
+     * @param completionCallback optional method to call once the effect is completed
+     */
+    @CheckReturnValue
+    public TimedEffect(@NotNull CrowdControl ccAPI, int requestId, @NotNull String effect, @NotNull Duration duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
+        this(ccAPI, requestId, effect, Objects.requireNonNull(duration, "duration cannot be null").toMillis(), callback, completionCallback);
+    }
+
+    /**
+     * Creates a new {@link TimedEffect}.
      * @param ccAPI Crowd Control API
      * @param request request that triggered this effect
      * @param duration duration of the effect
      * @param callback method to call once the effect is started
      * @param completionCallback optional method to call once the effect is completed
      */
+    @CheckReturnValue
     public TimedEffect(@NotNull CrowdControl ccAPI, @NotNull Request request, @NotNull Duration duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
         this(ccAPI, request, Objects.requireNonNull(duration, "duration cannot be null").toMillis(), callback, completionCallback);
     }
@@ -74,6 +105,7 @@ public final class TimedEffect {
      * Returns the current milliseconds remaining in the effect, or 0 if it should be complete.
      * @return time left in milliseconds
      */
+    @CheckReturnValue
     public long getCurrentDuration() {
         return Math.max(0, duration - (System.currentTimeMillis() - startedAt));
     }
@@ -186,6 +218,7 @@ public final class TimedEffect {
      * Determines if this effect has completed.
      * @return completion status
      */
+    @CheckReturnValue
     public boolean isComplete() {
         return getCurrentDuration() == 0;
     }
@@ -194,6 +227,7 @@ public final class TimedEffect {
      * Determines if this effect has started.
      * @return start status
      */
+    @CheckReturnValue
     public boolean hasStarted() {
         return startedAt != -1;
     }
@@ -204,6 +238,7 @@ public final class TimedEffect {
      * Gets the ID of the request that this timed effect corresponds to.
      * @return request ID
      */
+    @CheckReturnValue
     public int getId() {
         return id;
     }
@@ -212,6 +247,7 @@ public final class TimedEffect {
      * Gets the name of the effect.
      * @return effect name
      */
+    @CheckReturnValue
     public String getEffect() {
         return effect;
     }
