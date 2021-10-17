@@ -130,31 +130,32 @@ public final class Response {
 		/**
 		 * The effect has been queued for execution after the current one ends.
 		 * <p>
-		 * <i>This value is intended for use by the library.</i>
+		 * <i>This is only usable internally by the Crowd Control server. Do not use it.</i>
+		 * @deprecated internal value; unsupported
 		 */
+		@Deprecated
 		QUEUE,
 		/**
 		 * The effect triggered successfully and is now active until it ends.
 		 * <p>
-		 * <i>This value is intended for use by the library only. {@link #SUCCESS} should generally be used instead.</i>
+		 * <i>This is only usable internally by the Crowd Control server. Do not use it.</i>
+		 * @deprecated internal value; unsupported
 		 */
+		@Deprecated
 		RUNNING,
 		/**
 		 * The timed effect has been paused and is now waiting.
-		 * <p>
-		 * <i>This value is intended for use by the library.</i>
+		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		PAUSED,
 		/**
 		 * The timed effect has been resumed and is counting down again.
-		 * <p>
-		 * <i>This value is intended for use by the library.</i>
+		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		RESUMED,
 		/**
 		 * The timed effect has finished.
-		 * <p>
-		 * <i>This value is intended for use by the library.</i>
+		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		FINISHED
 	}

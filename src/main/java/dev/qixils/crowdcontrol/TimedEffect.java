@@ -10,8 +10,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +27,6 @@ import java.util.logging.Logger;
 public final class TimedEffect {
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
     private static final Map<String, TimedEffect> ACTIVE_EFFECTS = new HashMap<>();
-    private static final Map<String, Queue<TimedEffect>> QUEUED_EFFECTS = new HashMap<>();
     private static final Logger logger = Logger.getLogger("CC-TimedEffect");
 
     private long startedAt = -1;
@@ -119,19 +116,14 @@ public final class TimedEffect {
             throw new IllegalStateException("Effect was already queued");
         queued = true;
 
-        if (startedAt != -1)
-            throw new IllegalStateException("Effect has already started");
-
         TimedEffect activeEffect = ACTIVE_EFFECTS.get(effect);
 
-        if (activeEffect == null || (activeEffect.isComplete() && (!QUEUED_EFFECTS.containsKey(effect) || QUEUED_EFFECTS.get(effect).isEmpty()))) {
+        if (activeEffect == null || activeEffect.isComplete()) {
             start();
             return;
         }
 
-        Queue<TimedEffect> queue = QUEUED_EFFECTS.computeIfAbsent(effect, $ -> new ConcurrentLinkedQueue<>());
-        queue.add(this);
-        cc.dispatchResponse(Response.builder().id(id).type(Response.ResultType.QUEUE).build());
+        cc.dispatchResponse(Response.builder().id(id).type(Response.ResultType.RETRY).message("Timed effect is already running").build());
     }
 
     private void start() {
@@ -199,13 +191,6 @@ public final class TimedEffect {
                 logger.log(Level.WARNING, "Exception occurred during completion callback", exception);
             }
         }
-
-        // this should always be called after #start meaning it shouldn't be null
-        Queue<TimedEffect> queue = QUEUED_EFFECTS.get(effect);
-
-        TimedEffect next = queue.poll();
-        if (next != null)
-            next.start();
         return true;
     }
 
