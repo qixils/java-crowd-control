@@ -59,7 +59,7 @@ public final class TimedEffect {
      * @param completionCallback optional method to call once the effect is completed
      */
     @CheckReturnValue
-    public TimedEffect(@NotNull CrowdControl ccAPI, int requestId, @NotNull String effect, long duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
+    public TimedEffect(@NotNull CrowdControl ccAPI, int requestId, @NotNull String effect, long duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
         this.cc = Objects.requireNonNull(ccAPI, "ccAPI cannot be null");
         this.callback = Objects.requireNonNull(callback, "callback cannot be null");
         this.completionCallback = completionCallback;
@@ -77,7 +77,7 @@ public final class TimedEffect {
      * @param completionCallback optional method to call once the effect is completed
      */
     @CheckReturnValue
-    public TimedEffect(@NotNull CrowdControl ccAPI, @NotNull Request request, long duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
+    public TimedEffect(@NotNull CrowdControl ccAPI, @NotNull Request request, long duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
         this(ccAPI, Objects.requireNonNull(request, "request cannot be null").getId(), request.getEffect(), duration, callback, completionCallback);
     }
 
@@ -91,7 +91,7 @@ public final class TimedEffect {
      * @param completionCallback optional method to call once the effect is completed
      */
     @CheckReturnValue
-    public TimedEffect(@NotNull CrowdControl ccAPI, int requestId, @NotNull String effect, @NotNull Duration duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
+    public TimedEffect(@NotNull CrowdControl ccAPI, int requestId, @NotNull String effect, @NotNull Duration duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
         this(ccAPI, requestId, effect, Objects.requireNonNull(duration, "duration cannot be null").toMillis(), callback, completionCallback);
     }
 
@@ -104,7 +104,7 @@ public final class TimedEffect {
      * @param completionCallback optional method to call once the effect is completed
      */
     @CheckReturnValue
-    public TimedEffect(@NotNull CrowdControl ccAPI, @NotNull Request request, @NotNull Duration duration, @NotNull Consumer<TimedEffect> callback, @Nullable Consumer<TimedEffect> completionCallback) {
+    public TimedEffect(@NotNull CrowdControl ccAPI, @NotNull Request request, @NotNull Duration duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
         this(ccAPI, request, Objects.requireNonNull(duration, "duration cannot be null").toMillis(), callback, completionCallback);
     }
 
