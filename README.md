@@ -12,7 +12,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 ```xml
 <groupId>dev.qixils.crowdcontrol</groupId>
 <artifactId>java-crowd-control</artifactId>
-<version>2.1.2</version>
+<version>2.1.3</version>
 ```
 
 ### Gradle
@@ -20,13 +20,13 @@ Add to the `dependencies` section of your `pom.xml` file:
 Add to the `dependencies` section of your `build.gradle` file:
 
 ```gradle
-compileOnly 'dev.qixils.crowdcontrol:java-crowd-control:2.1.2'
+compileOnly 'dev.qixils.crowdcontrol:java-crowd-control:2.1.3'
 ```
 
 Or, if using Kotlin (`build.gradle.kts`):
 
 ```kts
-compileOnly("dev.qixils.crowdcontrol:java-crowd-control:2.1.2")
+compileOnly("dev.qixils.crowdcontrol:java-crowd-control:2.1.3")
 ```
 
 ## Usage

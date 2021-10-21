@@ -25,8 +25,18 @@ import java.util.logging.Logger;
  * Similarly, the effect can be {@link #pause() paused}, {@link #resume() resumed}, or {@link #complete() stopped}.
  */
 public final class TimedEffect {
-    private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
     private static final Map<String, TimedEffect> ACTIVE_EFFECTS = new HashMap<>();
+
+    /**
+     * Determines if an effect with the provided name is currently active.
+     * @param effect effect name
+     * @return whether the effect is active
+     */
+    public static boolean isActive(@NotNull String effect) {
+        return ACTIVE_EFFECTS.containsKey(effect) && !ACTIVE_EFFECTS.get(effect).isComplete();
+    }
+
+    private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
     private static final Logger logger = Logger.getLogger("CC-TimedEffect");
 
     private long startedAt = -1;
@@ -104,6 +114,8 @@ public final class TimedEffect {
      */
     @CheckReturnValue
     public long getCurrentDuration() {
+        if (duration == -1)
+            return 0;
         return Math.max(0, duration - (System.currentTimeMillis() - startedAt));
     }
 
