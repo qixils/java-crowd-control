@@ -1,0 +1,72 @@
+package dev.qixils.crowdcontrol.builder;
+
+import dev.qixils.crowdcontrol.CrowdControl;
+import dev.qixils.crowdcontrol.socket.SocketManager;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.CheckReturnValue;
+import java.util.function.Function;
+
+/**
+ * Builds a new {@link CrowdControl} instance that acts as a client and connects to a single Crowd Control server instance.
+ */
+public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
+    private String IP;
+
+    /**
+     * Creates a new {@link CrowdControl} client builder.
+     * @param socketManagerCreator a function that creates a new {@link SocketManager} given a {@link CrowdControl} instance
+     */
+    @CheckReturnValue
+    public CrowdControlClientBuilder(@NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
+        super(socketManagerCreator);
+    }
+
+    /**
+     * Sets the IP that the Crowd Control client will connect to.
+     * @param IP IP to connect to
+     * @return this builder
+     * @throws IllegalArgumentException the IP was null or blank
+     */
+    @CheckReturnValue
+    @Contract("_ -> this")
+    public @NotNull CrowdControlClientBuilder IP(@NotNull String IP) throws IllegalArgumentException {
+        //noinspection ConstantConditions
+        if (IP == null || IP.isBlank()) {
+            throw new IllegalArgumentException("IP must be non-null and not blank");
+        }
+        this.IP = IP;
+        return this;
+    }
+
+    /**
+     * Sets the port that will be used by the Crowd Control client.
+     * @param port port to connect to
+     * @return this builder
+     * @throws IllegalArgumentException the port was outside the expected bounds of [1,65536]
+     */
+    @Override
+    @CheckReturnValue
+    @Contract("_ -> this")
+    public @NotNull CrowdControlClientBuilder port(int port) throws IllegalArgumentException {
+        return (CrowdControlClientBuilder) super.port(port);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @return new CrowdControl instance
+     * @throws IllegalStateException {@link #port(int)} or {@link #IP(String)} was not called
+     */
+    @Override
+    @Contract("-> new")
+    public @NotNull CrowdControl build() throws IllegalStateException {
+        if (port == -1) {
+            throw new IllegalStateException("Port must be set using #port");
+        }
+        if (IP == null) {
+            throw new IllegalStateException("IP must be set using #IP");
+        }
+        return new CrowdControl(IP, port, null, socketManagerCreator);
+    }
+}
