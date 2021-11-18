@@ -118,6 +118,14 @@ public final class Request {
 	}
 
 	/**
+	 * Determines if this Request is triggering an effect for all users.
+	 * @return if the triggered effect is global
+	 */
+	public boolean isGlobal() {
+		return targets == null || targets.length == 0;
+	}
+
+	/**
 	 * Converts the Twitch IDs of the streamers being targeted by this effect to another data type.
 	 * Caching the results of this conversion is recommended.
 	 * <p>
