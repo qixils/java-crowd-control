@@ -7,14 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.CheckReturnValue;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * An incoming packet from the Crowd Control TCP server which represents an effect to be played.
@@ -123,29 +118,6 @@ public final class Request {
 	 */
 	public boolean isGlobal() {
 		return targets == null || targets.length == 0;
-	}
-
-	/**
-	 * Converts the Twitch IDs of the streamers being targeted by this effect to another data type.
-	 * Caching the results of this conversion is recommended.
-	 * <p>
-	 * An empty collection suggests that all players may be targeted.
-	 * The returned collection is not guaranteed to be mutable.
-	 * @param mapper converter between Twitch IDs and the desired object type
-	 * @param <T> object type to map to
-	 * @return possibly empty collection of mapped Twitch IDs
-	 */
-	public <T> @NotNull Collection<@Nullable T> getMappedTargets(@NotNull Function<@NotNull Target, @Nullable T> mapper) {
-		Target[] targets = getTargets();
-		if (targets.length == 0)
-			return Collections.emptyList();
-
-		List<T> list = new ArrayList<>(targets.length);
-		for (Target target : targets) {
-			list.add(mapper.apply(target));
-		}
-
-		return list;
 	}
 
 	/**
