@@ -58,21 +58,21 @@ public final class TimedEffect {
 
     /**
      * Determines if an effect with the provided name is currently active.
-     * @param effect effect name
+     * @param effectGroup effect group
      * @return whether the effect is active
      */
-    public static boolean isActive(@NotNull String effect) {
-        return isActive(effect, null);
+    public static boolean isActive(@NotNull String effectGroup) {
+        return isActive(effectGroup, null);
     }
 
     /**
      * Determines if an effect with the provided name and targeted streamer is currently active.
-     * @param effect effect name
+     * @param effectGroup effect group
      * @param target targeted streamer
      * @return whether the effect is active
      */
-    public static boolean isActive(@NotNull String effect, @Nullable Target target) {
-        MapKey key = new MapKey(effect, target);
+    public static boolean isActive(@NotNull String effectGroup, @Nullable Target target) {
+        MapKey key = new MapKey(effectGroup, target);
         return ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete();
     }
 
