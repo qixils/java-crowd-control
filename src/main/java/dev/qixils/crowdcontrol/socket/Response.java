@@ -135,7 +135,7 @@ public final class Response {
 
 	/**
 	 * Sends this {@link Response} to the client or server that delivered the related {@link Request}.
-	 * @throws IllegalStateException the related Request does not have an associated client or server
+	 * @throws IllegalStateException the related {@link Request} does not have an associated client or server
 	 */
 	public void send() throws IllegalStateException {
 		if (request.originatingSocket == null) {
@@ -416,6 +416,14 @@ public final class Response {
 		@CheckReturnValue
 		public Response build() {
 			return new Response(request, type, message, timeRemaining, packetType);
+		}
+
+		/**
+		 * Builds this {@link Response} and then sends it to the client or server that delivered the related {@link Request}.
+		 * @throws IllegalStateException the related {@link Request} does not have an associated client or server
+		 */
+		public void send() {
+			build().send();
 		}
 
 		/**
