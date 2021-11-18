@@ -6,7 +6,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.CheckReturnValue;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * An incoming packet from the Crowd Control TCP server which represents an effect to be played.
@@ -16,36 +24,20 @@ public final class Request {
 	private int id;
 	@SerializedName("code")
 	private String effect; // more sensible variable name for this library
-	private Object[] parameters; // dunno what this is for atm
+	private String message;
+	private Object[] parameters; // mostly used for C# code I believe, maybe not of much use here
 	private String viewer;
-	private Integer cost; // i believe this is nullable
+	private Integer cost; // I believe this is nullable
 	private Type type;
+	private Target[] targets;
+	transient Socket originatingSocket;
 
 	/**
-	 * Instantiates an empty Request.
+	 * Instantiates an empty {@link Request}.
 	 * <p>
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
 	Request(){}
-
-	/**
-	 * Instantiates a basic request packet which represents an effect to be played.
-	 * @param id ID of the packet
-	 * @param effect name of the effect to play
-	 * @param parameters arguments supplied by the C# Crowd Control pack
-	 * @param viewer viewer who triggered the effect
-	 * @param cost optional cost of the effect
-	 * @param type type of request
-	 */
-	@CheckReturnValue
-	public Request(int id, @NotNull String effect, @Nullable Object[] parameters, @NotNull String viewer, @Nullable Integer cost, @NotNull Type type) {
-		this.id = id;
-		this.effect = Objects.requireNonNull(effect, "effect");
-		this.parameters = Objects.requireNonNullElseGet(parameters, () -> new Object[0]);
-		this.viewer = Objects.requireNonNull(viewer, "viewer");
-		this.cost = cost;
-		this.type = Objects.requireNonNull(type, "type");
-	}
 
 	/**
 	 * Gets the ID of the incoming packet. Corresponds to a unique transaction.
@@ -54,6 +46,14 @@ public final class Request {
 	@CheckReturnValue
 	public int getId() {
 		return id;
+	}
+
+	/**
+	 * Gets the message from the incoming packet.
+	 * @return message
+	 */
+	public String getMessage() {
+		return message;
 	}
 
 	/**
@@ -107,6 +107,49 @@ public final class Request {
 	}
 
 	/**
+	 * Gets the streamers being targeted by this effect.
+	 * An empty array suggests that all players may be targeted.
+	 * @return possibly empty array of {@link Target}
+	 */
+	public Target @NotNull[] getTargets() {
+		if (targets == null)
+			targets = new Target[0];
+		return targets;
+	}
+
+	/**
+	 * Converts the Twitch IDs of the streamers being targeted by this effect to another data type.
+	 * Caching the results of this conversion is recommended.
+	 * <p>
+	 * An empty collection suggests that all players may be targeted.
+	 * The returned collection is not guaranteed to be mutable.
+	 * @param mapper converter between Twitch IDs and the desired object type
+	 * @param <T> object type to map to
+	 * @return possibly empty collection of mapped Twitch IDs
+	 */
+	public <T> @NotNull Collection<@Nullable T> getMappedTargets(@NotNull Function<@NotNull Target, @Nullable T> mapper) {
+		Target[] targets = getTargets();
+		if (targets.length == 0)
+			return Collections.emptyList();
+
+		List<T> list = new ArrayList<>(targets.length);
+		for (Target target : targets) {
+			list.add(mapper.apply(target));
+		}
+
+		return list;
+	}
+
+	/**
+	 * Creates a {@link dev.qixils.crowdcontrol.socket.Response.Builder} for
+	 * a {@link Response} to this request.
+	 * @return new response builder
+	 */
+	public Response.Builder buildResponse() {
+		return new Response.Builder(this);
+	}
+
+	/**
 	 * Creates a {@link Request} object from JSON.
 	 * @param json input json data from the Crowd Control TCP server
 	 * @return a new Request object
@@ -115,7 +158,49 @@ public final class Request {
 	@NotNull
 	@CheckReturnValue
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
-		return EnumOrdinalAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Request.class);
+		return ByteAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Request.class);
+	}
+
+	/**
+	 * A recipient of an effect.
+	 * <p>
+	 * This corresponds to a Twitch streamer connected to the Crowd Control server.
+	 */
+	public final static class Target {
+		private String id;
+		private String name;
+		private String avatar;
+
+		/**
+		 * Instantiates an empty {@link Target}.
+		 * <p>
+		 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
+		 */
+		Target(){}
+
+		/**
+		 * The recipient's Twitch ID.
+		 * @return Twitch ID
+		 */
+		public String getId() {
+			return id;
+		}
+
+		/**
+		 * The recipient's name on Twitch.
+		 * @return Twitch username
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * Gets the URL of the recipient's avatar on Twitch.
+		 * @return Twitch avatar URL
+		 */
+		public String getAvatar() {
+			return avatar;
+		}
 	}
 
 	/**
@@ -134,6 +219,56 @@ public final class Request {
 		/**
 		 * Indicates that you should stop an effect.
 		 */
-		STOP
+		STOP,
+		/**
+		 * Indicates that a streamer is attempting to log in to the Crowd Control server.
+		 * <p>
+		 * This value is only used internally by the library. You will not encounter this value
+		 * and should assume it does not exist.
+		 */
+		LOGIN((byte) 0xF0),
+		/**
+		 * This packet's sole purpose is to establish that the connection with the
+		 * Crowd Control server has not been dropped.
+		 * <p>
+		 * This value is only used internally by the library. You will not encounter this value
+		 * and should assume it does not exist.
+		 */
+		KEEP_ALIVE((byte) 0xFF);
+
+		private static final Map<Byte, Type> BY_BYTE;
+		static {
+			Map<Byte, Type> map = new HashMap<>(values().length);
+			for (Type type : values())
+				map.put(type.encodedByte, type);
+			BY_BYTE = map;
+		}
+
+		private final byte encodedByte;
+
+		Type(byte encodedByte) {
+			this.encodedByte = encodedByte;
+		}
+
+		Type() {
+			this.encodedByte = (byte) ordinal();
+		}
+
+		/**
+		 * Gets the byte that this type is represented by in JSON encoding.
+		 * @return encoded byte
+		 */
+		public byte getEncodedByte() {
+			return encodedByte;
+		}
+
+		/**
+		 * Gets a packet type from its corresponding JSON encoding.
+		 * @param encodedByte byte used in JSON encoding
+		 * @return corresponding Type if applicable
+		 */
+		public static @Nullable Type from(byte encodedByte) {
+			return BY_BYTE.get(encodedByte);
+		}
 	}
 }

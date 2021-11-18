@@ -1,0 +1,66 @@
+package dev.qixils.crowdcontrol.builder;
+
+import dev.qixils.crowdcontrol.CrowdControl;
+import dev.qixils.crowdcontrol.socket.SocketManager;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.CheckReturnValue;
+import java.util.function.Function;
+
+/**
+ * Builds a new {@link CrowdControl} instance that acts as a server for Crowd Control clients to connect to.
+ */
+public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
+    private String password;
+
+    /**
+     * Creates a new {@link CrowdControl} server builder.
+     * @param socketManagerCreator a function that creates a new {@link SocketManager} given a {@link CrowdControl} instance
+     */
+    @CheckReturnValue
+    public CrowdControlServerBuilder(@NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
+        super(socketManagerCreator);
+    }
+
+    /**
+     * Sets the password required for Crowd Control clients to connect.
+     * @param password password clients must enter to connect
+     * @return this builder
+     * @throws IllegalArgumentException the password was null or blank
+     */
+    @CheckReturnValue
+    @Contract("_ -> this")
+    public @NotNull CrowdControlServerBuilder password(@NotNull String password) throws IllegalArgumentException {
+        //noinspection ConstantConditions
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("password must be non-null and not blank");
+        }
+        this.password = password;
+        return this;
+    }
+
+    /**
+     * Sets the port that will be used by the Crowd Control server.
+     * @param port port to listen for new connections on
+     * @return this builder
+     * @throws IllegalArgumentException the port was outside the expected bounds of [1,65536]
+     */
+    @Override
+    @CheckReturnValue
+    @Contract("_ -> this")
+    public @NotNull CrowdControlServerBuilder port(int port) throws IllegalArgumentException {
+        return (CrowdControlServerBuilder) super.port(port);
+    }
+
+    // <inherits javadocs>
+    @Override
+    @CheckReturnValue
+    @Contract("-> new")
+    public @NotNull CrowdControl build() throws IllegalStateException {
+        if (port == -1) {
+            throw new IllegalStateException("Port must be set using #port");
+        }
+        return new CrowdControl(null, port, password, socketManagerCreator);
+    }
+}

@@ -1,8 +1,14 @@
 package dev.qixils.crowdcontrol;
 
+import dev.qixils.crowdcontrol.builder.CrowdControlClientBuilder;
+import dev.qixils.crowdcontrol.builder.CrowdControlServerBuilder;
+import dev.qixils.crowdcontrol.socket.ClientSocketManager;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import dev.qixils.crowdcontrol.socket.ServerSocketManager;
+import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
@@ -10,7 +16,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -23,7 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * API for interacting with <a href="https://crowdcontrol.live">Crowd Control</a> via the SimpleTCPConnector.
+ * API for interacting with <a href="https://crowdcontrol.live">Crowd Control</a> via the SimpleTCPConnector or SimpleTCPClientConnector.
  * <p>
  * You should only ever create one instance of this class.
  */
@@ -31,37 +41,44 @@ public final class CrowdControl {
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();
 	private final List<Supplier<Boolean>> globalChecks = new ArrayList<>();
-	private final String IP;
+	private final @Nullable String IP;
 	private final int port;
+	private final @Nullable String password;
 	private final SocketManager socketManager;
 	private static final Logger logger = Logger.getLogger("CC-Core");
 
 	/**
-	 * Creates a CrowdControl API instance which listens to the local server.
-	 * @param port local port to listen on
+	 * Creates a new Crowd Control client or server instance.
+	 * <p>
+	 * You should generally be using {@link #server()} or {@link #client()} instead.
+	 * This constructor's parameters are prone to changes.
+	 * @param IP IP address to connect to (if applicable)
+	 * @param port port to listen on or connect to
+	 * @param password password required to connect (if applicable)
+	 * @param socketManagerCreator creator of a new {@link SocketManager}
 	 */
-	@CheckReturnValue
-	public CrowdControl(int port) {
-		this("localhost", port);
-	}
-
-	/**
-	 * Creates a CrowdControl API instance which listens to a server.
-	 * @param IP IP to listen on
-	 * @param port port to listen on
-	 */
-	@CheckReturnValue
-	public CrowdControl(@NotNull String IP, int port) {
-		this.IP = Objects.requireNonNull(IP, "IP");
+	public CrowdControl(@Nullable String IP, int port, @Nullable String password, @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
+		this.IP = IP;
 		this.port = port;
-		socketManager = new SocketManager(this);
+		this.socketManager = socketManagerCreator.apply(this);
+		if (password == null) {
+			this.password = null;
+		} else {
+			try {
+				MessageDigest md = MessageDigest.getInstance("SHA-512");
+				this.password = Base64.getEncoder().encodeToString(md.digest(password.getBytes(StandardCharsets.UTF_8)));
+			} catch (NoSuchAlgorithmException exc) {
+				throw new RuntimeException(exc);
+			}
+		}
 	}
 
 	/**
 	 * Returns the IP that the {@link SocketManager} will listen on.
-	 * @return IP
+	 * If running in server mode, this will be null.
+	 * @return IP if available
 	 */
-	@NotNull
+	@Nullable
 	@CheckReturnValue
 	public String getIP() {
 		return IP;
@@ -76,9 +93,19 @@ public final class CrowdControl {
 		return port;
 	}
 
+	/**
+	 * Returns the password required for clients to connect to this server as a SHA-512 encrypted,
+	 * Base64-encoded string. If running in client mode, this will be null.
+	 * @return password required to connect
+	 */
+	@Nullable
+	@CheckReturnValue
+	public String getPassword() {
+		return password;
+	}
+
 	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS = Map.of(
 			Response.class, response -> (Response) response,
-			Response.ResultType.class, type -> Response.builder().type((Response.ResultType) type).build(),
 			Response.Builder.class, builder -> ((Response.Builder) builder).build()
 	);
 
@@ -88,7 +115,7 @@ public final class CrowdControl {
 	 * @param errorDescription issue with the method
 	 */
 	private void methodHandlerWarning(@NotNull Method method, @NotNull String errorDescription) {
-		logger.warning("Method " + method + " is improperly configured: " + errorDescription);
+		logger.warning("Method " + method.getName() + " is improperly configured: " + errorDescription);
 	}
 
 	/**
@@ -110,6 +137,7 @@ public final class CrowdControl {
 		for (Method method : clazz.getMethods()) {
 			if (!method.isAnnotationPresent(Subscribe.class)) continue;
 			String nullableEffect = method.getAnnotation(Subscribe.class).effect();
+			//noinspection ConstantConditions
 			if (nullableEffect == null) {
 				methodHandlerWarning(method, "effect name is null");
 				continue;
@@ -146,11 +174,11 @@ public final class CrowdControl {
 					try {
 						Object result = method.invoke(object, request);
 						output = result == null
-								? Response.builder().type(Response.ResultType.FAILURE).message("Effect handler returned a null response").build()
+								? request.buildResponse().type(Response.ResultType.FAILURE).message("Effect handler returned a null response").build()
 								: parser.apply(result);
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
-						output = Response.builder().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build();
+						output = request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build();
 					}
 					return output;
 				});
@@ -160,7 +188,7 @@ public final class CrowdControl {
 						method.invoke(object, request);
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
-						dispatchResponse(Response.builder().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build());
+						request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build().send();
 					}
 				});
 			} else {
@@ -185,7 +213,7 @@ public final class CrowdControl {
 
 	/**
 	 * Registers an effect handler which does not immediately return a {@link Response}.
-	 * It is expected to call {@link #dispatchResponse(Response)} on its own.
+	 * It is expected to call {@link Response#send()} on its own.
 	 * @param effect name of the effect to handle
 	 * @param handler function to handle the effect
 	 * @see #registerHandler(String, Function)
@@ -217,7 +245,7 @@ public final class CrowdControl {
 	public void handle(@NotNull Request request) {
 		for (Supplier<Boolean> check : globalChecks) {
 			if (!check.get()) {
-				dispatchResponse(Response.builder().type(Response.ResultType.FAILURE).message("The game is unavailable").build());
+				request.buildResponse().type(Response.ResultType.FAILURE).message("The game is unavailable").build().send();
 			}
 		}
 
@@ -225,31 +253,15 @@ public final class CrowdControl {
 
 		try {
 			if (effectHandlers.containsKey(effect))
-				dispatchResponse(effectHandlers.get(effect).apply(request));
+				effectHandlers.get(effect).apply(request).send();
 			else if (asyncHandlers.containsKey(effect))
 				asyncHandlers.get(effect).accept(request);
 			else
-				dispatchResponse(Response.builder().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").build());
+				request.buildResponse().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").build().send();
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
-			dispatchResponse(Response.builder().type(Response.ResultType.FAILURE).message("The effect encountered an exception").build());
+			request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").build().send();
 		}
-	}
-
-	/**
-	 * Sends a {@link Response} to the Crowd Control server.
-	 * @param response effect response
-	 */
-	public void dispatchResponse(@NotNull Response response) {
-		socketManager.sendResponse(response);
-	}
-
-	/**
-	 * Sends a {@link Response} to the Crowd Control server.
-	 * @param response effect response
-	 */
-	public void dispatchResponse(Response.@NotNull Builder response) {
-		dispatchResponse(Objects.requireNonNull(response, "response cannot be null").build());
 	}
 
 	/**
@@ -261,6 +273,24 @@ public final class CrowdControl {
 		} catch (IOException e) {
 			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
 		}
+	}
+
+	/**
+	 * Returns a builder for a new {@link CrowdControl} instance operating in client mode.
+	 * It will connect to a singular Crowd Control server instance.
+	 * @return a new client builder
+	 */
+	public static CrowdControlClientBuilder client() {
+		return new CrowdControlClientBuilder(ClientSocketManager::new);
+	}
+
+	/**
+	 * Returns a builder for a new {@link CrowdControl} instance operating in server mode.
+	 * It will allow numerous Crowd Control clients to connect.
+	 * @return a new server builder
+	 */
+	public static CrowdControlServerBuilder server() {
+		return new CrowdControlServerBuilder(ServerSocketManager::new);
 	}
 
 }

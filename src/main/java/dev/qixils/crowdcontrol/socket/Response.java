@@ -6,37 +6,73 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.CheckReturnValue;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An outgoing packet to the Crowd Control TCP server carrying information in response to an {@link Request incoming packet}.
  * @see Request
  */
 public final class Response {
+	private static final Logger logger = Logger.getLogger("CC-Response");
+
+	private final transient Request request;
 	private final int id;
 	@SerializedName("status")
 	private final ResultType type;
 	private final String message;
 	private final long timeRemaining; // millis
+	final PacketType packetType;
 
 	/**
 	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
 	 * and an associated message.
-	 * @param id Request ID
+	 * @param request originating request
+	 * @param type result of execution
+	 * @param message result message
+	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
+	 * @param packetType type of packet
+	 */
+	@CheckReturnValue
+	Response(@NotNull Request request, @NotNull Response.ResultType type, @NotNull String message, long timeRemaining, @Nullable PacketType packetType) {
+		this.request = Objects.requireNonNull(request, "request cannot be null");
+		this.id = request.getId();
+		this.type = Objects.requireNonNull(type, "type cannot be null");
+		this.message = Objects.requireNonNull(message, "message cannot be null");
+		this.timeRemaining = timeRemaining;
+		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
+	}
+
+	/**
+	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
+	 * and an associated message.
+	 * @param request originating request
 	 * @param type result of execution
 	 * @param message result message
 	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
 	 */
 	@CheckReturnValue
-	public Response(int id, @NotNull Response.ResultType type, @NotNull String message, long timeRemaining) {
-		this.id = id;
-		this.type = Objects.requireNonNull(type, "type");
-		this.message = Objects.requireNonNull(message, "message");
-		this.timeRemaining = timeRemaining;
+	public Response(@NotNull Request request, @NotNull Response.ResultType type, @NotNull String message, long timeRemaining) {
+		this(request, type, message, timeRemaining, null);
+	}
+
+	/**
+	 * Gets the unique {@link Request} that caused this response.
+	 * @return original request
+	 */
+	public Request getRequest() {
+		return request;
 	}
 
 	/**
@@ -84,7 +120,7 @@ public final class Response {
 	@NotNull
 	@CheckReturnValue
 	public String toJSON() {
-		return EnumOrdinalAdapter.GSON.toJson(this);
+		return ByteAdapter.GSON.toJson(this);
 	}
 
 	/**
@@ -98,13 +134,83 @@ public final class Response {
 	}
 
 	/**
-	 * Creates an empty {@link Builder} representing a Response.
-	 * @return new empty builder
+	 * Sends this {@link Response} to the client or server that delivered the related {@link Request}.
+	 * @throws IllegalStateException the related Request does not have an associated client or server
 	 */
-	@NotNull
-	@CheckReturnValue
-	public static Builder builder() {
-		return new Builder();
+	public void send() throws IllegalStateException {
+		if (request.originatingSocket == null) {
+			throw new IllegalStateException("This Response was constructed with an illegal Request which is not associated with a client or server");
+		}
+
+		if (request.originatingSocket.isClosed()) {
+			return;
+		}
+
+		//object is never updated after assignment, so we can ignore this error:
+		//noinspection SynchronizeOnNonFinalField
+		synchronized (request.originatingSocket) {
+			try {
+				OutputStream output = request.originatingSocket.getOutputStream();
+				output.write(toJSON().getBytes(StandardCharsets.UTF_8));
+				output.write(0x00);
+				// no flush nor close because they don't do anything in OutputStream
+			} catch (IOException exc) {
+				logger.log(Level.WARNING, "Failed to write response to socket", exc);
+			}
+		}
+	}
+
+	/**
+	 * Determines the type of packet being sent.
+	 */
+	enum PacketType {
+		/**
+		 * The packet is the result of executing an effect.
+		 */
+		EFFECT_RESULT,
+		/**
+		 * The packet is a response to a login attempt.
+		 */
+		LOGIN((byte) 0xF0),
+		/**
+		 * The packet is a response to a keep alive packet.
+		 */
+		KEEP_ALIVE((byte) 0xFF);
+
+		private static final Map<Byte, PacketType> BY_BYTE;
+		static {
+			Map<Byte, PacketType> map = new HashMap<>(values().length);
+			for (PacketType type : values())
+				map.put(type.encodedByte, type);
+			BY_BYTE = map;
+		}
+
+		private final byte encodedByte;
+
+		PacketType(byte encodedByte) {
+			this.encodedByte = encodedByte;
+		}
+
+		PacketType() {
+			this.encodedByte = (byte) ordinal();
+		}
+
+		/**
+		 * Gets the byte that this type is represented by in JSON encoding.
+		 * @return encoded byte
+		 */
+		public byte getEncodedByte() {
+			return encodedByte;
+		}
+
+		/**
+		 * Gets a packet type from its corresponding JSON encoding.
+		 * @param encodedByte byte used in JSON encoding
+		 * @return corresponding Type if applicable
+		 */
+		public static @Nullable PacketType from(byte encodedByte) {
+			return BY_BYTE.get(encodedByte);
+		}
 	}
 
 	/**
@@ -128,57 +234,78 @@ public final class Response {
 		 */
 		RETRY,
 		/**
-		 * The effect has been queued for execution after the current one ends.
-		 * <p>
-		 * <i>This is only usable internally by the Crowd Control server. Do not use it.</i>
-		 * @deprecated internal value; unsupported
-		 */
-		@Deprecated
-		QUEUE,
-		/**
-		 * The effect triggered successfully and is now active until it ends.
-		 * <p>
-		 * <i>This is only usable internally by the Crowd Control server. Do not use it.</i>
-		 * @deprecated internal value; unsupported
-		 */
-		@Deprecated
-		RUNNING,
-		/**
 		 * The timed effect has been paused and is now waiting.
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
-		PAUSED,
+		PAUSED((byte) 0x06),
 		/**
 		 * The timed effect has been resumed and is counting down again.
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
-		RESUMED,
+		RESUMED((byte) 0x07),
 		/**
 		 * The timed effect has finished.
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
-		FINISHED
+		FINISHED((byte) 0x08),
+		/**
+		 * Indicates that this Crowd Control server is not yet accepting requests.
+		 * <p>
+		 * This is an internal field used to indicate that the login process with a client has
+		 * not yet completed. You should instead use either
+		 * {@link #FAILURE} or {@link dev.qixils.crowdcontrol.CrowdControl#registerCheck(Supplier)}.
+		 */
+		NOT_READY((byte) 0xFF);
+
+		private static final Map<Byte, ResultType> BY_BYTE;
+		static {
+			Map<Byte, ResultType> map = new HashMap<>(values().length);
+			for (ResultType type : values())
+				map.put(type.encodedByte, type);
+			BY_BYTE = map;
+		}
+
+		private final byte encodedByte;
+
+		ResultType(byte encodedByte) {
+			this.encodedByte = encodedByte;
+		}
+
+		ResultType() {
+			this.encodedByte = (byte) ordinal();
+		}
+
+		/**
+		 * Gets the byte that this type is represented by in JSON encoding.
+		 * @return encoded byte
+		 */
+		public byte getEncodedByte() {
+			return encodedByte;
+		}
+
+		/**
+		 * Gets a packet type from its corresponding JSON encoding.
+		 * @param encodedByte byte used in JSON encoding
+		 * @return corresponding Type if applicable
+		 */
+		public static @Nullable ResultType from(byte encodedByte) {
+			return BY_BYTE.get(encodedByte);
+		}
 	}
 
 	/**
 	 * Mutable builder for the immutable {@link Response} class.
 	 */
 	public static class Builder implements Cloneable {
-		private int id;
+		private final Request request;
 		private ResultType type;
 		private String message;
 		private long timeRemaining;
+		private PacketType packetType;
 
 		// used to determine if a message has been manually set.
-		// false means a message has not been set or it has only been set by #type
+		// false means a message has either not been set or it has only been set by #type
 		private boolean messageSet = false;
-
-		/**
-		 * Instantiates an empty builder.
-		 * @see Builder
-		 */
-		@CheckReturnValue
-		public Builder(){}
 
 		/**
 		 * Creates a new builder using the data from a {@link Response}.
@@ -187,10 +314,11 @@ public final class Response {
 		@CheckReturnValue
 		public Builder(@NotNull Response source) {
 			Objects.requireNonNull(source, "source cannot be null");
-			this.id = source.id;
+			this.request = source.request;
 			this.message = source.message;
 			this.type = source.type;
 			this.timeRemaining = source.timeRemaining;
+			this.packetType = source.packetType;
 		}
 
 		/**
@@ -199,28 +327,7 @@ public final class Response {
 		 */
 		@CheckReturnValue
 		public Builder(@NotNull Request request) {
-			this.id = Objects.requireNonNull(request, "request cannot be null").getId();
-		}
-
-		/**
-		 * Creates a new builder representing the {@link Response} to a request ID.
-		 * @param id request to respond to
-		 */
-		@CheckReturnValue
-		public Builder(int id) {
-			this.id = id;
-		}
-
-		/**
-		 * Sets the ID of the request being responded to.
-		 * @param id request ID
-		 * @return this builder
-		 */
-		@NotNull
-		@Contract("_ -> this")
-		public Builder id(int id) {
-			this.id = id;
-			return this;
+			this.request = Objects.requireNonNull(request, "request cannot be null");
 		}
 
 		/**
@@ -290,13 +397,25 @@ public final class Response {
 		}
 
 		/**
+		 * Sets the type of packet that this Response represents.
+		 * @param packetType type of packet
+		 * @return this builder
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		Builder packetType(@Nullable PacketType packetType) {
+			this.packetType = packetType;
+			return this;
+		}
+
+		/**
 		 * Builds a new {@link Response} object.
 		 * @return new Response
 		 */
 		@NotNull
 		@CheckReturnValue
 		public Response build() {
-			return new Response(id, type, message, timeRemaining);
+			return new Response(request, type, message, timeRemaining, packetType);
 		}
 
 		/**
@@ -306,7 +425,7 @@ public final class Response {
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Builder clone() {
-			return new Builder().id(id).timeRemaining(timeRemaining).message(message).type(type);
+			return new Builder(request).timeRemaining(timeRemaining).message(message).type(type).packetType(packetType);
 		}
 	}
 }
