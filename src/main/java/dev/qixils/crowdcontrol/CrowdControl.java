@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 public final class CrowdControl {
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();
-	private final List<Supplier<Boolean>> globalChecks = new ArrayList<>();
+	private final List<Function<Request, Boolean>> globalChecks = new ArrayList<>();
 	private final @Nullable String IP;
 	private final int port;
 	private final @Nullable String password;
@@ -232,8 +232,21 @@ public final class CrowdControl {
 	 * for example, the game has not fully initialized or no players are connected.
 	 * @param check global check to register
 	 */
-	public void registerCheck(@NotNull Supplier<Boolean> check) {
+	public void registerCheck(@NotNull Function<Request, Boolean> check) {
 		globalChecks.add(Objects.requireNonNull(check, "check"));
+	}
+
+	/**
+	 * Registers a check which will be called for every incoming {@link Request}.
+	 * A resulting value of {@code false} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
+	 * <p>
+	 * This is used for validating that your service is accepting requests, and should return {@code false} if,
+	 * for example, the game has not fully initialized or no players are connected.
+	 * @param check global check to register
+	 */
+	public void registerCheck(@NotNull Supplier<Boolean> check) {
+		Objects.requireNonNull(check, "check");
+		globalChecks.add($ -> check.get());
 	}
 
 	/**
@@ -241,8 +254,8 @@ public final class CrowdControl {
 	 * @param request an incoming request
 	 */
 	public void handle(@NotNull Request request) {
-		for (Supplier<Boolean> check : globalChecks) {
-			if (!check.get()) {
+		for (Function<Request, Boolean> check : globalChecks) {
+			if (!check.apply(request)) {
 				request.buildResponse().type(Response.ResultType.FAILURE).message("The game is unavailable").send();
 			}
 		}
