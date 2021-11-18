@@ -1,12 +1,11 @@
 package dev.qixils.crowdcontrol.builder;
 
 import dev.qixils.crowdcontrol.CrowdControl;
-import dev.qixils.crowdcontrol.socket.SocketManager;
+import dev.qixils.crowdcontrol.socket.ServerSocketManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.CheckReturnValue;
-import java.util.function.Function;
 
 /**
  * Builds a new {@link CrowdControl} instance that acts as a server for Crowd Control clients to connect to.
@@ -16,11 +15,10 @@ public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
 
     /**
      * Creates a new {@link CrowdControl} server builder.
-     * @param socketManagerCreator a function that creates a new {@link SocketManager} given a {@link CrowdControl} instance
      */
     @CheckReturnValue
-    public CrowdControlServerBuilder(@NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
-        super(socketManagerCreator);
+    public CrowdControlServerBuilder() {
+        super(ServerSocketManager::new);
     }
 
     /**

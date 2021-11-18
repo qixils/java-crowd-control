@@ -2,10 +2,8 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.builder.CrowdControlClientBuilder;
 import dev.qixils.crowdcontrol.builder.CrowdControlServerBuilder;
-import dev.qixils.crowdcontrol.socket.ClientSocketManager;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
-import dev.qixils.crowdcontrol.socket.ServerSocketManager;
 import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,7 +279,7 @@ public final class CrowdControl {
 	 * @return a new client builder
 	 */
 	public static CrowdControlClientBuilder client() {
-		return new CrowdControlClientBuilder(ClientSocketManager::new);
+		return new CrowdControlClientBuilder();
 	}
 
 	/**
@@ -290,7 +288,7 @@ public final class CrowdControl {
 	 * @return a new server builder
 	 */
 	public static CrowdControlServerBuilder server() {
-		return new CrowdControlServerBuilder(ServerSocketManager::new);
+		return new CrowdControlServerBuilder();
 	}
 
 }
