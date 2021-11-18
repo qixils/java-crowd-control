@@ -29,7 +29,7 @@ public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
      */
     @CheckReturnValue
     @Contract("_ -> this")
-    public @NotNull CrowdControlClientBuilder IP(@NotNull String IP) throws IllegalArgumentException {
+    public @NotNull CrowdControlClientBuilder ip(@NotNull String IP) throws IllegalArgumentException {
         //noinspection ConstantConditions
         if (IP == null || IP.isBlank()) {
             throw new IllegalArgumentException("IP must be non-null and not blank");
@@ -54,7 +54,7 @@ public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
     /**
      * {@inheritDoc}
      * @return new CrowdControl instance
-     * @throws IllegalStateException {@link #port(int)} or {@link #IP(String)} was not called
+     * @throws IllegalStateException {@link #port(int)} or {@link #ip(String)} was not called
      */
     @Override
     @Contract("-> new")
