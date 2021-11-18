@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.CrowdControl;
+import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request.Type;
 import dev.qixils.crowdcontrol.socket.Response.PacketType;
 import dev.qixils.crowdcontrol.socket.Response.ResultType;
@@ -84,6 +85,8 @@ final class EffectExecutor {
 		effectPool.execute(() -> {
 			try {
 				crowdControl.handle(request);
+			} catch (NoApplicableTarget exc) {
+				request.buildResponse().type(ResultType.RETRY).message("No available streamer").send();
 			} catch (Exception e) {
 				logger.log(Level.WARNING, "Request handler threw an exception", e);
 				request.buildResponse().type(Response.ResultType.FAILURE).message("Request handler threw an exception").send();
