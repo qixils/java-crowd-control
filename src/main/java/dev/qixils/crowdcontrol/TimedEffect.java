@@ -130,13 +130,13 @@ public final class TimedEffect {
             return;
         }
 
-        request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").build().send();
+        request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
     }
 
     private void start() {
         ACTIVE_EFFECTS.put(effectGroup, this);
         startedAt = System.currentTimeMillis();
-        request.buildResponse().type(Response.ResultType.SUCCESS).timeRemaining(duration).build().send();
+        request.buildResponse().type(Response.ResultType.SUCCESS).timeRemaining(duration).send();
         try {
             callback.accept(this);
         } catch (Exception exception) {
@@ -160,7 +160,7 @@ public final class TimedEffect {
             throw new IllegalStateException("Effect has not started");
 
         paused = true;
-        request.buildResponse().type(Response.ResultType.PAUSED).timeRemaining(duration).build().send();
+        request.buildResponse().type(Response.ResultType.PAUSED).timeRemaining(duration).send();
     }
 
     /**
@@ -177,7 +177,7 @@ public final class TimedEffect {
 
         paused = false;
         startedAt = System.currentTimeMillis();
-        request.buildResponse().type(Response.ResultType.RESUMED).timeRemaining(duration).build().send();
+        request.buildResponse().type(Response.ResultType.RESUMED).timeRemaining(duration).send();
         EXECUTOR.schedule(this::tryComplete, duration, TimeUnit.MILLISECONDS);
     }
 
@@ -190,7 +190,7 @@ public final class TimedEffect {
         if (duration == -1) return false;
         duration = -1;
         ACTIVE_EFFECTS.remove(effectGroup, this); // using "value" param as a failsafe -- not sure if it helps or hurts tbh
-        request.buildResponse().type(Response.ResultType.FINISHED).build().send();
+        request.buildResponse().type(Response.ResultType.FINISHED).send();
         if (completionCallback != null) {
             try {
                 completionCallback.accept(this);

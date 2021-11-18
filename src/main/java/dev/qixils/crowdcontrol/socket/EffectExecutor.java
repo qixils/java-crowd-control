@@ -64,14 +64,14 @@ final class EffectExecutor {
 		}
 
 		if (request.getType() == Type.KEEP_ALIVE) {
-			request.buildResponse().packetType(PacketType.KEEP_ALIVE).build().send();
+			request.buildResponse().packetType(PacketType.KEEP_ALIVE).send();
 			return;
 		}
 
 		// login handling
 		if (!loggedIn && password != null && socketThread != null) {
 			if (request.getType() != Type.LOGIN) {
-				request.buildResponse().type(ResultType.NOT_READY).message("Client has not logged in").build().send();
+				request.buildResponse().type(ResultType.NOT_READY).message("Client has not logged in").send();
 			} else if (password.equals(request.getMessage())) {
 				loggedIn = true;
 			} else {
@@ -86,7 +86,7 @@ final class EffectExecutor {
 				crowdControl.handle(request);
 			} catch (Exception e) {
 				logger.log(Level.WARNING, "Request handler threw an exception", e);
-				request.buildResponse().type(Response.ResultType.FAILURE).message("Request handler threw an exception").build().send();
+				request.buildResponse().type(Response.ResultType.FAILURE).message("Request handler threw an exception").send();
 			}
 		});
 	}

@@ -127,7 +127,7 @@ public final class CrowdControl {
 	 *     <li>a return type of one of the following:<ul>
 	 *         <li>{@link Response}</li>
 	 *         <li>{@link Response.Builder}</li>
-	 *         <li>{@link Response.ResultType}</li>
+	 *         <li>Void (assumes you will call {@link Response#send()} yourself)</li>
 	 *     </ul></li>
 	 * </ul>
 	 * @param object class instance to register
@@ -188,7 +188,7 @@ public final class CrowdControl {
 						method.invoke(object, request);
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
-						request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build().send();
+						request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").send();
 					}
 				});
 			} else {
@@ -245,7 +245,7 @@ public final class CrowdControl {
 	public void handle(@NotNull Request request) {
 		for (Supplier<Boolean> check : globalChecks) {
 			if (!check.get()) {
-				request.buildResponse().type(Response.ResultType.FAILURE).message("The game is unavailable").build().send();
+				request.buildResponse().type(Response.ResultType.FAILURE).message("The game is unavailable").send();
 			}
 		}
 
@@ -257,10 +257,10 @@ public final class CrowdControl {
 			else if (asyncHandlers.containsKey(effect))
 				asyncHandlers.get(effect).accept(request);
 			else
-				request.buildResponse().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").build().send();
+				request.buildResponse().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
-			request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").build().send();
+			request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").send();
 		}
 	}
 
