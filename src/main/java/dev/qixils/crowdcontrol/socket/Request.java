@@ -182,6 +182,7 @@ public final class Request {
 		 * The recipient's Twitch ID.
 		 * @return Twitch ID
 		 */
+		@NotNull
 		public String getId() {
 			return id;
 		}
@@ -190,6 +191,7 @@ public final class Request {
 		 * The recipient's name on Twitch.
 		 * @return Twitch username
 		 */
+		@NotNull
 		public String getName() {
 			return name;
 		}
@@ -198,8 +200,22 @@ public final class Request {
 		 * Gets the URL of the recipient's avatar on Twitch.
 		 * @return Twitch avatar URL
 		 */
+		@Nullable // TODO: IDK how this works, assuming Nullable for now
 		public String getAvatar() {
 			return avatar;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Target target = (Target) o;
+			return getId().equals(target.getId()) && getName().equals(target.getName()) && Objects.equals(getAvatar(), target.getAvatar());
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(getId(), getName(), getAvatar());
 		}
 	}
 

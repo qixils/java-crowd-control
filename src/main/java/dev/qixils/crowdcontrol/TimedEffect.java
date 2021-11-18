@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.socket.Request;
+import dev.qixils.crowdcontrol.socket.Request.Target;
 import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +26,35 @@ import java.util.logging.Logger;
  * Similarly, the effect can be {@link #pause() paused}, {@link #resume() resumed}, or {@link #complete() stopped}.
  */
 public final class TimedEffect {
-    // TODO: support targeted effects
-    private static final Map<String, TimedEffect> ACTIVE_EFFECTS = new HashMap<>();
+
+    private static final class MapKey {
+        private final @NotNull String effectGroup;
+        private final @Nullable Target target;
+
+        private MapKey(@NotNull String effectGroup) {
+            this(effectGroup, null);
+        }
+
+        private MapKey(@NotNull String effectGroup, @Nullable Target target) {
+            this.effectGroup = effectGroup;
+            this.target = target;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MapKey mapKey = (MapKey) o;
+            return effectGroup.equals(mapKey.effectGroup) && Objects.equals(target, mapKey.target);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(effectGroup, target);
+        }
+    }
+
+    private static final Map<MapKey, TimedEffect> ACTIVE_EFFECTS = new HashMap<>();
 
     /**
      * Determines if an effect with the provided name is currently active.
@@ -34,7 +62,18 @@ public final class TimedEffect {
      * @return whether the effect is active
      */
     public static boolean isActive(@NotNull String effect) {
-        return ACTIVE_EFFECTS.containsKey(effect) && !ACTIVE_EFFECTS.get(effect).isComplete();
+        return isActive(effect, null);
+    }
+
+    /**
+     * Determines if an effect with the provided name and targeted streamer is currently active.
+     * @param effect effect name
+     * @param target targeted streamer
+     * @return whether the effect is active
+     */
+    public static boolean isActive(@NotNull String effect, @Nullable Target target) {
+        MapKey key = new MapKey(effect, target);
+        return ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete();
     }
 
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
@@ -45,9 +84,11 @@ public final class TimedEffect {
     private boolean paused = false;
     private boolean queued = false;
     private final @NotNull Request request;
+    private final @NotNull MapKey globalKey;
+    private final MapKey @NotNull[] mapKeys;
     private final @NotNull String effectGroup;
-    private final @NotNull Consumer<TimedEffect> callback;
-    private final @Nullable Consumer<TimedEffect> completionCallback;
+    private final @NotNull Consumer<@NotNull TimedEffect> callback;
+    private final @Nullable Consumer<@NotNull TimedEffect> completionCallback;
 
     /**
      * Creates a new {@link TimedEffect}.
@@ -76,6 +117,13 @@ public final class TimedEffect {
         this.duration = duration;
         this.request = Objects.requireNonNull(request, "effect cannot be null");
         this.effectGroup = Objects.requireNonNull(effectGroup, "effectGroup cannot be null");
+        this.globalKey = new MapKey(effectGroup);
+
+        Target[] targets = request.getTargets();
+        mapKeys = new MapKey[targets.length];
+        for (int i = 0; i < targets.length; i++) {
+            mapKeys[i] = new MapKey(effectGroup, targets[i]);
+        }
     }
 
     /**
@@ -116,6 +164,7 @@ public final class TimedEffect {
 
     /**
      * Queues this effect for execution. Timed effects with the same {@link #getEffectGroup() key} will run one at a time.
+     * If any streamer targeted by this effect is already
      * @throws IllegalStateException the effect has already {@link #hasStarted() started} or was already queued
      */
     public void queue() throws IllegalStateException {
@@ -123,18 +172,33 @@ public final class TimedEffect {
             throw new IllegalStateException("Effect was already queued");
         queued = true;
 
-        TimedEffect activeEffect = ACTIVE_EFFECTS.get(effectGroup);
-
-        if (activeEffect == null || activeEffect.isComplete()) {
-            start();
+        // check if a global effect is running
+        TimedEffect globalActiveEffect = ACTIVE_EFFECTS.get(globalKey);
+        if (globalActiveEffect != null && !globalActiveEffect.isComplete()) {
+            request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
             return;
         }
 
-        request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
+        // check if a per-streamer effect is running (on any targeted streamer)
+        for (MapKey mapKey : mapKeys) {
+            TimedEffect activeEffect = ACTIVE_EFFECTS.get(mapKey);
+            if (activeEffect != null && !activeEffect.isComplete()) {
+                request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
+                return;
+            }
+        }
+
+        // start
+        start();
     }
 
     private void start() {
-        ACTIVE_EFFECTS.put(effectGroup, this);
+        if (mapKeys.length == 0)
+            ACTIVE_EFFECTS.put(globalKey, this);
+        else {
+            for (MapKey mapKey : mapKeys)
+                ACTIVE_EFFECTS.put(mapKey, this);
+        }
         startedAt = System.currentTimeMillis();
         request.buildResponse().type(Response.ResultType.SUCCESS).timeRemaining(duration).send();
         try {
@@ -189,7 +253,14 @@ public final class TimedEffect {
     public boolean complete() {
         if (duration == -1) return false;
         duration = -1;
-        ACTIVE_EFFECTS.remove(effectGroup, this); // using "value" param as a failsafe -- not sure if it helps or hurts tbh
+
+        if (mapKeys.length == 0)
+            ACTIVE_EFFECTS.remove(globalKey, this);
+        else {
+            for (MapKey mapKey : mapKeys)
+                ACTIVE_EFFECTS.remove(mapKey, this);
+        }
+
         request.buildResponse().type(Response.ResultType.FINISHED).send();
         if (completionCallback != null) {
             try {
