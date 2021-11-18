@@ -63,7 +63,7 @@ public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
             throw new IllegalStateException("Port must be set using #port");
         }
         if (IP == null) {
-            throw new IllegalStateException("IP must be set using #IP");
+            throw new IllegalStateException("IP must be set using #ip");
         }
         return new CrowdControl(IP, port, null, socketManagerCreator);
     }
