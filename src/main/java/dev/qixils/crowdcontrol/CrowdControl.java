@@ -2,8 +2,10 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.builder.CrowdControlClientBuilder;
 import dev.qixils.crowdcontrol.builder.CrowdControlServerBuilder;
+import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +38,19 @@ import java.util.logging.Logger;
  * You should only ever create one instance of this class.
  */
 public final class CrowdControl {
+
+	/**
+	 * Helper method for determining if a provided exception class is part of an exception's stacktrace.
+	 * @param potentialCause class to search for in stacktrace
+	 * @param exception exception to be searched
+	 * @return true if the exception class is found
+	 */
+	public static boolean isCause(@NotNull Class<? extends Throwable> potentialCause, @Nullable Throwable exception) {
+		if (exception == null) return false;
+		if (potentialCause.isInstance(exception)) return true;
+		return isCause(potentialCause, exception.getCause());
+	}
+
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();
 	private final List<Function<Request, Boolean>> globalChecks = new ArrayList<>();
@@ -270,8 +285,12 @@ public final class CrowdControl {
 			else
 				request.buildResponse().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
-			request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").send();
+			if (CrowdControl.isCause(NoApplicableTarget.class, e)) {
+				request.buildResponse().type(ResultType.RETRY).message("Streamer(s) unavailable").send();
+			} else {
+				logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
+				request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").send();
+			}
 		}
 	}
 
