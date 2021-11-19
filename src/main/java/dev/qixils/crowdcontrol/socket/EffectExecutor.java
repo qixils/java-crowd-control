@@ -5,8 +5,9 @@ import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request.Type;
 import dev.qixils.crowdcontrol.socket.Response.PacketType;
 import dev.qixils.crowdcontrol.socket.Response.ResultType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -85,12 +86,19 @@ final class EffectExecutor {
 		effectPool.execute(() -> {
 			try {
 				crowdControl.handle(request);
-			} catch (NoApplicableTarget exc) {
-				request.buildResponse().type(ResultType.RETRY).message("No available streamer").send();
-			} catch (Exception e) {
-				logger.log(Level.WARNING, "Request handler threw an exception", e);
+			} catch (Throwable exc) {
+				if (isCause(NoApplicableTarget.class, exc)) {
+					request.buildResponse().type(ResultType.RETRY).message("Streamer(s) unavailable").send();
+				}
+				logger.log(Level.WARNING, "Request handler threw an exception", exc);
 				request.buildResponse().type(Response.ResultType.FAILURE).message("Request handler threw an exception").send();
 			}
 		});
+	}
+
+	private static boolean isCause(@NotNull Class<? extends Throwable> potentialCause, @Nullable Throwable exception) {
+		if (exception == null) return false;
+		if (potentialCause.isInstance(exception)) return true;
+		return isCause(potentialCause, exception.getCause());
 	}
 }
