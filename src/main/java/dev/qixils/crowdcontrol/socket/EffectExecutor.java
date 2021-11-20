@@ -87,10 +87,10 @@ final class EffectExecutor {
 				crowdControl.handle(request);
 			} catch (Throwable exc) {
 				if (CrowdControl.isCause(NoApplicableTarget.class, exc)) {
-					request.buildResponse().type(ResultType.RETRY).message("Streamer(s) unavailable").send();
+					request.buildResponse().type(ResultType.FAILURE).message("Streamer(s) unavailable").send();
 				} else {
 					logger.log(Level.WARNING, "Request handler threw an exception", exc);
-					request.buildResponse().type(Response.ResultType.FAILURE).message("Request handler threw an exception").send();
+					request.buildResponse().type(ResultType.FAILURE).message("Request handler threw an exception").send();
 				}
 			}
 		});
