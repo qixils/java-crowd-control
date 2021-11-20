@@ -283,13 +283,13 @@ public final class CrowdControl {
 			else if (asyncHandlers.containsKey(effect))
 				asyncHandlers.get(effect).accept(request);
 			else
-				request.buildResponse().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
+				request.buildResponse().type(ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
 		} catch (Exception e) {
 			if (CrowdControl.isCause(NoApplicableTarget.class, e)) {
-				request.buildResponse().type(ResultType.RETRY).message("Streamer(s) unavailable").send();
+				request.buildResponse().type(ResultType.FAILURE).message("Streamer(s) unavailable").send();
 			} else {
 				logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
-				request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").send();
+				request.buildResponse().type(ResultType.FAILURE).message("The effect encountered an exception").send();
 			}
 		}
 	}
