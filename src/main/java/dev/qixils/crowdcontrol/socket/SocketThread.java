@@ -22,6 +22,8 @@ final class SocketThread extends Thread implements SocketManager {
     }
 
     public void run() {
+        logger.info("Successfully connected to a new client");
+
         try {
             EffectExecutor effectExecutor = new EffectExecutor(this);
 
@@ -29,7 +31,7 @@ final class SocketThread extends Thread implements SocketManager {
                 effectExecutor.run();
             }
 
-            logger.fine("Client socket shutting down");
+            logger.info("Client socket shutting down");
         } catch (IOException exc) {
             // ensure socket is closed
             if (!socket.isClosed())
@@ -39,7 +41,7 @@ final class SocketThread extends Thread implements SocketManager {
             if (running)
                 logger.info("Disconnected from client socket");
             else
-                logger.fine("Client socket shutting down");
+                logger.info("Client socket shutting down");
         }
     }
 
