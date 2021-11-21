@@ -16,11 +16,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -79,7 +79,7 @@ public final class CrowdControl {
 		} else {
 			try {
 				MessageDigest md = MessageDigest.getInstance("SHA-512");
-				this.password = Base64.getEncoder().encodeToString(md.digest(password.getBytes(StandardCharsets.UTF_8)));
+				this.password = new BigInteger(1, md.digest(password.getBytes(StandardCharsets.UTF_8))).toString(16);
 			} catch (NoSuchAlgorithmException exc) {
 				throw new RuntimeException(exc);
 			}
