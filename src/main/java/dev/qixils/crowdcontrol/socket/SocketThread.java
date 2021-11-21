@@ -14,7 +14,7 @@ final class SocketThread extends Thread implements SocketManager {
     private static final Logger logger = Logger.getLogger("CC-SocketThread");
     final ServerSocketManager socketManager;
     final Socket socket;
-    private volatile boolean running;
+    private volatile boolean running = true;
 
     SocketThread(@NotNull ServerSocketManager socketManager, @NotNull Socket clientSocket) {
         this.socketManager = Objects.requireNonNull(socketManager, "socketManager cannot be null");
