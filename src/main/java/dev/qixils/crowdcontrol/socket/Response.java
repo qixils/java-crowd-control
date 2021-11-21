@@ -153,7 +153,7 @@ public final class Response {
 				OutputStream output = request.originatingSocket.getOutputStream();
 				output.write(toJSON().getBytes(StandardCharsets.UTF_8));
 				output.write(0x00);
-				// no flush nor close because they don't do anything in OutputStream
+				output.flush();
 			} catch (IOException exc) {
 				logger.log(Level.WARNING, "Failed to write response to socket", exc);
 			}
