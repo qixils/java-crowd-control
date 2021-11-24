@@ -52,7 +52,9 @@ final class SocketThread extends Thread implements SocketManager {
                 try {socket.close();} catch (IOException ignored) {}
 
             // log disconnection
-            if (running)
+            if ("Connection reset".equals(exc.getMessage()))
+                logger.info("Client disconnected from server (" + displayName + ")");
+            else if (running)
                 logger.log(Level.WARNING, "Erroneously disconnected from client socket (" + displayName + ")", exc);
             else
                 logger.info("Client socket shutting down (" + displayName + ")");
