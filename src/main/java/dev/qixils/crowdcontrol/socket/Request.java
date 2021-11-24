@@ -147,7 +147,7 @@ public final class Request {
 	 * This corresponds to a Twitch streamer connected to the Crowd Control server.
 	 */
 	public final static class Target {
-		private String id;
+		private int id;
 		private String name;
 		private String avatar;
 
@@ -162,8 +162,7 @@ public final class Request {
 		 * The recipient's Twitch ID.
 		 * @return Twitch ID
 		 */
-		@NotNull
-		public String getId() {
+		public int getId() {
 			return id;
 		}
 
@@ -180,7 +179,7 @@ public final class Request {
 		 * Gets the URL of the recipient's avatar on Twitch.
 		 * @return Twitch avatar URL
 		 */
-		@Nullable // TODO: IDK how this works, assuming Nullable for now
+		@NotNull
 		public String getAvatar() {
 			return avatar;
 		}
@@ -190,7 +189,7 @@ public final class Request {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			Target target = (Target) o;
-			return getId().equals(target.getId()) && getName().equals(target.getName()) && Objects.equals(getAvatar(), target.getAvatar());
+			return getId() == target.getId() && getName().equals(target.getName()) && getAvatar().equals(target.getAvatar());
 		}
 
 		@Override

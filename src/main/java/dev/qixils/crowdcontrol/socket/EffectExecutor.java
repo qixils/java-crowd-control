@@ -55,6 +55,15 @@ final class EffectExecutor {
 			bytes_read = input.read(results);
 		}
 		String inJSON = sb.toString();
+
+		if (inJSON.isBlank()) {
+			if (socketThread != null)
+				socketThread.shutdown();
+			else
+				socket.close();
+			return;
+		}
+
 		Request request;
 		try {
 			request = Request.fromJSON(inJSON);
@@ -77,6 +86,7 @@ final class EffectExecutor {
 				logger.info("New client successfully logged in (" + socketThread.displayName + ")");
 				loggedIn = true;
 			} else {
+				logger.info("Aborting connection due to incorrect password (" + socketThread.displayName + ")");
 				socketThread.shutdown();
 			}
 			return;
