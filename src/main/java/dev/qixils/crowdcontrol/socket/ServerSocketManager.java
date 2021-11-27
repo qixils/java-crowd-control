@@ -1,19 +1,15 @@
 package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.CrowdControl;
-import dev.qixils.crowdcontrol.socket.Response.PacketType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -69,31 +65,17 @@ public final class ServerSocketManager implements SocketManager {
         }
     }
 
-    private String dummyShutdownResponse(@Nullable Request cause, @Nullable String reason) {
-        DummyResponse response = new DummyResponse();
-        if (cause != null)
-            response.id = cause.getId();
-        response.message = Objects.requireNonNullElse(reason, "Disconnected");
-        response.type = PacketType.DISCONNECT;
-        return response.toJSON();
-    }
-
-    private void writeResponse(@NotNull String response) {
+    private void writeResponse(@NotNull DummyResponse response) {
         for (SocketThread socketThread : socketThreads) {
             if (socketThread.isSocketActive()) {
-                try {
-                    OutputStream output = socketThread.socket.getOutputStream();
-                    output.write(response.getBytes(StandardCharsets.UTF_8));
-                    output.write(0x00);
-                    output.flush();
-                } catch (IOException ignored){}
+                response.write(socketThread.socket);
             }
         }
     }
 
     @Override
     public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
-        writeResponse(dummyShutdownResponse(cause, reason));
+        writeResponse(DummyResponse.from(cause, reason));
         rawShutdown(cause, reason);
     }
 
