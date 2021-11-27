@@ -58,7 +58,7 @@ final class EffectExecutor {
 
 		if (inJSON.isBlank()) {
 			if (socketThread != null)
-				socketThread.shutdown();
+				socketThread.shutdown("Received a blank packet; assuming client has disconnected");
 			else
 				socket.close();
 			return;
@@ -84,10 +84,15 @@ final class EffectExecutor {
 				request.buildResponse().type(ResultType.NOT_READY).message("Client has not logged in").send();
 			} else if (password.equalsIgnoreCase(request.getMessage())) {
 				logger.info("New client successfully logged in (" + socketThread.displayName + ")");
+				DummyResponse resp = new DummyResponse();
+				resp.id = request.getId();
+				resp.message = "Successfully logged in";
+				resp.type = PacketType.LOGIN_SUCCESS;
+				socketThread.writeResponse(resp);
 				loggedIn = true;
 			} else {
 				logger.info("Aborting connection due to incorrect password (" + socketThread.displayName + ")");
-				socketThread.shutdown();
+				socketThread.shutdown(request, "Incorrect password");
 			}
 			return;
 		}

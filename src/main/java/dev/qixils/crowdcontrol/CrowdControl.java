@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  * <p>
  * You should only ever create one instance of this class.
  */
-public final class CrowdControl {
+public final class CrowdControl implements SocketManager {
 
 	/**
 	 * Helper method for determining if a provided exception class is part of an exception's stacktrace.
@@ -187,11 +187,11 @@ public final class CrowdControl {
 					try {
 						Object result = method.invoke(object, request);
 						output = result == null
-								? request.buildResponse().type(Response.ResultType.FAILURE).message("Effect handler returned a null response").build()
+								? request.buildResponse().type(ResultType.FAILURE).message("Effect handler returned a null response").build()
 								: parser.apply(result);
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
-						output = request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build();
+						output = request.buildResponse().type(ResultType.FAILURE).message("Failed to invoke method handler").build();
 					}
 					return output;
 				});
@@ -201,7 +201,7 @@ public final class CrowdControl {
 						method.invoke(object, request);
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
-						request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").send();
+						request.buildResponse().type(ResultType.FAILURE).message("Failed to invoke method handler").send();
 					}
 				});
 			} else {
@@ -271,7 +271,7 @@ public final class CrowdControl {
 	public void handle(@NotNull Request request) {
 		for (Function<Request, Boolean> check : globalChecks) {
 			if (!check.apply(request)) {
-				request.buildResponse().type(Response.ResultType.FAILURE).message("The game is unavailable").send();
+				request.buildResponse().type(ResultType.FAILURE).message("The game is unavailable").send();
 			}
 		}
 
@@ -297,9 +297,37 @@ public final class CrowdControl {
 	/**
 	 * Shuts down the internal connection to the Crowd Control server.
 	 */
+	@SuppressWarnings("deprecation")
 	public void shutdown() {
 		try {
-			socketManager.shutdown();
+			socketManager.shutdown(null, null);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
+		}
+	}
+
+	/**
+	 * Shuts down the internal connection to the Crowd Control server and
+	 * sends a corresponding error message to the streamer(s).
+	 * @param reason the reason for shutting down
+	 */
+	public void shutdown(@Nullable String reason) {
+		try {
+			socketManager.shutdown(null, reason);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
+		}
+	}
+
+	/**
+	 * Shuts down the internal connection to the Crowd Control server and
+	 * sends a corresponding error message to the streamer(s).
+	 * @param cause cause for shutting down
+	 * @param reason the reason for shutting down
+	 */
+	public void shutdown(@Nullable Request cause, @Nullable String reason) {
+		try {
+			socketManager.shutdown(cause, reason);
 		} catch (IOException e) {
 			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
 		}
