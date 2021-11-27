@@ -58,7 +58,7 @@ final class SocketThread extends Thread implements SocketManager {
             }
 
             logger.info("Client socket shutting down (" + displayName + ")");
-            writeResponse(dummyShutdownResponse(null, "Server is shutting down"));
+            DummyResponse.from(null, "Server is shutting down").write(socket);
         } catch (IOException exc) {
             if ("Connection reset".equals(exc.getMessage())) {
                 logger.info("Client disconnected from server (" + displayName + ")");
@@ -86,34 +86,11 @@ final class SocketThread extends Thread implements SocketManager {
         return !isSocketActive();
     }
 
-    private String dummyShutdownResponse(@Nullable Request cause, @Nullable String reason) {
-        DummyResponse response = new DummyResponse();
-        if (cause != null)
-            response.id = cause.getId();
-        response.message = Objects.requireNonNullElse(reason, "Disconnected");
-        response.type = PacketType.DISCONNECT;
-        return response.toJSON();
-    }
-
-    void writeResponse(@NotNull JsonObject response) {
-        writeResponse(response.toJSON());
-    }
-
-    void writeResponse(@NotNull String response) {
-        if (socket.isClosed()) return;
-        try {
-            OutputStream output = socket.getOutputStream();
-            output.write(response.getBytes(StandardCharsets.UTF_8));
-            output.write(0x00);
-            output.flush();
-        } catch (IOException ignored){}
-    }
-
     @Override
     public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
         if (!disconnectMessageSent) {
             disconnectMessageSent = true;
-            writeResponse(dummyShutdownResponse(cause, reason));
+            DummyResponse.from(cause, reason).write(socket);
         }
         rawShutdown();
     }
