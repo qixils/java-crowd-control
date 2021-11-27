@@ -4,8 +4,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * An exception indicating that a software utilizing the {@link dev.qixils.crowdcontrol.CrowdControl}
- * library was unable to map the provided target(s) while attempting to execute an effect and that
- * the library should retry the effect after a short time.
+ * library was unable to map the provided {@link dev.qixils.crowdcontrol.socket.Request.Target target(s)}
+ * while attempting to execute an effect and that the library should retry the effect after a short time.
  */
 public class NoApplicableTarget extends CrowdControlException {
 
