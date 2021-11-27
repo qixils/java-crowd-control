@@ -164,7 +164,7 @@ public final class Response implements JsonObject {
 	/**
 	 * Determines the type of packet being sent.
 	 */
-	enum PacketType {
+	enum PacketType implements ByteObject {
 		/**
 		 * The packet is the result of executing an effect.
 		 */
@@ -204,10 +204,6 @@ public final class Response implements JsonObject {
 			this.encodedByte = (byte) ordinal();
 		}
 
-		/**
-		 * Gets the byte that this type is represented by in JSON encoding.
-		 * @return encoded byte
-		 */
 		public byte getEncodedByte() {
 			return encodedByte;
 		}
@@ -225,7 +221,7 @@ public final class Response implements JsonObject {
 	/**
 	 * The result of processing an incoming packet.
 	 */
-	public enum ResultType {
+	public enum ResultType implements ByteObject {
 		/**
 		 * The effect was applied successfully.
 		 */
@@ -284,10 +280,6 @@ public final class Response implements JsonObject {
 			this.encodedByte = (byte) ordinal();
 		}
 
-		/**
-		 * Gets the byte that this type is represented by in JSON encoding.
-		 * @return encoded byte
-		 */
 		public byte getEncodedByte() {
 			return encodedByte;
 		}

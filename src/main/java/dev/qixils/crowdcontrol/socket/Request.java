@@ -201,7 +201,7 @@ public final class Request {
 	/**
 	 * The type of incoming packet.
 	 */
-	public enum Type {
+	public enum Type implements ByteObject {
 		/**
 		 * Indicates that you should simulate the starting of an effect (i.e. test if it's available)
 		 * but should not actually start the effect.
@@ -249,10 +249,6 @@ public final class Request {
 			this.encodedByte = (byte) ordinal();
 		}
 
-		/**
-		 * Gets the byte that this type is represented by in JSON encoding.
-		 * @return encoded byte
-		 */
 		public byte getEncodedByte() {
 			return encodedByte;
 		}

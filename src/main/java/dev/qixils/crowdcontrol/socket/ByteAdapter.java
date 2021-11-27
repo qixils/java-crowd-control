@@ -11,19 +11,18 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.function.Function;
 
-class ByteAdapter<T> extends TypeAdapter<T> {
-	static final Gson GSON = new GsonBuilder()
-			.registerTypeAdapter(Request.Type.class, new ByteAdapter<>(Request.Type::from, Request.Type::getEncodedByte))
-			.registerTypeAdapter(Response.ResultType.class, new ByteAdapter<>(Response.ResultType::from, Response.ResultType::getEncodedByte))
+class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
+	static final Gson
+			GSON = new GsonBuilder()
+			.registerTypeAdapter(Request.Type.class, new ByteAdapter<>(Request.Type::from))
+			.registerTypeAdapter(Response.ResultType.class, new ByteAdapter<>(Response.ResultType::from))
+			.registerTypeAdapter(Response.PacketType.class, new ByteAdapter<>(Response.PacketType::from))
 			.create();
 
 	private final @NotNull Function<@NotNull Byte, @Nullable T> fromByte;
-	private final @NotNull Function<@NotNull T, @NotNull Byte> toByte;
 
-	public ByteAdapter(@NotNull Function<@NotNull Byte, @NotNull T> fromByte,
-					   @NotNull Function<@NotNull T, @NotNull Byte> toByte) {
+	public ByteAdapter(@NotNull Function<@NotNull Byte, @NotNull T> fromByte) {
 		this.fromByte = fromByte;
-		this.toByte = toByte;
 	}
 
 	@Override
@@ -31,7 +30,7 @@ class ByteAdapter<T> extends TypeAdapter<T> {
 		if (value == null) {
 			out.nullValue();
 		} else {
-			out.value(toByte.apply(value));
+			out.value(value.getEncodedByte());
 		}
 	}
 

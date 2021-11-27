@@ -97,7 +97,7 @@ public final class ServerSocketManager implements SocketManager {
         rawShutdown(cause, reason);
     }
 
-    public void rawShutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
+    private void rawShutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
         running = false;
         for (SocketThread socketThread : socketThreads) {
             if (socketThread.isSocketActive())

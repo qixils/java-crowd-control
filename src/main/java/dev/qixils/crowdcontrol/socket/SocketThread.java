@@ -19,11 +19,13 @@ import java.util.logging.Logger;
  * Handles the connection to a Crowd Control client when operating in server mode.
  */
 final class SocketThread extends Thread implements SocketManager {
+    private static final String RAW_PASSWORD_REQUEST;
     private static final byte[] PASSWORD_REQUEST;
     static {
         DummyResponse resp = new DummyResponse();
         resp.type = PacketType.LOGIN;
-        byte[] json = resp.toJSON().getBytes(StandardCharsets.UTF_8);
+        RAW_PASSWORD_REQUEST = resp.toJSON();
+        byte[] json = RAW_PASSWORD_REQUEST.getBytes(StandardCharsets.UTF_8);
         // array copy adds an extra 0x00 byte to the end, indicating the end of the packet
         PASSWORD_REQUEST = Arrays.copyOf(json, json.length+1);
     }
