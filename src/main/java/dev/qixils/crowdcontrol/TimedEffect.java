@@ -20,7 +20,8 @@ import java.util.logging.Logger;
 
 /**
  * A wrapper for safely executing exclusive timed effects.
- * Effects with the same key will run one after another.
+ * Effects with the same {@link #getEffectGroup() key} and {@link Request#getTargets() target}
+ * will run one after another.
  * <p>
  * To enqueue this effect, execute {@link #queue()} after instantiating a new object.
  * Similarly, the effect can be {@link #pause() paused}, {@link #resume() resumed}, or {@link #complete() stopped}.
@@ -75,6 +76,8 @@ public final class TimedEffect {
         MapKey key = new MapKey(effectGroup, target);
         return ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete();
     }
+
+    // TODO: #isActive(String,Request) and #isActive(String,Target...)
 
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
     private static final Logger logger = Logger.getLogger("CC-TimedEffect");
@@ -163,8 +166,8 @@ public final class TimedEffect {
     }
 
     /**
-     * Queues this effect for execution. Timed effects with the same {@link #getEffectGroup() key} will run one at a time.
-     * If any streamer targeted by this effect is already
+     * Queues this effect for execution. Timed effects with the same {@link #getEffectGroup() key}
+     * and {@link Request#getTargets() target} will run one at a time.
      * @throws IllegalStateException the effect has already {@link #hasStarted() started} or was already queued
      */
     public void queue() throws IllegalStateException {
@@ -276,6 +279,7 @@ public final class TimedEffect {
         if (getCurrentDuration() == 0)
             complete();
     }
+
     /**
      * Determines if this effect has completed.
      * @return completion status
@@ -315,5 +319,4 @@ public final class TimedEffect {
     public String getEffectGroup() {
         return effectGroup;
     }
-
 }
