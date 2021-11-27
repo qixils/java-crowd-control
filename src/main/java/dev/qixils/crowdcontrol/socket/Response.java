@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * An outgoing packet to the Crowd Control TCP server carrying information in response to an {@link Request incoming packet}.
  * @see Request
  */
-public final class Response {
+public final class Response implements JsonObject {
 	private static final Logger logger = Logger.getLogger("CC-Response");
 
 	private final transient Request request;
@@ -46,7 +46,7 @@ public final class Response {
 	 * @param packetType type of packet
 	 */
 	@CheckReturnValue
-	Response(@NotNull Request request, @NotNull Response.ResultType type, @NotNull String message, long timeRemaining, @Nullable PacketType packetType) {
+	Response(@NotNull Request request, Response.@NotNull ResultType type, @NotNull String message, long timeRemaining, @Nullable PacketType packetType) {
 		this.request = Objects.requireNonNull(request, "request cannot be null");
 		this.id = request.getId();
 		this.type = Objects.requireNonNull(type, "type cannot be null");
@@ -139,7 +139,7 @@ public final class Response {
 	 * @throws IllegalStateException the related {@link Request} does not have an associated client or server
 	 */
 	public void send() throws IllegalStateException {
-		if (request.originatingSocket == null) {
+		if (request == null || request.originatingSocket == null) {
 			throw new IllegalStateException("This Response was constructed with an illegal Request which is not associated with a client or server");
 		}
 
@@ -170,11 +170,19 @@ public final class Response {
 		 */
 		EFFECT_RESULT,
 		/**
-		 * The packet is a response to a login attempt.
+		 * <b>Internal value</b> used to prompt a connecting client for a password.
 		 */
 		LOGIN((byte) 0xF0),
 		/**
-		 * The packet is a response to a keep alive packet.
+		 * <b>Internal value</b> used to indicate a successful login.
+		 */
+		LOGIN_SUCCESS((byte) 0xF1),
+		/**
+		 * <b>Internal value</b> used to indicate that the socket is being disconnected.
+		 */
+		DISCONNECT((byte) 0xFE),
+		/**
+		 * <b>Internal value</b> used to reply to a keep alive packet.
 		 */
 		KEEP_ALIVE((byte) 0xFF);
 
