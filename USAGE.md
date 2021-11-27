@@ -195,9 +195,10 @@ For more information, please view [the method's javadocs](https://javadoc.io/doc
 #### Registering Checks
 
 Checks are functions that are called every time a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
-is received, although they have no knowledge of the Request. They are used to prevent the
+is received which may or may not have knowledge of the Request. They are used to prevent the
 execution of effects if your game has not yet loaded or if your players have not yet
-connected. These can be registered using [`#registerCheck(Supplier<Boolean>)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerCheck(java.util.function.Supplier)).
+connected. These can be registered using [`#registerCheck(Supplier<Boolean>)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerCheck(java.util.function.Supplier))
+and [`#registerCheck(Function<Request,Boolean>)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerCheck(java.util.function.Function))
 
 #### Further Reading
 
