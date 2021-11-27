@@ -33,6 +33,7 @@ public final class Response {
 	private final ResultType type;
 	private final String message;
 	private final long timeRemaining; // millis
+	@SerializedName("type")
 	final PacketType packetType;
 
 	/**
