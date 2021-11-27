@@ -12,8 +12,7 @@ import java.io.IOException;
 import java.util.function.Function;
 
 class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
-	static final Gson
-			GSON = new GsonBuilder()
+	static final Gson GSON = new GsonBuilder()
 			.registerTypeAdapter(Request.Type.class, new ByteAdapter<>(Request.Type::from))
 			.registerTypeAdapter(Response.ResultType.class, new ByteAdapter<>(Response.ResultType::from))
 			.registerTypeAdapter(Response.PacketType.class, new ByteAdapter<>(Response.PacketType::from))
