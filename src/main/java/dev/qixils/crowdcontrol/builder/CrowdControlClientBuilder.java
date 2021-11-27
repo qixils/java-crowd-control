@@ -60,10 +60,10 @@ public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
     @Contract("-> new")
     public @NotNull CrowdControl build() throws IllegalStateException {
         if (port == -1) {
-            throw new IllegalStateException("Port must be set using #port");
+            throw new IllegalStateException("Port must be set using #port(int)");
         }
         if (IP == null) {
-            throw new IllegalStateException("IP must be set using #ip");
+            throw new IllegalStateException("IP must be set using #ip(String)");
         }
         return new CrowdControl(IP, port, null, socketManagerCreator);
     }

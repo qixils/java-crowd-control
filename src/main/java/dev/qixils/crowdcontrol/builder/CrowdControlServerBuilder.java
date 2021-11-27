@@ -51,13 +51,20 @@ public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
         return (CrowdControlServerBuilder) super.port(port);
     }
 
-    // <inherits javadocs>
+    /**
+     * {@inheritDoc}
+     * @return new CrowdControl instance
+     * @throws IllegalStateException {@link #port(int)} or {@link #password(String)} was not called
+     */
     @Override
     @CheckReturnValue
     @Contract("-> new")
     public @NotNull CrowdControl build() throws IllegalStateException {
         if (port == -1) {
-            throw new IllegalStateException("Port must be set using #port");
+            throw new IllegalStateException("Port must be set using #port(int)");
+        }
+        if (password == null) {
+            throw new IllegalStateException("Password must be set using #password(String)");
         }
         return new CrowdControl(null, port, password, socketManagerCreator);
     }
