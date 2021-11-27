@@ -116,7 +116,7 @@ public final class ClientSocketManager implements SocketManager {
 		rawShutdown();
 	}
 
-	public void rawShutdown() throws IOException {
+	private void rawShutdown() throws IOException {
 		running = false;
 		if (socket != null && !socket.isClosed())
 			socket.close();
