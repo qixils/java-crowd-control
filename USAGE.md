@@ -40,7 +40,7 @@ types are outlined below.
 You will also need to create a `.cs` file which holds a list of all of
 your available effects as well as information about how the Crowd
 Control desktop app should connect to your application. Example files
-will be provided below as they differ based on connector type.
+for each connector type are provided below.
 
 ### Client Mode
 
@@ -50,7 +50,7 @@ receives commands from a central server that it connects to. This
 central server is (usually) the streamer's Crowd Control desktop
 application running on a local port.
 
-To use this connector type, use the Crowd Control client builder:
+To use this connector type, use the Crowd Control [client builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlClientBuilder.html):
 
 ```java
 import dev.qixils.crowdcontrol.CrowdControl;
@@ -106,7 +106,7 @@ with multiple clients (streamers) and process effects for each streamer
 individually. This may be ideal for multiplayer game servers like
 Minecraft.
 
-To use this connector type, use the Crowd Control server builder:
+To use this connector type, use the Crowd Control [server builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlServerBuilder.html):
 
 ```java
 import dev.qixils.crowdcontrol.CrowdControl;
@@ -209,7 +209,7 @@ The documentation for all classes and methods may be found [here](https://javado
 The following code demonstrates what a very simple usage of this library may look like.
 It does not correspond to any specific video game.
 
-```
+```java
 /**
  * Initializes effects and checks for Crowd Control.
  */
