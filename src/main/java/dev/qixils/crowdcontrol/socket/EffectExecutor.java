@@ -88,7 +88,7 @@ final class EffectExecutor {
 				resp.id = request.getId();
 				resp.message = "Successfully logged in";
 				resp.type = PacketType.LOGIN_SUCCESS;
-				socketThread.writeResponse(resp);
+				resp.write(socket);
 				loggedIn = true;
 			} else {
 				logger.info("Aborting connection due to incorrect password (" + socketThread.displayName + ")");
