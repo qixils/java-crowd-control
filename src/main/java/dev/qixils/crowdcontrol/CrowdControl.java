@@ -296,8 +296,12 @@ public final class CrowdControl implements SocketManager {
 
 	/**
 	 * Shuts down the internal connection to the Crowd Control server.
+	 * @deprecated providing error messages via {@link #shutdown(String)} is recommended
+	 * @see #shutdown(String)
+	 * @see #shutdown(Request, String)
 	 */
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings("deprecation") // yes, I know that I am overriding a deprecated method, deal with it
+	@Deprecated
 	public void shutdown() {
 		try {
 			socketManager.shutdown(null, null);
