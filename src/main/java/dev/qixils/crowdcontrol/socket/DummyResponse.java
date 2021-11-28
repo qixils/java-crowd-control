@@ -11,7 +11,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-class DummyResponse implements JsonObject {
+final class DummyResponse implements JsonObject {
 	int id = 0;
 	ResultType status;
 	String message;

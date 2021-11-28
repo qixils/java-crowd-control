@@ -65,21 +65,8 @@ public final class ServerSocketManager implements SocketManager {
         }
     }
 
-    private void writeResponse(@NotNull DummyResponse response) {
-        for (SocketThread socketThread : socketThreads) {
-            if (socketThread.isSocketActive()) {
-                response.write(socketThread.socket);
-            }
-        }
-    }
-
     @Override
     public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
-        writeResponse(DummyResponse.from(cause, reason));
-        rawShutdown(cause, reason);
-    }
-
-    private void rawShutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
         running = false;
         for (SocketThread socketThread : socketThreads) {
             if (socketThread.isSocketActive())
