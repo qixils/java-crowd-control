@@ -19,8 +19,8 @@ import java.util.logging.Logger;
  * Handles the connection to a Crowd Control client when operating in server mode.
  */
 final class SocketThread extends Thread implements SocketManager {
-    private static final String RAW_PASSWORD_REQUEST;
-    private static final byte[] PASSWORD_REQUEST;
+    private static final @NotNull String RAW_PASSWORD_REQUEST;
+    private static final byte @NotNull[] PASSWORD_REQUEST;
     static {
         DummyResponse resp = new DummyResponse();
         resp.type = PacketType.LOGIN;
@@ -30,12 +30,11 @@ final class SocketThread extends Thread implements SocketManager {
         PASSWORD_REQUEST = Arrays.copyOf(json, json.length+1);
     }
 
-    private static final Logger logger = Logger.getLogger("CC-SocketThread");
-    final ServerSocketManager socketManager;
-    final Socket socket;
-    final String displayName = UUID.randomUUID().toString().substring(30).toUpperCase(Locale.ENGLISH);
+    private static final @NotNull Logger logger = Logger.getLogger("CC-SocketThread");
+    final @NotNull ServerSocketManager socketManager;
+    final @NotNull Socket socket;
+    final @NotNull String displayName = UUID.randomUUID().toString().substring(30).toUpperCase(Locale.ENGLISH);
     private volatile boolean running = true;
-    private volatile boolean disconnectMessageSent = false;
 
     SocketThread(@NotNull ServerSocketManager socketManager, @NotNull Socket clientSocket) {
         this.socketManager = Objects.requireNonNull(socketManager, "socketManager cannot be null");
@@ -88,16 +87,11 @@ final class SocketThread extends Thread implements SocketManager {
 
     @Override
     public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
-        if (!disconnectMessageSent) {
-            disconnectMessageSent = true;
-            DummyResponse.from(cause, reason).write(socket);
-        }
-        rawShutdown();
-    }
-
-    private void rawShutdown() throws IOException {
+        if (!running) return;
         running = false;
-        if (!socket.isClosed())
+        if (!socket.isClosed()) {
+            DummyResponse.from(cause, reason).write(socket);
             socket.close();
+        }
     }
 }

@@ -67,6 +67,7 @@ public final class ServerSocketManager implements SocketManager {
 
     @Override
     public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
+        if (!running) return;
         running = false;
         for (SocketThread socketThread : socketThreads) {
             if (socketThread.isSocketActive())

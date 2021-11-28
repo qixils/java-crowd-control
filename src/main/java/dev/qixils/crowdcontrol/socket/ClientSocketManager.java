@@ -23,7 +23,6 @@ public final class ClientSocketManager implements SocketManager {
 	private static final @NotNull Logger logger = Logger.getLogger("CC-ClientSocket");
 	private int sleep = 1;
 	private boolean connected = false;
-	private volatile boolean disconnectMessageSent = false;
 
 	/**
 	 * Creates a new client-side socket manager. This is intended only for use by the library.
@@ -86,16 +85,11 @@ public final class ClientSocketManager implements SocketManager {
 
 	@Override
 	public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
-		if (!disconnectMessageSent) {
-			disconnectMessageSent = true;
-			DummyResponse.from(cause, reason).write(socket);
-		}
-		rawShutdown();
-	}
-
-	private void rawShutdown() throws IOException {
+		if (!running) return;
 		running = false;
-		if (socket != null && !socket.isClosed())
+		if (socket != null && !socket.isClosed()) {
+			DummyResponse.from(cause, reason).write(socket);
 			socket.close();
+		}
 	}
 }
