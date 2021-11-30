@@ -33,9 +33,50 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * API for interacting with <a href="https://crowdcontrol.live">Crowd Control</a> via the SimpleTCPConnector or SimpleTCPClientConnector.
+ * API for interacting with <a href="https://crowdcontrol.live">Crowd Control</a> via the
+ * {@code SimpleTCPConnector} or {@code SimpleTCPClientConnector}.
+ * <h2>Creating an instance</h2>
  * <p>
- * You should only ever create one instance of this class.
+ * To create an instance of this class, use either the {@link #client()} or {@link #server()}
+ * methods.
+ * </p>
+ * <ul>
+ *     <li>
+ *         {@link #client()} creates a client instance that can be used to connect to a central
+ *         Crowd Control server. It corresponds with the {@code SimpleTCPConnector} in your
+ *         project's .cs file. In this mode, your project will only be able to connect to one
+ *         streamer, although multiple instances of your project will all be able to connect to
+ *         this streamer at the same time. This mode is ideal for singleplayer games.
+ *     </li>
+ *     <li>
+ *         {@link #server()} creates a server instance that can be used to connect to multiple
+ *         Crowd Control clients. It corresponds with the {@code SimpleTCPClientConnector}.
+ *         This allows you to receive requests from multiple streamers, making this ideal for
+ *         multiplayer games.
+ *     </li>
+ * </ul>
+ * <p>
+ * You should only ever create one instance of this class. If you must recreate this instance,
+ * remember to call {@link #shutdown(String)} first.
+ * </p>
+ * <h2>Registering effect handlers</h2>
+ * <p>
+ * Effect handlers process incoming effect {@link Request}s, apply them to players or environments
+ * as appropriate, and then return a {@link Response} that informs the client of whether the effect
+ * was successfully applied.
+ * </p>
+ * <p>
+ * To start handling incoming effects, you much register handlers for each effect
+ * you want to handle using one of {@link #registerHandler(String, Consumer)},
+ * {@link #registerHandler(String, Function)}, or {@link #registerHandlers(Object)}.
+ * </p>
+ * <h2>Registering checks</h2>
+ * <p>
+ * Checks allow you to block an effect from being processed if certain conditions are not met.
+ * This is typically used to ensure effects are not run before the game has loaded into a world.
+ * You can register checks using {@link #registerCheck(Supplier)}
+ * or {@link #registerCheck(Function)}.
+ * </p>
  */
 public final class CrowdControl implements SocketManager {
 
@@ -63,7 +104,10 @@ public final class CrowdControl implements SocketManager {
 	 * @param password             password required to connect (if applicable)
 	 * @param socketManagerCreator creator of a new {@link SocketManager}
 	 */
-	public CrowdControl(@Nullable String IP, int port, @Nullable String password, @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
+	public CrowdControl(@Nullable String IP,
+						int port,
+						@Nullable String password,
+						@NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
 		this.IP = IP;
 		this.port = port;
 		this.socketManager = socketManagerCreator.apply(this);
@@ -113,6 +157,16 @@ public final class CrowdControl implements SocketManager {
 	}
 
 	/**
+	 * Renders a warning for improperly configured {@link Subscribe} methods.
+	 *
+	 * @param method           improperly configured method
+	 * @param errorDescription issue with the method
+	 */
+	private static void methodHandlerWarning(@NotNull Method method, @NotNull String errorDescription) {
+		logger.warning("Method " + method.getName() + " is improperly configured: " + errorDescription);
+	}
+
+	/**
 	 * Returns the IP that the {@link SocketManager} will listen on.
 	 * If running in server mode, this will be null.
 	 *
@@ -144,16 +198,6 @@ public final class CrowdControl implements SocketManager {
 	@CheckReturnValue
 	public String getPassword() {
 		return password;
-	}
-
-	/**
-	 * Renders a warning for improperly configured {@link Subscribe} methods.
-	 *
-	 * @param method           improperly configured method
-	 * @param errorDescription issue with the method
-	 */
-	private void methodHandlerWarning(@NotNull Method method, @NotNull String errorDescription) {
-		logger.warning("Method " + method.getName() + " is improperly configured: " + errorDescription);
 	}
 
 	/**

@@ -6,7 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Subscribes a method to listen to effects. The containing class must be {@link CrowdControl#registerHandlers(Object) registered}.
+ * Indicates that the annotated method
+ * is an effect handler for the {@link #effect() provided effect}.
+ * The containing class must be {@link CrowdControl#registerHandlers(Object) registered}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Subscribe {
