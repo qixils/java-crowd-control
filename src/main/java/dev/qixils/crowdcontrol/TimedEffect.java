@@ -107,28 +107,34 @@ public final class TimedEffect {
 		this(request, effectGroup, duration.toMillis(), callback, completionCallback);
 	}
 
-	// TODO: #isActive(String,Request) and #isActive(String,Target...)
-
 	/**
-	 * Determines if an effect with the provided name is currently active.
+	 * Determines if an effect with the provided name is currently active for any of the
+	 * provided streamers. An empty array will be interpreted as a global effect.
 	 *
 	 * @param effectGroup effect group
+	 * @param targets     targeted streamers
 	 * @return whether the effect is active
 	 */
-	public static boolean isActive(@NotNull String effectGroup) {
-		return isActive(effectGroup, null);
+	public static boolean isActive(@NotNull String effectGroup, Target @NotNull ... targets) {
+		for (Target target : targets) {
+			MapKey key = new MapKey(effectGroup, target);
+			if (ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete())
+				return true;
+		}
+
+		return false;
 	}
 
 	/**
-	 * Determines if an effect with the provided name and targeted streamer is currently active.
+	 * Determines if an effect with the provided name is currently active for any streamer
+	 * targeted by the provided request.
 	 *
 	 * @param effectGroup effect group
-	 * @param target      targeted streamer
+	 * @param request     request to query for targeted streamers
 	 * @return whether the effect is active
 	 */
-	public static boolean isActive(@NotNull String effectGroup, @Nullable Target target) {
-		MapKey key = new MapKey(effectGroup, target);
-		return ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete();
+	public static boolean isActive(@NotNull String effectGroup, @NotNull Request request) {
+		return isActive(effectGroup, request.getTargets());
 	}
 
 	/**
