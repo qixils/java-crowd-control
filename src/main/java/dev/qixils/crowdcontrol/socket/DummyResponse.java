@@ -18,14 +18,6 @@ final class DummyResponse implements JsonObject {
 	long timeRemaining;
 	PacketType type;
 
-	public String toJSON() {
-		return ByteAdapter.GSON.toJson(this);
-	}
-
-	void write(@Nullable Socket socket) {
-		write(socket, toJSON());
-	}
-
 	static void write(@Nullable Socket socket, @NotNull String message) {
 		if (socket == null || socket.isClosed()) return;
 		try {
@@ -33,7 +25,8 @@ final class DummyResponse implements JsonObject {
 			output.write(message.getBytes(StandardCharsets.UTF_8));
 			output.write(0x00);
 			output.flush();
-		} catch (IOException ignored) {}
+		} catch (IOException ignored) {
+		}
 	}
 
 	static DummyResponse from(@Nullable Request cause, @Nullable String reason) {
@@ -43,5 +36,13 @@ final class DummyResponse implements JsonObject {
 		response.message = Objects.requireNonNullElse(reason, "Disconnected");
 		response.type = PacketType.DISCONNECT;
 		return response;
+	}
+
+	public String toJSON() {
+		return ByteAdapter.GSON.toJson(this);
+	}
+
+	void write(@Nullable Socket socket) {
+		write(socket, toJSON());
 	}
 }

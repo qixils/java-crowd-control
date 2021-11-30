@@ -19,79 +19,81 @@ import java.util.logging.Logger;
  * Handles the connection to a Crowd Control client when operating in server mode.
  */
 final class SocketThread extends Thread implements SocketManager {
-    private static final @NotNull String RAW_PASSWORD_REQUEST;
-    private static final byte @NotNull[] PASSWORD_REQUEST;
-    static {
-        DummyResponse resp = new DummyResponse();
-        resp.type = PacketType.LOGIN;
-        RAW_PASSWORD_REQUEST = resp.toJSON();
-        byte[] json = RAW_PASSWORD_REQUEST.getBytes(StandardCharsets.UTF_8);
-        // array copy adds an extra 0x00 byte to the end, indicating the end of the packet
-        PASSWORD_REQUEST = Arrays.copyOf(json, json.length+1);
-    }
+	private static final @NotNull String RAW_PASSWORD_REQUEST;
+	private static final byte @NotNull [] PASSWORD_REQUEST;
+	private static final @NotNull Logger logger = Logger.getLogger("CC-SocketThread");
 
-    private static final @NotNull Logger logger = Logger.getLogger("CC-SocketThread");
-    final @NotNull ServerSocketManager socketManager;
-    final @NotNull Socket socket;
-    final @NotNull String displayName = UUID.randomUUID().toString().substring(30).toUpperCase(Locale.ENGLISH);
-    private volatile boolean running = true;
+	static {
+		DummyResponse resp = new DummyResponse();
+		resp.type = PacketType.LOGIN;
+		RAW_PASSWORD_REQUEST = resp.toJSON();
+		byte[] json = RAW_PASSWORD_REQUEST.getBytes(StandardCharsets.UTF_8);
+		// array copy adds an extra 0x00 byte to the end, indicating the end of the packet
+		PASSWORD_REQUEST = Arrays.copyOf(json, json.length + 1);
+	}
 
-    SocketThread(@NotNull ServerSocketManager socketManager, @NotNull Socket clientSocket) {
-        this.socketManager = Objects.requireNonNull(socketManager, "socketManager cannot be null");
-        this.socket = Objects.requireNonNull(clientSocket, "clientSocket cannot be null");
-    }
+	final @NotNull ServerSocketManager socketManager;
+	final @NotNull Socket socket;
+	final @NotNull String displayName = UUID.randomUUID().toString().substring(30).toUpperCase(Locale.ENGLISH);
+	private volatile boolean running = true;
 
-    public void run() {
-        logger.info("Successfully connected to a new client (" + displayName + ")");
+	SocketThread(@NotNull ServerSocketManager socketManager, @NotNull Socket clientSocket) {
+		this.socketManager = Objects.requireNonNull(socketManager, "socketManager cannot be null");
+		this.socket = Objects.requireNonNull(clientSocket, "clientSocket cannot be null");
+	}
 
-        try {
-            EffectExecutor effectExecutor = new EffectExecutor(this);
+	public void run() {
+		logger.info("Successfully connected to a new client (" + displayName + ")");
 
-            // prompt client for password
-            OutputStream output = socket.getOutputStream();
-            output.write(PASSWORD_REQUEST);
-            output.flush();
+		try {
+			EffectExecutor effectExecutor = new EffectExecutor(this);
 
-            while (running) {
-                effectExecutor.run();
-            }
+			// prompt client for password
+			OutputStream output = socket.getOutputStream();
+			output.write(PASSWORD_REQUEST);
+			output.flush();
 
-            logger.info("Client socket shutting down (" + displayName + ")");
-            DummyResponse.from(null, "Server is shutting down").write(socket);
-        } catch (IOException exc) {
-            if ("Connection reset".equals(exc.getMessage())) {
-                logger.info("Client disconnected from server (" + displayName + ")");
-                return;
-            }
+			while (running) {
+				effectExecutor.run();
+			}
 
-            // send disconnection message to socket & ensure socket is closed
-            try {
-                shutdown(null, running ? "Server encountered an error" : "Server is shutting down");
-            } catch (IOException ignored) {}
+			logger.info("Client socket shutting down (" + displayName + ")");
+			DummyResponse.from(null, "Server is shutting down").write(socket);
+		} catch (IOException exc) {
+			if ("Connection reset".equals(exc.getMessage())) {
+				logger.info("Client disconnected from server (" + displayName + ")");
+				return;
+			}
 
-            // log disconnection
-            if (running)
-                logger.log(Level.WARNING, "Erroneously disconnected from client socket (" + displayName + ")", exc);
-            else
-                logger.info("Client socket shutting down (" + displayName + ")");
-        }
-    }
+			// send disconnection message to socket & ensure socket is closed
+			try {
+				shutdown(null, running ? "Server encountered an error" : "Server is shutting down");
+			} catch (IOException ignored) {
+			}
 
-    public boolean isSocketActive() {
-        return running && !socket.isClosed();
-    }
+			// log disconnection
+			if (running)
+				logger.log(Level.WARNING, "Erroneously disconnected from client socket (" + displayName + ")", exc);
+			else
+				logger.info("Client socket shutting down (" + displayName + ")");
+		}
+	}
 
-    public boolean isSocketClosed() {
-        return !isSocketActive();
-    }
+	public boolean isSocketActive() {
+		return running && !socket.isClosed();
+	}
 
-    @Override
-    public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
-        if (!running) return;
-        running = false;
-        if (!socket.isClosed()) {
-            DummyResponse.from(cause, reason).write(socket);
-            socket.close();
-        }
-    }
+	public boolean isSocketClosed() {
+		return !isSocketActive();
+	}
+
+	@Override
+	public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
+		if (!running) return;
+		running = false;
+		if (!socket.isClosed()) {
+			DummyResponse.from(cause, reason).write(socket);
+			socket.close();
+		}
+	}
 }

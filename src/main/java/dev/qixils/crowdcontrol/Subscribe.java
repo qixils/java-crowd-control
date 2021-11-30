@@ -12,6 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Subscribe {
 	/**
 	 * The name of the effect to listen to.
+	 *
 	 * @return effect name
 	 */
 	@NotNull
