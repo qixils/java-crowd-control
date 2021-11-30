@@ -210,6 +210,7 @@ The documentation for all classes and methods may be found [here](https://javado
 
 The following code demonstrates what a very simple usage of this library may look like.
 It does not correspond to any specific video game.
+~~Any resemblance to Minecraft is purely circumstantial.~~
 
 ```java
 /**
@@ -223,9 +224,9 @@ void initEffects() {
   crowdControl.registerCheck(() -> gameIsLoaded() && getLivingPlayers() > 0);
   
   // Register an effect that kills player(s)
-  crowdControl.registerEffect("kill_player", request -> {
-    // Keeping track of whether or not something actually happens as a result of using
-    //  this effect is critical for Crowd Control. If an effect does not apply,
+		crowdControl.registerEffect("kill_player",request->{
+		// Keeping track of whether something actually happens as a result of using
+		//  this effect is critical for Crowd Control. If an effect does not apply,
     //  the handler should either reply with FAILURE to refund the purchaser or RETRY
     //  to attempt to apply the effect again in a few seconds if it is likely to work
     //  in the near future.
@@ -257,27 +258,32 @@ void initEffects() {
           success = true;
         }
       }
-      
-      // Determine response based on success of command
-      Response.Builder response = success
-        ? request.buildResponse().type(Response.ResultType.SUCCESS)
-        // instead of immediately refunding the purchaser, we can return RETRY to try
-        //  to plant a tree again in a few seconds
-        : request.buildResponse().type(Response.ResultType.RETRY).message("No available location to plant tree(s)");
-      response.send();
-    });
-    // This lambda method is a Consumer<Request>, so no return statement is necessary
-  });
-}
+
+		// Determine response based on success of command
+		Response.Builder response=success
+		?request.buildResponse().type(Response.ResultType.SUCCESS)
+		// instead of immediately refunding the purchaser, we can return RETRY to try
+		//  to plant a tree again in a few seconds
+		:request.buildResponse().type(Response.ResultType.RETRY).message("No available location to plant tree(s)");
+		response.send();
+		});
+		// This lambda method is a Consumer<Request>, so no return statement is necessary
+		});
+
+		// Registers an effect that temporarily disables jumping
+		DisableJumpingEffect disableJumpingEffect=new DisableJumpingEffect();
+		crowdControl.registerEffects(disableJumpingEffect);
+		registerGameEventListener(disableJumpingEffect);
+		}
 
 /**
  * Converts a Crowd Control Target (a streamer) to a Player, if online.
  * Used when running the Crowd Control library in server-mode.
  */
-Player getPlayerFromTarget(Request.Target target) {
-  for (Player player : getPlayers()) {
-    TwitchAccount account = player.getTwitchAccount();
-    if (account != null && account.getId() == target.getId()) {
+		Player getPlayerFromTarget(Request.Target target){
+		for(Player player:getPlayers()){
+		TwitchAccount account=player.getTwitchAccount();
+		if(account!=null&&account.getId()==target.getId()){
       return player;
     }
   }
@@ -301,18 +307,43 @@ Collection<Player> getPlayersFromRequest(Request request) {
     if (player != null)  {
       players.add();
     } else {
-      // insert error logging/warnings here
-    }
-  }
-  
-  if (players.isEmpty()) {
-    // insert error logging/warnings here
-  }
-  
-  return players;
+		// insert error logging/warnings here
+		}
+		}
+
+		if(players.isEmpty()){
+		// insert error logging/warnings here
+		}
+
+		return players;
+		}
+
+static class DisableJumpEffect {
+	private static final Duration EFFECT_DURATION = Duration.ofSeconds(5);
+	private Set<Integer> disabledPlayers = new HashSet<>();
+
+	// Game Listener
+	@EventHandler
+	public void onJump(PlayerJumpEvent event) {
+		if (disabledPlayers.contains(event.getPlayer().getEntityId())) {
+			event.setCancelled(true);
+		}
+	}
+
+	// Crowd Control effect handler
+	@Subscribe("disable_jump")
+	public void onEffect(Request request) {
+		// timed effect prevents multiple of the same effect from running at the same time
+		new TimedEffect(request, EFFECT_DURATION, $ -> {
+			// Get the player(s) being targeted by the effect
+			for (Player player : getPlayersFromRequest(request)) {
+				disabledPlayers.add(player.getEntityId());
+			}
+		}, $ -> {
+			for (Player player : getPlayersFromRequest(request)) {
+				disabledPlayers.remove(player.getEntityId());
+			}
+		}).queue();
+	}
 }
 ```
-
-<!--TODO: add example for using #registerEffects-->
-
-<!--TODO: add TimedEffect example-->
