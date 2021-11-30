@@ -39,35 +39,28 @@ import java.util.logging.Logger;
  */
 public final class CrowdControl implements SocketManager {
 
-	/**
-	 * Helper method for determining if a provided exception class is part of an exception's stacktrace.
-	 * @param potentialCause class to search for in stacktrace
-	 * @param exception exception to be searched
-	 * @return true if the exception class is found
-	 */
-	public static boolean isCause(@NotNull Class<? extends Throwable> potentialCause, @Nullable Throwable exception) {
-		if (exception == null) return false;
-		if (potentialCause.isInstance(exception)) return true;
-		return isCause(potentialCause, exception.getCause());
-	}
-
+	private static final Logger logger = Logger.getLogger("CC-Core");
+	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS = Map.of(
+			Response.class, response -> (Response) response,
+			Response.Builder.class, builder -> ((Response.Builder) builder).build()
+	);
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();
-	private final List<Function<Request, Boolean>> globalChecks = new ArrayList<>();
+	private final List<Function<Request, CheckResult>> globalChecks = new ArrayList<>();
 	private final @Nullable String IP;
 	private final int port;
 	private final @Nullable String password;
 	private final SocketManager socketManager;
-	private static final Logger logger = Logger.getLogger("CC-Core");
 
 	/**
 	 * Creates a new Crowd Control client or server instance.
 	 * <p>
 	 * You should generally be using {@link #server()} or {@link #client()} instead.
 	 * This constructor's parameters are prone to changes.
-	 * @param IP IP address to connect to (if applicable)
-	 * @param port port to listen on or connect to
-	 * @param password password required to connect (if applicable)
+	 *
+	 * @param IP                   IP address to connect to (if applicable)
+	 * @param port                 port to listen on or connect to
+	 * @param password             password required to connect (if applicable)
 	 * @param socketManagerCreator creator of a new {@link SocketManager}
 	 */
 	public CrowdControl(@Nullable String IP, int port, @Nullable String password, @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
@@ -87,8 +80,42 @@ public final class CrowdControl implements SocketManager {
 	}
 
 	/**
+	 * Helper method for determining if a provided exception class is part of an exception's stacktrace.
+	 *
+	 * @param potentialCause class to search for in stacktrace
+	 * @param exception      exception to be searched
+	 * @return true if the exception class is found
+	 */
+	public static boolean isCause(@NotNull Class<? extends Throwable> potentialCause, @Nullable Throwable exception) {
+		if (exception == null) return false;
+		if (potentialCause.isInstance(exception)) return true;
+		return isCause(potentialCause, exception.getCause());
+	}
+
+	/**
+	 * Returns a builder for a new {@link CrowdControl} instance operating in client mode.
+	 * It will connect to a singular Crowd Control server instance.
+	 *
+	 * @return a new client builder
+	 */
+	public static CrowdControlClientBuilder client() {
+		return new CrowdControlClientBuilder();
+	}
+
+	/**
+	 * Returns a builder for a new {@link CrowdControl} instance operating in server mode.
+	 * It will allow numerous Crowd Control clients to connect.
+	 *
+	 * @return a new server builder
+	 */
+	public static CrowdControlServerBuilder server() {
+		return new CrowdControlServerBuilder();
+	}
+
+	/**
 	 * Returns the IP that the {@link SocketManager} will listen on.
 	 * If running in server mode, this will be null.
+	 *
 	 * @return IP if available
 	 */
 	@Nullable
@@ -99,6 +126,7 @@ public final class CrowdControl implements SocketManager {
 
 	/**
 	 * Returns the port that the {@link SocketManager} will listen on.
+	 *
 	 * @return IP port
 	 */
 	@CheckReturnValue
@@ -109,6 +137,7 @@ public final class CrowdControl implements SocketManager {
 	/**
 	 * Returns the password required for clients to connect to this server as a SHA-512 encrypted,
 	 * Base64-encoded string. If running in client mode, this will be null.
+	 *
 	 * @return password required to connect
 	 */
 	@Nullable
@@ -117,14 +146,10 @@ public final class CrowdControl implements SocketManager {
 		return password;
 	}
 
-	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS = Map.of(
-			Response.class, response -> (Response) response,
-			Response.Builder.class, builder -> ((Response.Builder) builder).build()
-	);
-
 	/**
 	 * Renders a warning for improperly configured {@link Subscribe} methods.
-	 * @param method improperly configured method
+	 *
+	 * @param method           improperly configured method
 	 * @param errorDescription issue with the method
 	 */
 	private void methodHandlerWarning(@NotNull Method method, @NotNull String errorDescription) {
@@ -143,6 +168,7 @@ public final class CrowdControl implements SocketManager {
 	 *         <li>Void (assumes you will call {@link Response#send()} yourself)</li>
 	 *     </ul></li>
 	 * </ul>
+	 *
 	 * @param object class instance to register
 	 */
 	public void registerHandlers(@NotNull Object object) {
@@ -212,7 +238,8 @@ public final class CrowdControl implements SocketManager {
 
 	/**
 	 * Registers a function to handle an effect.
-	 * @param effect name of the effect to handle
+	 *
+	 * @param effect  name of the effect to handle
 	 * @param handler function to handle the effect
 	 * @see #registerHandler(String, Consumer)
 	 */
@@ -227,7 +254,8 @@ public final class CrowdControl implements SocketManager {
 	/**
 	 * Registers an effect handler which does not immediately return a {@link Response}.
 	 * It is expected to call {@link Response#send()} on its own.
-	 * @param effect name of the effect to handle
+	 *
+	 * @param effect  name of the effect to handle
 	 * @param handler function to handle the effect
 	 * @see #registerHandler(String, Function)
 	 */
@@ -241,36 +269,39 @@ public final class CrowdControl implements SocketManager {
 
 	/**
 	 * Registers a check which will be called for every incoming {@link Request}.
-	 * A resulting value of {@code false} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
+	 * A resulting value of {@link CheckResult#DISALLOW} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
 	 * <p>
-	 * This is used for validating that your service is accepting requests, and should return {@code false} if,
-	 * for example, the game has not fully initialized or no players are connected.
+	 * This is used for validating that your service is accepting requests, and should return {@link CheckResult#DISALLOW}
+	 * if, for example, the game has not fully initialized or no players are connected.
+	 *
 	 * @param check global check to register
 	 */
-	public void registerCheck(@NotNull Function<Request, Boolean> check) {
+	public void registerCheck(@NotNull Function<Request, CheckResult> check) {
 		globalChecks.add(Objects.requireNonNull(check, "check"));
 	}
 
 	/**
 	 * Registers a check which will be called for every incoming {@link Request}.
-	 * A resulting value of {@code false} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
+	 * A resulting value of {@link CheckResult#DISALLOW} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
 	 * <p>
-	 * This is used for validating that your service is accepting requests, and should return {@code false} if,
-	 * for example, the game has not fully initialized or no players are connected.
+	 * This is used for validating that your service is accepting requests, and should return {@link CheckResult#DISALLOW}
+	 * if, for example, the game has not fully initialized or no players are connected.
+	 *
 	 * @param check global check to register
 	 */
-	public void registerCheck(@NotNull Supplier<Boolean> check) {
+	public void registerCheck(@NotNull Supplier<CheckResult> check) {
 		Objects.requireNonNull(check, "check");
 		globalChecks.add($ -> check.get());
 	}
 
 	/**
 	 * Handles an incoming {@link Request} by executing the relevant handler.
+	 *
 	 * @param request an incoming request
 	 */
 	public void handle(@NotNull Request request) {
-		for (Function<Request, Boolean> check : globalChecks) {
-			if (!check.apply(request)) {
+		for (Function<Request, CheckResult> check : globalChecks) {
+			if (check.apply(request) == CheckResult.DISALLOW) {
 				request.buildResponse().type(ResultType.FAILURE).message("The game is unavailable").send();
 			}
 		}
@@ -296,11 +327,13 @@ public final class CrowdControl implements SocketManager {
 
 	/**
 	 * Shuts down the internal connection to the Crowd Control server.
-	 * @deprecated providing error messages via {@link #shutdown(String)} is recommended
+	 *
 	 * @see #shutdown(String)
 	 * @see #shutdown(Request, String)
+	 * @deprecated providing error messages via {@link #shutdown(String)} is recommended
 	 */
-	@SuppressWarnings("deprecation") // yes, I know that I am overriding a deprecated method, deal with it
+	@SuppressWarnings("deprecation")
+	// yes, I know that I am overriding a deprecated method, deal with it
 	@Deprecated
 	public void shutdown() {
 		try {
@@ -313,6 +346,7 @@ public final class CrowdControl implements SocketManager {
 	/**
 	 * Shuts down the internal connection to the Crowd Control server and
 	 * sends a corresponding error message to the streamer(s).
+	 *
 	 * @param reason the reason for shutting down
 	 */
 	public void shutdown(@Nullable String reason) {
@@ -326,7 +360,8 @@ public final class CrowdControl implements SocketManager {
 	/**
 	 * Shuts down the internal connection to the Crowd Control server and
 	 * sends a corresponding error message to the streamer(s).
-	 * @param cause cause for shutting down
+	 *
+	 * @param cause  cause for shutting down
 	 * @param reason the reason for shutting down
 	 */
 	public void shutdown(@Nullable Request cause, @Nullable String reason) {
@@ -335,24 +370,6 @@ public final class CrowdControl implements SocketManager {
 		} catch (IOException e) {
 			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
 		}
-	}
-
-	/**
-	 * Returns a builder for a new {@link CrowdControl} instance operating in client mode.
-	 * It will connect to a singular Crowd Control server instance.
-	 * @return a new client builder
-	 */
-	public static CrowdControlClientBuilder client() {
-		return new CrowdControlClientBuilder();
-	}
-
-	/**
-	 * Returns a builder for a new {@link CrowdControl} instance operating in server mode.
-	 * It will allow numerous Crowd Control clients to connect.
-	 * @return a new server builder
-	 */
-	public static CrowdControlServerBuilder server() {
-		return new CrowdControlServerBuilder();
 	}
 
 }

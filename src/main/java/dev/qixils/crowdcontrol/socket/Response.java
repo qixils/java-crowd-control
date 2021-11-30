@@ -22,28 +22,29 @@ import java.util.logging.Logger;
 
 /**
  * An outgoing packet to the Crowd Control TCP server carrying information in response to an {@link Request incoming packet}.
+ *
  * @see Request
  */
 public final class Response implements JsonObject {
 	private static final Logger logger = Logger.getLogger("CC-Response");
-
+	@SerializedName("type")
+	final PacketType packetType;
 	private final transient Request request;
 	private final int id;
 	@SerializedName("status")
 	private final ResultType type;
 	private final String message;
 	private final long timeRemaining; // millis
-	@SerializedName("type")
-	final PacketType packetType;
 
 	/**
 	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
 	 * and an associated message.
-	 * @param request originating request
-	 * @param type result of execution
-	 * @param message result message
+	 *
+	 * @param request       originating request
+	 * @param type          result of execution
+	 * @param message       result message
 	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
-	 * @param packetType type of packet
+	 * @param packetType    type of packet
 	 */
 	@CheckReturnValue
 	Response(@NotNull Request request, Response.@NotNull ResultType type, @NotNull String message, long timeRemaining, @Nullable PacketType packetType) {
@@ -58,9 +59,10 @@ public final class Response implements JsonObject {
 	/**
 	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
 	 * and an associated message.
-	 * @param request originating request
-	 * @param type result of execution
-	 * @param message result message
+	 *
+	 * @param request       originating request
+	 * @param type          result of execution
+	 * @param message       result message
 	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
 	 */
 	@CheckReturnValue
@@ -70,6 +72,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Gets the unique {@link Request} that caused this response.
+	 *
 	 * @return original request
 	 */
 	public Request getRequest() {
@@ -78,6 +81,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Gets the ID of the outgoing packet. Corresponds to a unique transaction.
+	 *
 	 * @return packet ID
 	 */
 	@CheckReturnValue
@@ -87,6 +91,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Gets the result of executing an effect.
+	 *
 	 * @return effect result
 	 */
 	@NotNull
@@ -97,6 +102,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Gets the message that will be delivered along with the result.
+	 *
 	 * @return result message
 	 */
 	@NotNull
@@ -107,6 +113,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Gets the milliseconds left until the referenced effect ends.
+	 *
 	 * @return effect duration in milliseconds
 	 */
 	@CheckReturnValue
@@ -116,6 +123,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Outputs this object as a JSON string for use in the server connection.
+	 *
 	 * @return JSON string
 	 */
 	@NotNull
@@ -126,6 +134,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Gets a mutable {@link Builder} representing this Response.
+	 *
 	 * @return new builder
 	 */
 	@NotNull
@@ -136,6 +145,7 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Sends this {@link Response} to the client or server that delivered the related {@link Request}.
+	 *
 	 * @throws IllegalStateException the related {@link Request} does not have an associated client or server
 	 */
 	public void send() throws IllegalStateException {
@@ -187,6 +197,7 @@ public final class Response implements JsonObject {
 		KEEP_ALIVE((byte) 0xFF);
 
 		private static final Map<Byte, PacketType> BY_BYTE;
+
 		static {
 			Map<Byte, PacketType> map = new HashMap<>(values().length);
 			for (PacketType type : values())
@@ -204,17 +215,18 @@ public final class Response implements JsonObject {
 			this.encodedByte = (byte) ordinal();
 		}
 
-		public byte getEncodedByte() {
-			return encodedByte;
-		}
-
 		/**
 		 * Gets a packet type from its corresponding JSON encoding.
+		 *
 		 * @param encodedByte byte used in JSON encoding
 		 * @return corresponding Type if applicable
 		 */
 		public static @Nullable PacketType from(byte encodedByte) {
 			return BY_BYTE.get(encodedByte);
+		}
+
+		public byte getEncodedByte() {
+			return encodedByte;
 		}
 	}
 
@@ -240,16 +252,19 @@ public final class Response implements JsonObject {
 		RETRY,
 		/**
 		 * The timed effect has been paused and is now waiting.
+		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		PAUSED((byte) 0x06),
 		/**
 		 * The timed effect has been resumed and is counting down again.
+		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		RESUMED((byte) 0x07),
 		/**
 		 * The timed effect has finished.
+		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		FINISHED((byte) 0x08),
@@ -263,6 +278,7 @@ public final class Response implements JsonObject {
 		NOT_READY((byte) 0xFF);
 
 		private static final Map<Byte, ResultType> BY_BYTE;
+
 		static {
 			Map<Byte, ResultType> map = new HashMap<>(values().length);
 			for (ResultType type : values())
@@ -280,17 +296,18 @@ public final class Response implements JsonObject {
 			this.encodedByte = (byte) ordinal();
 		}
 
-		public byte getEncodedByte() {
-			return encodedByte;
-		}
-
 		/**
 		 * Gets a packet type from its corresponding JSON encoding.
+		 *
 		 * @param encodedByte byte used in JSON encoding
 		 * @return corresponding Type if applicable
 		 */
 		public static @Nullable ResultType from(byte encodedByte) {
 			return BY_BYTE.get(encodedByte);
+		}
+
+		public byte getEncodedByte() {
+			return encodedByte;
 		}
 	}
 
@@ -310,6 +327,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Creates a new builder using the data from a {@link Response}.
+		 *
 		 * @param source source for a new builder
 		 */
 		@CheckReturnValue
@@ -324,6 +342,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Creates a new builder representing the {@link Response} to a {@link Request}.
+		 *
 		 * @param request request to respond to
 		 */
 		@CheckReturnValue
@@ -333,6 +352,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Sets the type of result being returned.
+		 *
 		 * @param type result type
 		 * @return this builder
 		 */
@@ -348,6 +368,7 @@ public final class Response implements JsonObject {
 		/**
 		 * Sets the message describing or explaining the response.
 		 * <br>Useful for explaining why an effect failed to apply.
+		 *
 		 * @param message response message
 		 * @return this builder
 		 */
@@ -361,6 +382,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Sets the time left on the referenced effect in milliseconds.
+		 *
 		 * @param timeRemaining time in milliseconds
 		 * @return this builder
 		 */
@@ -375,6 +397,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Sets the time left on the referenced effect.
+		 *
 		 * @param timeRemaining effect duration
 		 * @return this builder
 		 */
@@ -386,6 +409,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Sets the time at which the referenced effect will end.
+		 *
 		 * @param endEffectAt time to end effect
 		 * @return this builder
 		 */
@@ -399,6 +423,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Sets the type of packet that this Response represents.
+		 *
 		 * @param packetType type of packet
 		 * @return this builder
 		 */
@@ -411,6 +436,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Builds a new {@link Response} object.
+		 *
 		 * @return new Response
 		 */
 		@NotNull
@@ -421,6 +447,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Builds this {@link Response} and then sends it to the client or server that delivered the related {@link Request}.
+		 *
 		 * @throws IllegalStateException the related {@link Request} does not have an associated client or server
 		 */
 		public void send() {
@@ -429,6 +456,7 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Creates a new {@link Builder} object with the same parameters.
+		 *
 		 * @return cloned builder
 		 */
 		@SuppressWarnings("MethodDoesntCallSuperMethod")

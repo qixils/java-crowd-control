@@ -6,6 +6,7 @@ package dev.qixils.crowdcontrol.socket;
 public interface ByteObject {
 	/**
 	 * Gets the byte that this object is represented by in JSON serialization.
+	 *
 	 * @return encoded byte
 	 */
 	byte getEncodedByte();

@@ -16,16 +16,17 @@ import java.util.logging.Logger;
  * Manages the connection to the Crowd Control server.
  */
 public final class ClientSocketManager implements SocketManager {
+	private static final @NotNull Logger logger = Logger.getLogger("CC-ClientSocket");
 	private final @NotNull CrowdControl crowdControl;
 	private final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	private @Nullable Socket socket;
 	private volatile boolean running = true;
-	private static final @NotNull Logger logger = Logger.getLogger("CC-ClientSocket");
 	private int sleep = 1;
 	private boolean connected = false;
 
 	/**
 	 * Creates a new client-side socket manager. This is intended only for use by the library.
+	 *
 	 * @param crowdControl Crowd Control instance
 	 */
 	@CheckReturnValue
@@ -63,7 +64,8 @@ public final class ClientSocketManager implements SocketManager {
 					// ensure socket is closed
 					try {
 						socket.close();
-					} catch (IOException ignored) {}
+					} catch (IOException ignored) {
+					}
 				}
 
 				if (!running)
@@ -77,7 +79,8 @@ public final class ClientSocketManager implements SocketManager {
 				try {
 					//noinspection BusyWait
 					Thread.sleep(sleep * 1000L);
-				} catch (InterruptedException ignored) {}
+				} catch (InterruptedException ignored) {
+				}
 				sleep *= 2;
 			}
 		}
