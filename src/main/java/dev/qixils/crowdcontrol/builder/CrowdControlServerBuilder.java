@@ -8,7 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.CheckReturnValue;
 
 /**
- * Builds a new {@link CrowdControl} instance that acts as a server for Crowd Control clients to connect to.
+ * Builds a new {@link CrowdControl} instance that acts as
+ * a server for Crowd Control clients to connect to.
  */
 public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
 	private String password;

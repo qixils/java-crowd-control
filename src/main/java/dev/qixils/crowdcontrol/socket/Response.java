@@ -21,7 +21,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * An outgoing packet to the Crowd Control TCP server carrying information in response to an {@link Request incoming packet}.
+ * An outgoing packet to the Crowd Control TCP server carrying the result of executing
+ * a {@link Request requested} effect.
  *
  * @see Request
  */
@@ -47,7 +48,11 @@ public final class Response implements JsonObject {
 	 * @param packetType    type of packet
 	 */
 	@CheckReturnValue
-	Response(@NotNull Request request, Response.@NotNull ResultType type, @NotNull String message, long timeRemaining, @Nullable PacketType packetType) {
+	Response(@NotNull Request request,
+			 Response.@NotNull ResultType type,
+			 @NotNull String message,
+			 long timeRemaining,
+			 @Nullable PacketType packetType) {
 		this.request = Objects.requireNonNull(request, "request cannot be null");
 		this.id = request.getId();
 		this.type = Objects.requireNonNull(type, "type cannot be null");
@@ -66,7 +71,10 @@ public final class Response implements JsonObject {
 	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
 	 */
 	@CheckReturnValue
-	public Response(@NotNull Request request, @NotNull Response.ResultType type, @NotNull String message, long timeRemaining) {
+	public Response(@NotNull Request request,
+					@NotNull Response.ResultType type,
+					@NotNull String message,
+					long timeRemaining) {
 		this(request, type, message, timeRemaining, null);
 	}
 

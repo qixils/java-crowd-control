@@ -24,7 +24,8 @@ import java.util.logging.Logger;
  * will run one after another.
  * <p>
  * To enqueue this effect, execute {@link #queue()} after instantiating a new object.
- * Similarly, the effect can be {@link #pause() paused}, {@link #resume() resumed}, or {@link #complete() stopped}.
+ * Similarly, the effect can be {@link #pause() paused}, {@link #resume() resumed},
+ * or {@link #complete() stopped}.
  */
 public final class TimedEffect {
 
