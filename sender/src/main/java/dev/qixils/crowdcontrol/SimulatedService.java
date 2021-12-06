@@ -15,19 +15,30 @@ import java.time.Duration;
 /**
  * An object used to simulate a Crowd Control server or client that sends
  * {@link dev.qixils.crowdcontrol.socket.Request effect requests} to a connected video game.
+ *
+ * @param <R> the type of {@link Publisher} returned by the {@code #sendRequest} methods
  */
-public interface SimulatedService {
+public interface SimulatedService<R extends Publisher<@NotNull Response>> {
 	/**
 	 * Time until a request {@link java.util.concurrent.TimeoutException times out}.
 	 */
 	Duration TIMEOUT = Duration.ofSeconds(15);
 
 	/**
-	 * Determines if the simulated server or client is currently running.
+	 * Determines if the simulated service is currently running.
 	 */
 	@CheckReturnValue
 	@NonBlocking
 	boolean isRunning();
+
+	/**
+	 * Determines if the simulated service is currently accepting requests.
+	 *
+	 * @return {@code true} if the simulated service is currently accepting requests
+	 */
+	default boolean isAcceptingRequests() {
+		return isRunning();
+	}
 
 	/**
 	 * Stops the simulated server or client.
@@ -42,11 +53,11 @@ public interface SimulatedService {
 	 * @return a {@link Publisher} that will either emit the {@link Response}(s),
 	 * throw a {@link java.util.concurrent.TimeoutException} if no response is received in a timely manner,
 	 * or throw a {@link IOException} if an I/O error occurs trying to write the request
-	 * @throws IllegalStateException if the simulated server or client is not {@link #isRunning() running}
+	 * @throws IllegalStateException if the simulated server or client is not {@link #isAcceptingRequests() accepting requests}
 	 */
 	@NotNull
 	@NonBlocking
-	default Publisher<@NotNull Response> sendRequest(@NotNull Request request) throws IllegalStateException {
+	default R sendRequest(@NotNull Request request) throws IllegalStateException {
 		return sendRequest(request, true);
 	}
 
@@ -57,11 +68,11 @@ public interface SimulatedService {
 	 * @return a {@link Publisher} that will either emit the {@link Response}(s),
 	 * throw a {@link java.util.concurrent.TimeoutException} if no response is received in a timely manner,
 	 * or throw a {@link IOException} if an I/O error occurs trying to write the request
-	 * @throws IllegalStateException if the simulated server or client is not {@link #isRunning() running}
+	 * @throws IllegalStateException if the simulated server or client is not {@link #isAcceptingRequests() accepting requests}
 	 */
 	@NotNull
 	@NonBlocking
-	default Publisher<@NotNull Response> sendRequest(Request.@NotNull Builder builder) throws IllegalStateException {
+	default R sendRequest(Request.@NotNull Builder builder) throws IllegalStateException {
 		return sendRequest(builder, true);
 	}
 
@@ -74,11 +85,11 @@ public interface SimulatedService {
 	 * @return a {@link Publisher} that will either emit the {@link Response}(s),
 	 * throw a {@link java.util.concurrent.TimeoutException} if {@code timeout} is {@code true},
 	 * or throw a {@link IOException} if an I/O error occurs trying to write the request
-	 * @throws IllegalStateException if the simulated server or client is not {@link #isRunning() running}
+	 * @throws IllegalStateException if the simulated server or client is not {@link #isAcceptingRequests() accepting requests}
 	 */
 	@NotNull
 	@NonBlocking
-	default Publisher<@NotNull Response> sendRequest(@NotNull Request request, boolean timeout) throws IllegalStateException {
+	default R sendRequest(@NotNull Request request, boolean timeout) throws IllegalStateException {
 		return sendRequest(request.toBuilder(), timeout);
 	}
 
@@ -91,9 +102,9 @@ public interface SimulatedService {
 	 * @return a {@link Publisher} that will either emit the {@link Response}(s),
 	 * throw a {@link java.util.concurrent.TimeoutException} if {@code timeout} is {@code true},
 	 * or throw a {@link IOException} if an I/O error occurs trying to write the request
-	 * @throws IllegalStateException if the simulated server or client is not {@link #isRunning() running}
+	 * @throws IllegalStateException if the simulated server or client is not {@link #isAcceptingRequests() accepting requests}
 	 */
 	@NotNull
 	@NonBlocking
-	Publisher<@NotNull Response> sendRequest(Request.@NotNull Builder builder, boolean timeout) throws IllegalStateException;
+	R sendRequest(Request.@NotNull Builder builder, boolean timeout) throws IllegalStateException;
 }

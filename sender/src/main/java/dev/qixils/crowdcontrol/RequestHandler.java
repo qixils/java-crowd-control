@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class RequestHandler implements SimulatedService {
+class RequestHandler implements SimulatedService<Mono<Response>> {
 	private static final Logger logger = Logger.getLogger("CC-RequestHandler");
 	private static final Executor executor = Executors.newCachedThreadPool();
 	private final Map<Integer, CompletableFuture<Response>> pendingResponses = new HashMap<>(1);
@@ -45,6 +45,7 @@ class RequestHandler implements SimulatedService {
 	}
 
 	public void start() throws IllegalThreadStateException {
+		logger.info("Starting request handler");
 		loopThread.start();
 	}
 
@@ -104,8 +105,11 @@ class RequestHandler implements SimulatedService {
 
 					case EFFECT_RESULT:
 						CompletableFuture<Response> future = pendingResponses.remove(response.getId());
-						if (future != null)
+						if (future != null) {
+							logger.fine("Received response for request " + response.getId());
 							future.complete(response);
+						} else
+							logger.warning("Received response for unknown request ID: " + response.getId());
 				}
 			}
 		} catch (IOException e) {
@@ -116,9 +120,8 @@ class RequestHandler implements SimulatedService {
 
 	@Override
 	public @NotNull Mono<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
-		if (!isRunning()) {
-			throw new IllegalStateException("RequestHandler is not running");
-		}
+		if (!isAcceptingRequests())
+			throw new IllegalStateException("RequestHandler is not accepting requests");
 
 		CompletableFuture<Response> responseFuture = new CompletableFuture<>();
 		Request request = builder.id(++nextRequestId).build();

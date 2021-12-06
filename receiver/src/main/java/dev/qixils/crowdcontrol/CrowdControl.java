@@ -242,7 +242,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 					}
 					return output;
 				});
-			} else if (returnType == Void.class) {
+			} else if (returnType.equals(Void.TYPE)) {
 				registerHandler(effect, request -> {
 					try {
 						method.invoke(object, request);

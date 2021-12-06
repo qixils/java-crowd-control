@@ -44,10 +44,22 @@ public final class Request implements JsonObject {
 	 */
 	public Request(Request.@NotNull Builder builder) {
 		this.type = Objects.requireNonNull(builder.type, "type cannot be null");
+
+		// request ID
+		if (builder.id < 0)
+			throw new IllegalArgumentException("id cannot be negative");
 		this.id = builder.id;
+
+		// request effect & viewer
+		if (type == Type.START || type == Type.STOP || type == Type.TEST) {
+			Objects.requireNonNull(builder.effect, "effect cannot be null");
+			Objects.requireNonNull(builder.viewer, "viewer cannot be null");
+		}
 		this.effect = builder.effect;
-		this.message = builder.message;
 		this.viewer = builder.viewer;
+
+		// misc
+		this.message = builder.message;
 		this.cost = builder.cost;
 		this.targets = builder.targets;
 	}
@@ -366,7 +378,7 @@ public final class Request implements JsonObject {
 		private String message;
 		private String viewer;
 		private @Nullable Integer cost;
-		private Type type;
+		private Type type = Type.START;
 		private Target[] targets;
 
 		/**

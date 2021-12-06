@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * A client that connects to a video game hosting a Crowd Control server using the
  * {@code SimpleTCPClientConnector} and dispatches {@link Request}s.
  */
-public final class SimulatedClient implements AutomatableService, ServiceManager {
+public final class SimulatedClient implements AutomatableService<Mono<Response>>, ServiceManager {
 	private static final Logger logger = Logger.getLogger("CC-Simul-Client");
 	private final String ip;
 	private final int port;
@@ -54,7 +54,7 @@ public final class SimulatedClient implements AutomatableService, ServiceManager
 
 	@Override
 	@Blocking
-	public void connect() throws IOException {
+	public void start() throws IOException {
 		Socket socket = new Socket(ip, port);
 		logger.info("Connected to " + ip + ":" + port);
 		handler = new RequestHandler(socket, password);
@@ -62,7 +62,7 @@ public final class SimulatedClient implements AutomatableService, ServiceManager
 
 	@Override
 	@NonBlocking
-	public void start() {
+	public void autoStart() {
 		new Thread(this::autoReconnect).start();
 	}
 
@@ -71,7 +71,7 @@ public final class SimulatedClient implements AutomatableService, ServiceManager
 		int reconnectionAttempts = 0;
 		while (running) {
 			try {
-				connect();
+				start();
 				reconnectionAttempts = 0;
 				while (handler.isRunning()) {
 					try {

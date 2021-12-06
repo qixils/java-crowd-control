@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  * A server that can connect to multiple video games running a Crowd Control client using the
  * {@code SimpleTCPConnector} and dispatches {@link Request}s.
  */
-public class SimulatedServer implements StartableService, ServiceManager {
+public class SimulatedServer implements StartableService<Flux<Response>>, ServiceManager {
 	private static final Logger logger = Logger.getLogger("CC-Simul-Server");
 	private final int port;
 	private final List<RequestHandler> rawHandlers = new ArrayList<>(1);
@@ -57,9 +57,11 @@ public class SimulatedServer implements StartableService, ServiceManager {
 	}
 
 	@Override
-	public void connect() throws IOException {
+	public void start() throws IOException {
 		serverSocket = new ServerSocket(port);
 		loopThread = new Thread(this::loop);
+		loopThread.start();
+		logger.info("Listening on port " + port);
 	}
 
 	@Blocking
@@ -71,8 +73,10 @@ public class SimulatedServer implements StartableService, ServiceManager {
 					socket.close();
 					return;
 				}
+				logger.info("Accepted connection from " + socket.getInetAddress());
 				RequestHandler handler = new RequestHandler(socket, null);
 				handler.start();
+				rawHandlers.add(handler);
 			} catch (IOException e) {
 				logger.log(Level.WARNING, "Failed to accept connection", e);
 			}
@@ -82,7 +86,16 @@ public class SimulatedServer implements StartableService, ServiceManager {
 	@Override
 	@CheckReturnValue
 	public boolean isRunning() {
-		return running && serverSocket != null && !serverSocket.isClosed() && loopThread != null && loopThread.isAlive();
+		return running
+				&& serverSocket != null
+				&& !serverSocket.isClosed()
+				&& loopThread != null
+				&& loopThread.isAlive();
+	}
+
+	@Override
+	public boolean isAcceptingRequests() {
+		return isRunning() && !getHandlers().isEmpty();
 	}
 
 	@Override
@@ -103,6 +116,9 @@ public class SimulatedServer implements StartableService, ServiceManager {
 
 	@Override
 	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder request, boolean timeout) throws IllegalStateException {
+		if (!isAcceptingRequests())
+			throw new IllegalStateException("Server is not accepting requests");
+
 		List<RequestHandler> handlers = getHandlers();
 		List<Mono<Response>> responses = new ArrayList<>(handlers.size());
 		for (RequestHandler handler : handlers) {
