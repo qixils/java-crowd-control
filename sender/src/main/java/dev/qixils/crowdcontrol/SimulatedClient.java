@@ -57,7 +57,8 @@ public final class SimulatedClient implements AutomatableService<Mono<Response>>
 	public void start() throws IOException {
 		Socket socket = new Socket(ip, port);
 		logger.info("Connected to " + ip + ":" + port);
-		handler = new RequestHandler(socket, password);
+		handler = new RequestHandler(socket, this, password);
+		handler.start();
 	}
 
 	@Override
@@ -98,8 +99,19 @@ public final class SimulatedClient implements AutomatableService<Mono<Response>>
 	}
 
 	@Override
+	public boolean isAcceptingRequests() {
+		return isRunning() && handler.isAcceptingRequests();
+	}
+
+	@Override
+	public boolean isShutdown() {
+		return !running;
+	}
+
+	@Override
 	@Blocking
 	public void shutdown() {
+		if (!running) return;
 		running = false;
 		handler.shutdown();
 	}

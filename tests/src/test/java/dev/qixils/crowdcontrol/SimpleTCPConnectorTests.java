@@ -11,12 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Tests for the {@code SimpleTCPConnector} socket protocol.
+ */
+@SuppressWarnings("BusyWait")
 public class SimpleTCPConnectorTests {
-	private static final int PORT = 53735;
+	private static final int PORT = 53736;
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
 	@Test
-	public void successfulRequestSingleClientTest() throws InterruptedException {
+	public void singleClientTest() throws InterruptedException {
 		SimulatedServer server = new SimulatedServer(PORT);
 		Assertions.assertDoesNotThrow(server::start);
 
@@ -24,13 +28,9 @@ public class SimpleTCPConnectorTests {
 		client.registerHandlers(EFFECT_HANDLERS);
 
 		// give client time to connect
-		try {
-			int delay = 1;
-			while (!server.isAcceptingRequests() && delay <= 10) {
-				Thread.sleep((long) Math.pow(2, delay++));
-			}
-		} catch (InterruptedException e) {
-			Assertions.fail(e);
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
 		}
 
 		Assertions.assertTrue(server.isAcceptingRequests());
@@ -71,7 +71,7 @@ public class SimpleTCPConnectorTests {
 	}
 
 	@Test
-	public void successfulRequestMultipleClientsTest() throws InterruptedException {
+	public void multipleClientsTest() throws InterruptedException {
 		SimulatedServer server = new SimulatedServer(PORT);
 		Assertions.assertDoesNotThrow(server::start);
 
@@ -85,13 +85,9 @@ public class SimpleTCPConnectorTests {
 		}
 
 		// give clients time to connect
-		try {
-			int delay = 1;
-			while (!server.isAcceptingRequests() && server.getConnectedClients() < clients && delay <= 10) {
-				Thread.sleep((long) Math.pow(2, delay++));
-			}
-		} catch (InterruptedException e) {
-			Assertions.fail(e);
+		int delay = 1;
+		while (!server.isAcceptingRequests() && server.getConnectedClients() < clients && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
 		}
 
 		Assertions.assertTrue(server.isAcceptingRequests());

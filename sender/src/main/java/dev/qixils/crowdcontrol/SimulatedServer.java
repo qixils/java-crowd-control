@@ -76,7 +76,7 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 					return;
 				}
 				logger.info("Accepted connection from " + socket.getInetAddress());
-				RequestHandler handler = new RequestHandler(socket, null);
+				RequestHandler handler = new RequestHandler(socket, this, null);
 				handler.start();
 				synchronized (rawHandlers) {
 					rawHandlers.add(handler);
@@ -103,6 +103,11 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 		return isRunning() && !getHandlers().isEmpty();
 	}
 
+	@Override
+	public boolean isShutdown() {
+		return !running;
+	}
+
 	/**
 	 * Gets the number of clients connected to this server.
 	 *
@@ -115,6 +120,7 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 	@Override
 	@Blocking
 	public void shutdown() {
+		if (!running) return;
 		running = false;
 		if (serverSocket != null && !serverSocket.isClosed()) {
 			try {

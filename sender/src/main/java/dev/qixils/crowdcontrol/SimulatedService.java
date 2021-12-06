@@ -36,9 +36,20 @@ public interface SimulatedService<R extends Publisher<@NotNull Response>> {
 	 *
 	 * @return {@code true} if the simulated service is currently accepting requests
 	 */
+	@CheckReturnValue
+	@NonBlocking
 	default boolean isAcceptingRequests() {
 		return isRunning();
 	}
+
+	/**
+	 * Determines if the simulated service was {@link #shutdown() shutdown}.
+	 *
+	 * @return {@code true} if the simulated service was {@link #shutdown() shutdown}
+	 */
+	@CheckReturnValue
+	@NonBlocking
+	boolean isShutdown();
 
 	/**
 	 * Stops the simulated server or client.

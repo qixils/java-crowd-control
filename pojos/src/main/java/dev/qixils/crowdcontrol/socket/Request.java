@@ -51,7 +51,7 @@ public final class Request implements JsonObject {
 		this.id = builder.id;
 
 		// request effect & viewer
-		if (type == Type.START || type == Type.STOP || type == Type.TEST) {
+		if (type.isEffectType()) {
 			Objects.requireNonNull(builder.effect, "effect cannot be null");
 			Objects.requireNonNull(builder.viewer, "viewer cannot be null");
 		}
@@ -229,22 +229,22 @@ public final class Request implements JsonObject {
 		 * Indicates that you should simulate the starting of an effect (i.e. test if it's available)
 		 * but should not actually start the effect.
 		 */
-		TEST,
+		TEST(true),
 		/**
 		 * Indicates that you should start an effect, if available.
 		 */
-		START,
+		START(true),
 		/**
 		 * Indicates that you should stop an effect.
 		 */
-		STOP,
+		STOP(true),
 		/**
 		 * Indicates that a streamer is attempting to log in to the Crowd Control server.
 		 * <p>
 		 * This value is only used internally by the library. You will not encounter this value
 		 * and should assume it does not exist.
 		 */
-		LOGIN((byte) 0xF0),
+		LOGIN(false, (byte) 0xF0),
 		/**
 		 * This packet's sole purpose is to establish that the connection with the
 		 * Crowd Control server has not been dropped.
@@ -252,7 +252,7 @@ public final class Request implements JsonObject {
 		 * This value is only used internally by the library. You will not encounter this value
 		 * and should assume it does not exist.
 		 */
-		KEEP_ALIVE((byte) 0xFF);
+		KEEP_ALIVE(false, (byte) 0xFF);
 
 		private static final Map<Byte, Type> BY_BYTE;
 
@@ -263,13 +263,16 @@ public final class Request implements JsonObject {
 			BY_BYTE = map;
 		}
 
+		private final boolean isStandard;
 		private final byte encodedByte;
 
-		Type(byte encodedByte) {
+		Type(boolean isStandard, byte encodedByte) {
+			this.isStandard = isStandard;
 			this.encodedByte = encodedByte;
 		}
 
-		Type() {
+		Type(boolean isStandard) {
+			this.isStandard = isStandard;
 			this.encodedByte = (byte) ordinal();
 		}
 
@@ -287,6 +290,15 @@ public final class Request implements JsonObject {
 		@CheckReturnValue
 		public byte getEncodedByte() {
 			return encodedByte;
+		}
+
+		/**
+		 * Determines if this packet represents a standard effect request.
+		 *
+		 * @return if this packet represents a standard effect request
+		 */
+		public boolean isEffectType() {
+			return isStandard;
 		}
 	}
 
@@ -405,6 +417,8 @@ public final class Request implements JsonObject {
 		public Builder() {
 		}
 
+		// setters
+
 		/**
 		 * Sets the type of result being returned.
 		 *
@@ -495,6 +509,85 @@ public final class Request implements JsonObject {
 			this.id = id;
 			return this;
 		}
+
+		// getters
+
+		/**
+		 * Gets the ID of the request.
+		 *
+		 * @return request ID
+		 */
+		@CheckReturnValue
+		public int getId() {
+			return id;
+		}
+
+		/**
+		 * Gets the effect being requested.
+		 *
+		 * @return requested effect
+		 */
+		@Nullable
+		@CheckReturnValue
+		public String getEffect() {
+			return effect;
+		}
+
+		/**
+		 * Gets the message describing or explaining the request.
+		 *
+		 * @return request message
+		 */
+		@Nullable
+		@CheckReturnValue
+		public String getMessage() {
+			return message;
+		}
+
+		/**
+		 * Gets the viewer requesting the effect.
+		 *
+		 * @return viewer requesting the effect
+		 */
+		@Nullable
+		@CheckReturnValue
+		public String getViewer() {
+			return viewer;
+		}
+
+		/**
+		 * Gets the cost of the effect.
+		 *
+		 * @return cost of the effect
+		 */
+		@CheckReturnValue
+		public @Nullable Integer getCost() {
+			return cost;
+		}
+
+		/**
+		 * Gets the type of result being returned.
+		 *
+		 * @return result type
+		 */
+		@Nullable
+		@CheckReturnValue
+		public Type getType() {
+			return type;
+		}
+
+		/**
+		 * Gets the targets of the effect.
+		 *
+		 * @return targets of the effect
+		 */
+		@Nullable
+		@CheckReturnValue
+		public Target[] getTargets() {
+			return targets;
+		}
+
+		// build
 
 		/**
 		 * Builds a new {@link Request} object.
