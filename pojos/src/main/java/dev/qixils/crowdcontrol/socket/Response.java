@@ -87,6 +87,16 @@ public final class Response implements JsonObject {
 	}
 
 	/**
+	 * Constructs a response to a {@link Request} from a {@link Builder}.
+	 *
+	 * @param builder {@link Response} builder
+	 */
+	@CheckReturnValue
+	public Response(@NotNull Builder builder) {
+		this(builder.request, builder.type, builder.message, builder.timeRemaining, builder.packetType);
+	}
+
+	/**
 	 * Creates a {@link Response} object from JSON.
 	 *
 	 * @param json input json data from the Crowd Control game
@@ -503,7 +513,7 @@ public final class Response implements JsonObject {
 		@NotNull
 		@CheckReturnValue
 		public Response build() {
-			return new Response(request, type, message, timeRemaining, packetType);
+			return new Response(this);
 		}
 
 		/**
@@ -523,7 +533,9 @@ public final class Response implements JsonObject {
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Builder clone() {
-			return new Builder(request).timeRemaining(timeRemaining).message(message).type(type).packetType(packetType);
+			Builder builder = new Builder(request).timeRemaining(timeRemaining).message(message).type(type).packetType(packetType);
+			builder.messageSet = messageSet;
+			return builder;
 		}
 	}
 }

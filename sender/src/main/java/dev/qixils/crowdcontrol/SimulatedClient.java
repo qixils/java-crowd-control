@@ -26,6 +26,14 @@ public final class SimulatedClient implements AutomatableService<Mono<Response>>
 	private RequestHandler handler = null;
 	private boolean running = true;
 
+	/**
+	 * Creates a new {@code SimulatedClient} that connects to the given host using the
+	 * provided password.
+	 *
+	 * @param ip       the IP to connect to
+	 * @param port     the port to connect to
+	 * @param password the password to use
+	 */
 	public SimulatedClient(@NotNull String ip, int port, @NotNull String password) {
 		this.ip = ip;
 		this.port = port;

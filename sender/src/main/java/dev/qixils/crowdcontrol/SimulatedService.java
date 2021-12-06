@@ -26,6 +26,8 @@ public interface SimulatedService<R extends Publisher<@NotNull Response>> {
 
 	/**
 	 * Determines if the simulated service is currently running.
+	 *
+	 * @return {@code true} if the simulated service is currently running
 	 */
 	@CheckReturnValue
 	@NonBlocking

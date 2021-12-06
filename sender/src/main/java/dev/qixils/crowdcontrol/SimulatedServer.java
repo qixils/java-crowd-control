@@ -30,6 +30,11 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 	private Thread loopThread = null;
 	private volatile boolean running = true;
 
+	/**
+	 * Creates a new {@link SimulatedServer} that listens on the given port.
+	 *
+	 * @param port port to listen on
+	 */
 	public SimulatedServer(int port) {
 		this.port = port;
 	}
