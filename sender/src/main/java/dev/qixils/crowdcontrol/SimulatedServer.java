@@ -52,8 +52,10 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 	}
 
 	private List<RequestHandler> getHandlers() {
-		rawHandlers.removeIf(handler -> !handler.isRunning());
-		return rawHandlers;
+		synchronized (rawHandlers) {
+			rawHandlers.removeIf(handler -> !handler.isRunning());
+			return rawHandlers;
+		}
 	}
 
 	@Override
@@ -76,7 +78,9 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 				logger.info("Accepted connection from " + socket.getInetAddress());
 				RequestHandler handler = new RequestHandler(socket, null);
 				handler.start();
-				rawHandlers.add(handler);
+				synchronized (rawHandlers) {
+					rawHandlers.add(handler);
+				}
 			} catch (IOException e) {
 				if (running)
 					logger.log(Level.WARNING, "Failed to accept connection", e);
