@@ -38,6 +38,13 @@ public class SimpleTCPClientConnectorTests {
 		Response response = client.sendRequest(new Request.Builder().effect("success").viewer("test")).block();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(response.getResultType(), Response.ResultType.SUCCESS);
+
+		// cleanup
+		client.shutdown();
+		server.shutdown("Test completed");
+
+		Thread.sleep(25); // give server time to shut down
+		Assertions.assertFalse(client.isRunning());
 	}
 
 	@Test
@@ -66,6 +73,12 @@ public class SimpleTCPClientConnectorTests {
 			Assertions.assertNotNull(response);
 			Assertions.assertEquals(response.getResultType(), Response.ResultType.SUCCESS);
 		}
+
+		// cleanup
+		clientList.forEach(SimulatedClient::shutdown);
+		server.shutdown("Test completed");
+
+		Thread.sleep(25); // give server time to shut down
 	}
 
 	@Test
@@ -84,5 +97,10 @@ public class SimpleTCPClientConnectorTests {
 
 		Assertions.assertFalse(client.isAcceptingRequests());
 		Assertions.assertTrue(client.isShutdown());
+
+		// cleanup
+		server.shutdown("Test completed");
+
+		Thread.sleep(25); // give server time to shut down
 	}
 }
