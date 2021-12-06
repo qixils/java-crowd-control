@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @SuppressWarnings("BusyWait")
 public class SimpleTCPConnectorTests {
-	private static final int PORT = 53736;
+	private static final int PORT = 53735;
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
 	@Test
@@ -66,7 +66,7 @@ public class SimpleTCPConnectorTests {
 		client.shutdown("Test completed");
 		server.shutdown();
 
-		Thread.sleep(25); // give server time to shut down
+		Thread.sleep(40); // give server time to shut down
 		Assertions.assertFalse(server.isRunning());
 	}
 
@@ -94,7 +94,7 @@ public class SimpleTCPConnectorTests {
 
 		// get all responses
 		Request.Builder request = new Request.Builder().effect("success").viewer("test");
-		Thread.sleep(25); // more delay for good measure
+		Thread.sleep(40); // more delay for good measure
 		List<Response> responses = server.sendRequest(request).collectList().block();
 
 		Assertions.assertNotNull(responses);
@@ -107,7 +107,7 @@ public class SimpleTCPConnectorTests {
 		clientsList.forEach(client -> client.shutdown("Test completed"));
 		server.shutdown();
 
-		Thread.sleep(25); // give server time to shut down
+		Thread.sleep(40); // give server time to shut down
 		Assertions.assertFalse(server.isRunning());
 	}
 }

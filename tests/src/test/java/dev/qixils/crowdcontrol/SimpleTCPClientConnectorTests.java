@@ -43,7 +43,7 @@ public class SimpleTCPClientConnectorTests {
 		client.shutdown();
 		server.shutdown("Test completed");
 
-		Thread.sleep(25); // give server time to shut down
+		Thread.sleep(40); // give server time to shut down
 		Assertions.assertFalse(client.isRunning());
 	}
 
@@ -78,7 +78,7 @@ public class SimpleTCPClientConnectorTests {
 		clientList.forEach(SimulatedClient::shutdown);
 		server.shutdown("Test completed");
 
-		Thread.sleep(25); // give server time to shut down
+		Thread.sleep(40); // give server time to shut down
 	}
 
 	@Test
@@ -101,6 +101,6 @@ public class SimpleTCPClientConnectorTests {
 		// cleanup
 		server.shutdown("Test completed");
 
-		Thread.sleep(25); // give server time to shut down
+		Thread.sleep(40); // give server time to shut down
 	}
 }
