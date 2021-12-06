@@ -23,6 +23,8 @@ public class SimpleTCPClientConnectorTests {
 		CrowdControl server = CrowdControl.server().port(PORT).password(CORRECT_PASSWORD).build();
 		server.registerHandlers(EFFECT_HANDLERS);
 
+		Thread.sleep(20); // give server time to start
+
 		SimulatedClient client = new SimulatedClient("localhost", PORT, CORRECT_PASSWORD);
 		Assertions.assertDoesNotThrow(client::start);
 
@@ -51,6 +53,8 @@ public class SimpleTCPClientConnectorTests {
 	public void multipleClientsTest() throws InterruptedException {
 		CrowdControl server = CrowdControl.server().port(PORT).password(CORRECT_PASSWORD).build();
 		server.registerHandlers(EFFECT_HANDLERS);
+
+		Thread.sleep(20); // give server time to start
 
 		final int clients = 5;
 		final List<SimulatedClient> clientList = new ArrayList<>(clients);
@@ -85,6 +89,8 @@ public class SimpleTCPClientConnectorTests {
 	public void incorrectPasswordTest() throws InterruptedException {
 		CrowdControl server = CrowdControl.server().port(PORT).password(CORRECT_PASSWORD).build();
 		server.registerHandlers(EFFECT_HANDLERS);
+
+		Thread.sleep(20); // give server time to start
 
 		SimulatedClient client = new SimulatedClient("localhost", PORT, INCORRECT_PASSWORD);
 		Assertions.assertDoesNotThrow(client::start);
