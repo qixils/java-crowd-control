@@ -7,18 +7,21 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class SimpleTCPConnectorTests {
 	private static final int PORT = 53735;
+	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
 	@Test
-	public void successfulRequestSingleClientTest() {
+	public void successfulRequestSingleClientTest() throws InterruptedException {
 		SimulatedServer server = new SimulatedServer(PORT);
 		Assertions.assertDoesNotThrow(server::start);
 
 		CrowdControl client = CrowdControl.client().ip("localhost").port(PORT).build();
-		client.registerHandlers(new EffectHandlers());
+		client.registerHandlers(EFFECT_HANDLERS);
 
 		// give client time to connect
 		try {
@@ -58,5 +61,57 @@ public class SimpleTCPConnectorTests {
 		Response response = Assertions.assertDoesNotThrow(firstFuture::join);
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(response.getResultType(), ResultType.SUCCESS);
+
+		// cleanup
+		client.shutdown("Test completed");
+		server.shutdown();
+
+		Thread.sleep(25); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
+
+	@Test
+	public void successfulRequestMultipleClientsTest() throws InterruptedException {
+		SimulatedServer server = new SimulatedServer(PORT);
+		Assertions.assertDoesNotThrow(server::start);
+
+		final int clients = 5;
+
+		List<CrowdControl> clientsList = new ArrayList<>(clients);
+		for (int i = 0; i < clients; i++) {
+			CrowdControl client = CrowdControl.client().ip("localhost").port(PORT).build();
+			client.registerHandlers(EFFECT_HANDLERS);
+			clientsList.add(client);
+		}
+
+		// give clients time to connect
+		try {
+			int delay = 1;
+			while (!server.isAcceptingRequests() && server.getConnectedClients() < clients && delay <= 10) {
+				Thread.sleep((long) Math.pow(2, delay++));
+			}
+		} catch (InterruptedException e) {
+			Assertions.fail(e);
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		// get all responses
+		Request.Builder request = new Request.Builder().effect("success").viewer("test");
+		Thread.sleep(25); // more delay for good measure
+		List<Response> responses = server.sendRequest(request).collectList().block();
+
+		Assertions.assertNotNull(responses);
+		Assertions.assertEquals(clients, responses.size());
+		for (Response response : responses) {
+			Assertions.assertEquals(response.getResultType(), ResultType.SUCCESS);
+		}
+
+		// cleanup
+		clientsList.forEach(client -> client.shutdown("Test completed"));
+		server.shutdown();
+
+		Thread.sleep(25); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
 	}
 }

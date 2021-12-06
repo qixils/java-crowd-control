@@ -78,7 +78,8 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 				handler.start();
 				rawHandlers.add(handler);
 			} catch (IOException e) {
-				logger.log(Level.WARNING, "Failed to accept connection", e);
+				if (running)
+					logger.log(Level.WARNING, "Failed to accept connection", e);
 			}
 		}
 	}
@@ -96,6 +97,15 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 	@Override
 	public boolean isAcceptingRequests() {
 		return isRunning() && !getHandlers().isEmpty();
+	}
+
+	/**
+	 * Gets the number of clients connected to this server.
+	 *
+	 * @return connected clients
+	 */
+	public int getConnectedClients() {
+		return getHandlers().size();
 	}
 
 	@Override
