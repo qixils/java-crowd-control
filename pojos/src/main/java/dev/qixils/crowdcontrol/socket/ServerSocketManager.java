@@ -1,6 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
-import dev.qixils.crowdcontrol.CrowdControl;
+import dev.qixils.crowdcontrol.RequestManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  */
 public final class ServerSocketManager implements SocketManager {
 	private static final Logger logger = Logger.getLogger("CC-ServerSocket");
-	final CrowdControl crowdControl;
+	final RequestManager crowdControl;
 	final Executor effectPool = Executors.newCachedThreadPool();
 	private final List<SocketThread> socketThreads = new ArrayList<>();
 	volatile boolean running = true;
@@ -32,7 +32,7 @@ public final class ServerSocketManager implements SocketManager {
 	 * @param crowdControl Crowd Control instance
 	 */
 	@CheckReturnValue
-	public ServerSocketManager(@NotNull CrowdControl crowdControl) {
+	public ServerSocketManager(@NotNull RequestManager crowdControl) {
 		this.crowdControl = crowdControl;
 		new Thread(this::loop, "crowd-control-socket-loop").start();
 	}

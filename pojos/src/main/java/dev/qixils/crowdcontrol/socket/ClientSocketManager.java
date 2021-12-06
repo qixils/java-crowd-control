@@ -1,6 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
-import dev.qixils.crowdcontrol.CrowdControl;
+import dev.qixils.crowdcontrol.RequestManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  */
 public final class ClientSocketManager implements SocketManager {
 	private static final @NotNull Logger logger = Logger.getLogger("CC-ClientSocket");
-	private final @NotNull CrowdControl crowdControl;
+	private final @NotNull RequestManager crowdControl;
 	private final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	private @Nullable Socket socket;
 	private volatile boolean running = true;
@@ -27,11 +27,11 @@ public final class ClientSocketManager implements SocketManager {
 	/**
 	 * Creates a new client-side socket manager. This is intended only for use by the library.
 	 *
-	 * @param crowdControl Crowd Control instance
+	 * @param serverConfig Crowd Control instance
 	 */
 	@CheckReturnValue
-	public ClientSocketManager(@NotNull CrowdControl crowdControl) {
-		this.crowdControl = crowdControl;
+	public ClientSocketManager(@NotNull RequestManager serverConfig) {
+		this.crowdControl = serverConfig;
 		new Thread(this::loop, "crowd-control-socket-loop").start();
 	}
 
@@ -80,6 +80,7 @@ public final class ClientSocketManager implements SocketManager {
 					//noinspection BusyWait
 					Thread.sleep(sleep * 1000L);
 				} catch (InterruptedException ignored) {
+					if (!running) return;
 				}
 				sleep *= 2;
 			}

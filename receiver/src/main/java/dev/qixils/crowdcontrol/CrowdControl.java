@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.builder.CrowdControlClientBuilder;
 import dev.qixils.crowdcontrol.builder.CrowdControlServerBuilder;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
@@ -16,10 +17,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +75,7 @@ import java.util.logging.Logger;
  * or {@link #registerCheck(Function)}.
  * </p>
  */
-public final class CrowdControl implements SocketManager {
+public final class CrowdControl implements SocketManager, RequestManager {
 
 	private static final Logger logger = Logger.getLogger("CC-Core");
 	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS = Map.of(
@@ -111,29 +108,9 @@ public final class CrowdControl implements SocketManager {
 		this.IP = IP;
 		this.port = port;
 		this.socketManager = socketManagerCreator.apply(this);
-		if (password == null) {
-			this.password = null;
-		} else {
-			try {
-				MessageDigest md = MessageDigest.getInstance("SHA-512");
-				this.password = new BigInteger(1, md.digest(password.getBytes(StandardCharsets.UTF_8))).toString(16);
-			} catch (NoSuchAlgorithmException exc) {
-				throw new RuntimeException(exc);
-			}
-		}
-	}
-
-	/**
-	 * Helper method for determining if a provided exception class is part of an exception's stacktrace.
-	 *
-	 * @param potentialCause class to search for in stacktrace
-	 * @param exception      exception to be searched
-	 * @return true if the exception class is found
-	 */
-	public static boolean isCause(@NotNull Class<? extends Throwable> potentialCause, @Nullable Throwable exception) {
-		if (exception == null) return false;
-		if (potentialCause.isInstance(exception)) return true;
-		return isCause(potentialCause, exception.getCause());
+		this.password = password == null
+				? null
+				: ServiceManager.encryptPassword(password);
 	}
 
 	/**
@@ -360,7 +337,7 @@ public final class CrowdControl implements SocketManager {
 			else
 				request.buildResponse().type(ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
 		} catch (Exception e) {
-			if (CrowdControl.isCause(NoApplicableTarget.class, e)) {
+			if (ExceptionUtil.isCause(NoApplicableTarget.class, e)) {
 				request.buildResponse().type(ResultType.FAILURE).message("Streamer(s) unavailable").send();
 			} else {
 				logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);

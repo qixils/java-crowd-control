@@ -38,7 +38,7 @@ final class DummyResponse implements JsonObject {
 		return response;
 	}
 
-	public String toJSON() {
+	public @NotNull String toJSON() {
 		return ByteAdapter.GSON.toJson(this);
 	}
 

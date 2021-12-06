@@ -3,8 +3,8 @@ package dev.qixils.crowdcontrol.exceptions;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An exception indicating that a software utilizing the
- * {@link dev.qixils.crowdcontrol.CrowdControl} library was unable to map the provided
+ * An exception indicating that a software utilizing the Crowd Control receiver library was
+ * unable to map the provided
  * {@link dev.qixils.crowdcontrol.socket.Request.Target target(s)} while attempting to execute an
  * effect and that the library should
  * {@link dev.qixils.crowdcontrol.socket.Response.ResultType#RETRY retry} the effect after a short

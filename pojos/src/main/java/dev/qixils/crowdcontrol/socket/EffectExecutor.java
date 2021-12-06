@@ -1,6 +1,8 @@
 package dev.qixils.crowdcontrol.socket;
 
-import dev.qixils.crowdcontrol.CrowdControl;
+import com.google.gson.JsonParseException;
+import dev.qixils.crowdcontrol.RequestManager;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request.Type;
 import dev.qixils.crowdcontrol.socket.Response.PacketType;
@@ -23,7 +25,7 @@ final class EffectExecutor {
 	private final Socket socket;
 	private final Executor effectPool;
 	private final InputStreamReader input;
-	private final CrowdControl crowdControl;
+	private final RequestManager crowdControl;
 	private final @Nullable String password;
 	private boolean loggedIn = false;
 
@@ -36,7 +38,7 @@ final class EffectExecutor {
 		this.password = crowdControl.getPassword();
 	}
 
-	EffectExecutor(Socket socket, Executor effectPool, CrowdControl crowdControl) throws IOException {
+	EffectExecutor(Socket socket, Executor effectPool, RequestManager crowdControl) throws IOException {
 		this.socketThread = null;
 		this.socket = socket;
 		this.effectPool = effectPool;
@@ -47,16 +49,15 @@ final class EffectExecutor {
 
 	void run() throws IOException {
 		// get incoming data
-		StringBuilder sb = new StringBuilder();
-		char[] results = new char[1];
-		int bytes_read = input.read(results);
-		while (results[0] != 0x00 && bytes_read == 1) {
-			sb.append(results[0]);
-			bytes_read = input.read(results);
+		Request request;
+		try {
+			request = JsonObject.fromInputStream(input, Request::fromJSON);
+		} catch (JsonParseException e) {
+			logger.log(Level.WARNING, "Failed to parse JSON from socket", e);
+			return;
 		}
-		String inJSON = sb.toString();
 
-		if (inJSON.isBlank()) {
+		if (request == null) {
 			if (socketThread != null)
 				socketThread.shutdown("Received a blank packet; assuming client has disconnected");
 			else
@@ -64,14 +65,7 @@ final class EffectExecutor {
 			return;
 		}
 
-		Request request;
-		try {
-			request = Request.fromJSON(inJSON);
-			request.originatingSocket = socket;
-		} catch (Exception exc) {
-			logger.log(Level.SEVERE, "Could not parse request " + inJSON, exc);
-			return;
-		}
+		request.originatingSocket = socket;
 
 		if (request.getType() == Type.KEEP_ALIVE) {
 			request.buildResponse().packetType(PacketType.KEEP_ALIVE).send();
@@ -102,7 +96,7 @@ final class EffectExecutor {
 			try {
 				crowdControl.handle(request);
 			} catch (Throwable exc) {
-				if (CrowdControl.isCause(NoApplicableTarget.class, exc)) {
+				if (ExceptionUtil.isCause(NoApplicableTarget.class, exc)) {
 					request.buildResponse().type(ResultType.FAILURE).message("Streamer(s) unavailable").send();
 				} else {
 					logger.log(Level.WARNING, "Request handler threw an exception", exc);

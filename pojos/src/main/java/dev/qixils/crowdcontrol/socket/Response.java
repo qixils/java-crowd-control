@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,6 @@ import java.time.temporal.Temporal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,13 +29,21 @@ import java.util.logging.Logger;
 public final class Response implements JsonObject {
 	private static final Logger logger = Logger.getLogger("CC-Response");
 	@SerializedName("type")
-	final PacketType packetType;
-	private final transient Request request;
-	private final int id;
+	private PacketType packetType;
+	private transient Request request;
+	private int id;
 	@SerializedName("status")
-	private final ResultType type;
-	private final String message;
-	private final long timeRemaining; // millis
+	private ResultType type;
+	private String message;
+	private long timeRemaining; // millis
+
+	/**
+	 * Instantiates an empty {@link Response}.
+	 * <p>
+	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
+	 */
+	Response() {
+	}
 
 	/**
 	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
@@ -79,6 +87,19 @@ public final class Response implements JsonObject {
 	}
 
 	/**
+	 * Creates a {@link Response} object from JSON.
+	 *
+	 * @param json input json data from the Crowd Control game
+	 * @return a new Response object
+	 * @throws JsonSyntaxException the JSON failed to be parsed
+	 */
+	@NotNull
+	@CheckReturnValue
+	public static Response fromJSON(@NotNull String json) throws JsonSyntaxException {
+		return ByteAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Response.class);
+	}
+
+	/**
 	 * Gets the unique {@link Request} that caused this response.
 	 *
 	 * @return original request
@@ -106,6 +127,19 @@ public final class Response implements JsonObject {
 	@CheckReturnValue
 	public Response.ResultType getResultType() {
 		return type;
+	}
+
+	/**
+	 * Gets the type of packet represented by this response.
+	 * <p>
+	 * Note: unless directly working with library internals, this will always be {@link PacketType#EFFECT_RESULT}.
+	 *
+	 * @return packet type
+	 */
+	@NotNull
+	@CheckReturnValue
+	public PacketType getPacketType() {
+		return packetType;
 	}
 
 	/**
@@ -151,6 +185,23 @@ public final class Response implements JsonObject {
 		return new Builder(this);
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Response response = (Response) o;
+		return getId() == response.getId()
+				&& getTimeRemaining() == response.getTimeRemaining()
+				&& getPacketType() == response.getPacketType()
+				&& getResultType() == response.getResultType()
+				&& Objects.equals(getMessage(), response.getMessage());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getPacketType(), getId(), getResultType(), getMessage(), getTimeRemaining());
+	}
+
 	/**
 	 * Sends this {@link Response} to the client or server that delivered the related {@link Request}.
 	 *
@@ -182,7 +233,7 @@ public final class Response implements JsonObject {
 	/**
 	 * Determines the type of packet being sent.
 	 */
-	enum PacketType implements ByteObject {
+	public enum PacketType implements ByteObject {
 		/**
 		 * The packet is the result of executing an effect.
 		 */
@@ -251,7 +302,7 @@ public final class Response implements JsonObject {
 		 */
 		FAILURE,
 		/**
-		 * The effect is unavailable for use. Treated the same as {@link #FAILURE} by Crowd Control.
+		 * The requested effect is unusable and should not be requested again.
 		 */
 		UNAVAILABLE,
 		/**
@@ -280,8 +331,8 @@ public final class Response implements JsonObject {
 		 * Indicates that this Crowd Control server is not yet accepting requests.
 		 * <p>
 		 * This is an internal field used to indicate that the login process with a client has
-		 * not yet completed. You should instead use either
-		 * {@link #FAILURE} or {@link dev.qixils.crowdcontrol.CrowdControl#registerCheck(Supplier)}.
+		 * not yet completed. You should instead use {@link #FAILURE} to indicate a
+		 * temporary failure or {@link #UNAVAILABLE} to indicate a permanent failure.
 		 */
 		NOT_READY((byte) 0xFF);
 
@@ -431,13 +482,15 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Sets the type of packet that this Response represents.
+		 * <p>
+		 * Note: this is intended only for internal library use.
 		 *
 		 * @param packetType type of packet
 		 * @return this builder
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		Builder packetType(@Nullable PacketType packetType) {
+		public Builder packetType(@Nullable PacketType packetType) {
 			this.packetType = packetType;
 			return this;
 		}

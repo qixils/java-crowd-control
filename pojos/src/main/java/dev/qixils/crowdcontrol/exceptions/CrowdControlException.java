@@ -3,8 +3,7 @@ package dev.qixils.crowdcontrol.exceptions;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A generic exception raised by {@link dev.qixils.crowdcontrol.CrowdControl} or a package that
- * uses it.
+ * A generic exception raised by a Crowd Control library or a package that using one.
  */
 public class CrowdControlException extends RuntimeException {
 
