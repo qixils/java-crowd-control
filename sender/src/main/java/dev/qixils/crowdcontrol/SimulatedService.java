@@ -69,6 +69,7 @@ public interface SimulatedService<R> {
 	 * throw a {@link IOException} if an I/O error occurs trying to write the request,
 	 * or throw a {@link IllegalStateException} if the simulated server or client is not
 	 * {@link #isAcceptingRequests() accepting requests}
+	 * @throws IllegalArgumentException if {@code builder} is {@code null} or invalid
 	 */
 	@NotNull
 	@NonBlocking
@@ -85,6 +86,7 @@ public interface SimulatedService<R> {
 	 * throw a {@link IOException} if an I/O error occurs trying to write the request,
 	 * or throw a {@link IllegalStateException} if the simulated server or client is not
 	 * {@link #isAcceptingRequests() accepting requests}
+	 * @throws IllegalArgumentException if {@code builder} is {@code null} or invalid
 	 */
 	@NotNull
 	@NonBlocking
@@ -103,6 +105,7 @@ public interface SimulatedService<R> {
 	 * throw a {@link IOException} if an I/O error occurs trying to write the request,
 	 * or throw a {@link IllegalStateException} if the simulated server or client is not
 	 * {@link #isAcceptingRequests() accepting requests}
+	 * @throws IllegalArgumentException if {@code builder} is {@code null} or invalid
 	 */
 	@NotNull
 	@NonBlocking
@@ -121,6 +124,7 @@ public interface SimulatedService<R> {
 	 * throw a {@link IOException} if an I/O error occurs trying to write the request,
 	 * or throw a {@link IllegalStateException} if the simulated server or client is not
 	 * {@link #isAcceptingRequests() accepting requests}
+	 * @throws IllegalArgumentException if {@code builder} is {@code null} or invalid
 	 */
 	@NotNull
 	@NonBlocking

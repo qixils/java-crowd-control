@@ -162,17 +162,13 @@ final class RequestHandler implements SimulatedService<Response> {
 
 	@Override
 	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+		Objects.requireNonNull(builder, "builder cannot be null");
 		Type type = builder.getType();
 		if (type == null)
 			throw new IllegalArgumentException("Request type is null");
 
 		// create request (done first to ensure it is valid (i.e. doesn't throw))
 		Request request = builder.id(++nextRequestId).build();
-
-		// ensure response ID is unique (not that this should ever be an issue)
-		if (effectDataMap.containsKey(request.getId())) {
-			throw new IllegalStateException("Request ID " + request.getId() + " is already in use");
-		}
 
 		// TODO: unit test
 		return Flux.<Response>create(sink -> {
