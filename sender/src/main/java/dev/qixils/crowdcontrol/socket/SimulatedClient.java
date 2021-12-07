@@ -1,10 +1,12 @@
 package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.ServiceManager;
+import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.socket.Request.Builder;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 
 import javax.annotation.CheckReturnValue;
@@ -22,7 +24,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 	private final String ip;
 	private final int port;
 	private final String password;
-	private RequestHandler handler = null;
+	private @Nullable RequestHandler handler = null;
 	private boolean running = true;
 
 	/**
@@ -81,7 +83,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 			try {
 				start();
 				reconnectionAttempts = 0;
-				while (handler.isRunning()) {
+				while (handler != null && handler.isRunning()) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException ignored) {
@@ -107,6 +109,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 
 	@Override
 	public boolean isAcceptingRequests() {
+		//noinspection ConstantConditions: call to isRunning() ensures handler is not null
 		return isRunning() && handler.isAcceptingRequests();
 	}
 
@@ -116,16 +119,25 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 	}
 
 	@Override
+	public @NotNull TriState isEffectAvailable(@NotNull String effect) {
+		if (handler == null) return TriState.UNKNOWN;
+		return handler.isEffectAvailable(effect);
+	}
+
+	@Override
 	@Blocking
 	public void shutdown() {
 		if (!running) return;
 		running = false;
-		handler.shutdown();
+		if (handler != null) handler.shutdown();
 	}
 
 	@Override
 	@NonBlocking
 	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+		if (!isAcceptingRequests())
+			throw new IllegalStateException("Cannot send requests while not accepting requests");
+		//noinspection ConstantConditions: call to isRunning() ensures handler is not null
 		return handler.sendRequest(builder, timeout);
 	}
 }

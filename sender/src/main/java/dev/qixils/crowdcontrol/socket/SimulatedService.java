@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
+import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.socket.Request.Builder;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
@@ -127,4 +128,16 @@ public interface SimulatedService<R> {
 	@NotNull
 	@NonBlocking
 	Flux<@NotNull R> sendRequest(Request.@NotNull Builder builder, boolean timeout);
+
+	/**
+	 * Determines if an effect by that name is available.
+	 *
+	 * @param effect the name of the effect
+	 * @return the availability of the effect or {@link TriState#UNKNOWN} if the effect has not been
+	 * tested yet
+	 */
+	@NotNull
+	@NonBlocking
+	@CheckReturnValue
+	TriState isEffectAvailable(@NotNull String effect);
 }

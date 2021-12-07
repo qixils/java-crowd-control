@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonParseException;
+import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.CrowdControlException;
 import dev.qixils.crowdcontrol.socket.Request.Builder;
 import dev.qixils.crowdcontrol.socket.Request.Type;
@@ -34,6 +35,7 @@ final class RequestHandler implements SimulatedService<Response> {
 	private static final Executor executor = Executors.newCachedThreadPool();
 	private static final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Map<Integer, EffectData> effectDataMap = new ConcurrentHashMap<>(1);
+	private final Map<String, Boolean> effectAvailabilityMap = new ConcurrentHashMap<>(1);
 	private final Socket socket;
 	private final SimulatedService<?> parent;
 	private final InputStreamReader inputStream;
@@ -93,6 +95,11 @@ final class RequestHandler implements SimulatedService<Response> {
 		return !running;
 	}
 
+	@Override
+	public @NotNull TriState isEffectAvailable(@NotNull String effect) {
+		return TriState.fromBoolean(effectAvailabilityMap.get(effect));
+	}
+
 	@Blocking
 	private void loop() {
 		try {
@@ -142,15 +149,26 @@ final class RequestHandler implements SimulatedService<Response> {
 						logger.fine("Received response for request " + response.getId());
 
 						data.responseReceived = true;
-						data.sink.next(response);
+						data.sink.next(response); // send response to subscriber
 
-						boolean toSchedule = false;
+						// set availability of effect
+						String effectName = data.request.getEffect();
+						if (!effectAvailabilityMap.containsKey(effectName))
+							effectAvailabilityMap.put(effectName, response.getResultType() == ResultType.UNAVAILABLE);
+
+						boolean toSchedule = false; // whether to schedule a fake FINISHED response
+						// handle the various possible response types/states
 						if (response.isTerminating()) {
 							data.sink.complete();
 						} else if (response.getResultType() == ResultType.RETRY) {
 							int retryDelay = data.getRetryDelay();
 							if (retryDelay == -1)
 								data.sink.complete();
+							else
+								scheduledExecutor.schedule(
+										() -> writeRequest(data.request, data.sink),
+										retryDelay, TimeUnit.SECONDS
+								);
 						} else if (response.getResultType() == ResultType.PAUSED) {
 							data.pause();
 						} else if (response.getResultType() == ResultType.RESUMED) {
@@ -208,7 +226,7 @@ final class RequestHandler implements SimulatedService<Response> {
 			}
 
 			// add sink to map of publishers
-			EffectData data = new EffectData(request.getId(), sink);
+			EffectData data = new EffectData(request.getId(), request, sink);
 			effectDataMap.put(request.getId(), data);
 
 			// manage responseReceivedMap for timeout functionality
@@ -223,22 +241,26 @@ final class RequestHandler implements SimulatedService<Response> {
 			}
 
 			// send request
-			executor.execute(() -> {
-				try {
-					outputStream.write(request.toJSON().getBytes(StandardCharsets.UTF_8));
-					outputStream.write(0x00);
-					outputStream.flush();
-				} catch (Exception e) {
-					logger.log(Level.WARNING, "Failed to send request", e);
-					sink.error(e);
-				}
-			});
+			executor.execute(() -> writeRequest(request, sink));
 			// TODO: timeout unit test
 		}).doOnComplete(() -> effectDataMap.remove(request.getId()));
 	}
 
+	private void writeRequest(@NotNull Request request, @NotNull FluxSink<Response> sink) {
+		assert isAcceptingRequests() || (isRunning() && !request.getType().isEffectType());
+		try {
+			outputStream.write(request.toJSON().getBytes(StandardCharsets.UTF_8));
+			outputStream.write(0x00);
+			outputStream.flush();
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Failed to send request", e);
+			sink.error(e);
+		}
+	}
+
 	private static final class EffectData {
 		private final int id;
+		private final @NotNull Request request;
 		private final @NotNull FluxSink<@NotNull Response> sink;
 		private boolean responseReceived = false;
 		private int retryCount = 0;
@@ -247,14 +269,15 @@ final class RequestHandler implements SimulatedService<Response> {
 		private boolean paused = false;
 		private ScheduledFuture<?> scheduledFuture;
 
-		private EffectData(int id, @NotNull FluxSink<@NotNull Response> sink) {
+		private EffectData(int id, @NotNull Request request, @NotNull FluxSink<@NotNull Response> sink) {
 			this.id = id;
+			this.request = request;
 			this.sink = sink;
 		}
 
 		private int getRetryDelay() {
 			if (retryCount > 6) return -1;
-			return (int) Math.pow(2, 2 + (retryCount++)) * 1000;
+			return (int) Math.pow(2, 2 + (retryCount++));
 		}
 
 		private void updateTimeRemaining(long timeRemaining) {

@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.ServiceManager;
+import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.socket.Request.Builder;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,9 +25,9 @@ import java.util.logging.Logger;
 public final class SimulatedServer implements StartableService<@NotNull Flux<@NotNull Response>>, ServiceManager {
 	private static final Logger logger = Logger.getLogger("CC-Simul-Server");
 	private final int port;
-	private final List<RequestHandler> rawHandlers = new ArrayList<>(1);
-	private ServerSocket serverSocket;
-	private Thread loopThread = null;
+	private final List<RequestHandler> rawHandlers = Collections.synchronizedList(new ArrayList<>(1));
+	private @Nullable ServerSocket serverSocket;
+	private @Nullable Thread loopThread = null;
 	private volatile boolean running = true;
 
 	/**
@@ -55,10 +57,8 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	}
 
 	private List<RequestHandler> getHandlers() {
-		synchronized (rawHandlers) {
-			rawHandlers.removeIf(handler -> !handler.isRunning());
-			return new ArrayList<>(rawHandlers);
-		}
+		rawHandlers.removeIf(handler -> !handler.isRunning());
+		return new ArrayList<>(rawHandlers);
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 
 	@Blocking
 	private void loop() {
-		while (running && !serverSocket.isClosed()) {
+		while (running && serverSocket != null && !serverSocket.isClosed()) {
 			try {
 				Socket socket = serverSocket.accept();
 				if (!running) {
@@ -81,14 +81,13 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 				logger.info("Accepted connection from " + socket.getInetAddress());
 				RequestHandler handler = new RequestHandler(socket, this, null);
 				handler.start();
-				synchronized (rawHandlers) {
-					rawHandlers.add(handler);
-				}
+				rawHandlers.add(handler);
 			} catch (IOException e) {
 				if (running)
 					logger.log(Level.WARNING, "Failed to accept connection", e);
 			}
 		}
+		shutdown(); // something went wrong; close the server
 	}
 
 	@Override
@@ -104,6 +103,21 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	@Override
 	public boolean isAcceptingRequests() {
 		return isRunning() && !getHandlers().isEmpty();
+	}
+
+	@Override
+	public @NotNull TriState isEffectAvailable(@NotNull String effect) {
+		// the values returned by this are kinda weird, but it should be fine
+		boolean available = false;
+		for (RequestHandler handler : getHandlers()) {
+			if (handler.isEffectAvailable(effect) == TriState.UNKNOWN)
+				return TriState.UNKNOWN;
+			if (handler.isEffectAvailable(effect) == TriState.TRUE) {
+				available = true;
+				break;
+			}
+		}
+		return TriState.fromBoolean(available);
 	}
 
 	@Override

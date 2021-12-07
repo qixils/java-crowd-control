@@ -10,6 +10,7 @@ import javax.annotation.CheckReturnValue;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -55,8 +56,8 @@ public final class Request implements JsonObject {
 			Objects.requireNonNull(builder.effect, "effect cannot be null");
 			Objects.requireNonNull(builder.viewer, "viewer cannot be null");
 		}
-		this.effect = builder.effect;
-		this.viewer = builder.viewer;
+		this.effect = builder.effect == null ? null : builder.effect.toLowerCase(Locale.ENGLISH);
+		this.viewer = builder.viewer == null ? null : builder.viewer.toLowerCase(Locale.ENGLISH);
 
 		// misc
 		this.message = builder.message;
