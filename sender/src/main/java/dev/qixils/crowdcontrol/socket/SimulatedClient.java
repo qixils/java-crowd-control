@@ -1,8 +1,7 @@
-package dev.qixils.crowdcontrol;
+package dev.qixils.crowdcontrol.socket;
 
-import dev.qixils.crowdcontrol.socket.Request;
+import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.socket.Request.Builder;
-import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;

@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import dev.qixils.crowdcontrol.socket.Response.ResultType;
+import dev.qixils.crowdcontrol.socket.SimulatedServer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;

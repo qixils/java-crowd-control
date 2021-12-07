@@ -46,13 +46,40 @@ public final class Response implements JsonObject {
 	}
 
 	/**
-	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
-	 * and an associated message.
+	 * Instantiates a new {@link Response} given its ID, the result of executing the effect,
+	 * an associated message, the type of packet, the time until the effect completes,
+	 * and the associated {@link Request}.
+	 *
+	 * @param id            ID of the {@link Request} that was executed
+	 * @param type          result of the execution
+	 * @param message       result message
+	 * @param timeRemaining time remaining in milliseconds until the effect completes
+	 * @param packetType    type of the packet
+	 * @param request       associated {@link Request}
+	 */
+	Response(int id,
+			 @Nullable ResultType type,
+			 @Nullable String message,
+			 long timeRemaining,
+			 @Nullable PacketType packetType,
+			 @Nullable Request request) {
+		this.id = id;
+		this.type = type;
+		this.message = message;
+		this.timeRemaining = timeRemaining;
+		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
+		this.request = request;
+	}
+
+	/**
+	 * Constructs a response to a {@link Request} given the {@link Request} that caused it, the
+	 * result of executing the effect, an associated message, the time until the effect
+	 * completes, and the type of packet.
 	 *
 	 * @param request       originating request
 	 * @param type          result of execution
 	 * @param message       result message
-	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
+	 * @param timeRemaining time remaining in milliseconds until the effect completes
 	 * @param packetType    type of packet
 	 */
 	@CheckReturnValue
@@ -70,13 +97,14 @@ public final class Response implements JsonObject {
 	}
 
 	/**
-	 * Constructs a response to a {@link Request} given its ID, the result of executing the effect,
-	 * and an associated message.
+	 * Constructs a response to a {@link Request} given the {@link Request} that caused it, the
+	 * result of executing the effect, an associated message, and the time until the effect
+	 * completes.
 	 *
 	 * @param request       originating request
 	 * @param type          result of execution
 	 * @param message       result message
-	 * @param timeRemaining remaining duration for the referenced effect in milliseconds
+	 * @param timeRemaining time remaining in milliseconds until the effect completes
 	 */
 	@CheckReturnValue
 	public Response(@NotNull Request request,

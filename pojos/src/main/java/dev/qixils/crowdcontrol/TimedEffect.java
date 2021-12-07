@@ -206,12 +206,12 @@ public final class TimedEffect {
 	public void pause() throws IllegalStateException {
 		if (paused)
 			throw new IllegalStateException("Effect is already paused");
-		startedAt = -1;
+		if (startedAt == -1)
+			throw new IllegalStateException("Effect has not started");
+
 		duration = getCurrentDuration();
 		if (duration <= 0)
 			throw new IllegalStateException("Effect has already completed");
-		if (startedAt == -1)
-			throw new IllegalStateException("Effect has not started");
 
 		paused = true;
 		request.buildResponse().type(Response.ResultType.PAUSED).timeRemaining(duration).send();

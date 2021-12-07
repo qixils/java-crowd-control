@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import dev.qixils.crowdcontrol.socket.SimulatedClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

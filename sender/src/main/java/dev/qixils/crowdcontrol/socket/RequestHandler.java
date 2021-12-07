@@ -1,12 +1,10 @@
-package dev.qixils.crowdcontrol;
+package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonParseException;
 import dev.qixils.crowdcontrol.exceptions.CrowdControlException;
-import dev.qixils.crowdcontrol.socket.JsonObject;
-import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Request.Builder;
 import dev.qixils.crowdcontrol.socket.Request.Type;
-import dev.qixils.crowdcontrol.socket.Response;
+import dev.qixils.crowdcontrol.socket.Response.PacketType;
 import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
@@ -144,14 +143,44 @@ final class RequestHandler implements SimulatedService<Response> {
 
 						data.responseReceived = true;
 						data.sink.next(response);
+
+						boolean toSchedule = false;
 						if (response.isTerminating()) {
 							data.sink.complete();
 						} else if (response.getResultType() == ResultType.RETRY) {
 							int retryDelay = data.getRetryDelay();
 							if (retryDelay == -1)
 								data.sink.complete();
+						} else if (response.getResultType() == ResultType.PAUSED) {
+							data.pause();
+						} else if (response.getResultType() == ResultType.RESUMED) {
+							data.resume();
+							toSchedule = true;
+						} else if (response.getResultType() == ResultType.SUCCESS) {
+							// this represents the start of a timed effect
+							// because this was not caught by the first if block
+							data.updateTimeRemaining(response.getTimeRemaining());
+							toSchedule = true;
 						}
-						// todo: handle other response types
+
+						if (toSchedule)
+							data.scheduledFuture = scheduledExecutor.schedule(
+									() -> {
+										// send fake FINISHED packet to flux stream
+										data.sink.next(new Response(
+												response.getId(),
+												ResultType.FINISHED,
+												null,
+												0,
+												PacketType.EFFECT_RESULT,
+												null
+										));
+										// complete flux stream
+										data.sink.complete();
+									},
+									response.getTimeRemaining(),
+									TimeUnit.MILLISECONDS
+							);
 				}
 			}
 		} catch (IOException e) {
@@ -213,6 +242,10 @@ final class RequestHandler implements SimulatedService<Response> {
 		private final @NotNull FluxSink<@NotNull Response> sink;
 		private boolean responseReceived = false;
 		private int retryCount = 0;
+		private long timeRemaining = 0;
+		private long timeUpdatedAt = 0;
+		private boolean paused = false;
+		private ScheduledFuture<?> scheduledFuture;
 
 		private EffectData(int id, @NotNull FluxSink<@NotNull Response> sink) {
 			this.id = id;
@@ -222,6 +255,32 @@ final class RequestHandler implements SimulatedService<Response> {
 		private int getRetryDelay() {
 			if (retryCount > 6) return -1;
 			return (int) Math.pow(2, 2 + (retryCount++)) * 1000;
+		}
+
+		private void updateTimeRemaining(long timeRemaining) {
+			this.timeRemaining = timeRemaining;
+			this.timeUpdatedAt = System.currentTimeMillis();
+		}
+
+		// get the elapsed time since the last update
+		private long getCurrentTimeRemaining() {
+			return Math.max(0, timeRemaining - (System.currentTimeMillis() - timeUpdatedAt));
+		}
+
+		private void pause() {
+			if (paused) return;
+			paused = true;
+			if (scheduledFuture != null)
+				scheduledFuture.cancel(false);
+			scheduledFuture = null;
+			// update the time remaining using the elapsed time since the last update
+			updateTimeRemaining(getCurrentTimeRemaining());
+		}
+
+		private void resume() {
+			if (!paused) return;
+			paused = false;
+			timeUpdatedAt = System.currentTimeMillis();
 		}
 
 		@Override
