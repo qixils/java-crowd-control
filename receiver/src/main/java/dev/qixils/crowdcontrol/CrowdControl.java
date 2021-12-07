@@ -6,7 +6,6 @@ import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
-import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ import java.util.logging.Logger;
  *         Crowd Control server. It corresponds with the {@code SimpleTCPConnector} in your
  *         project's .cs file. In this mode, your project will only be able to connect to one
  *         streamer, although multiple instances of your project will all be able to connect to
- *         this streamer at the same time. This mode is ideal for singleplayer games.
+ *         this streamer at the same time. This mode is ideal for single-player games.
  *     </li>
  *     <li>
  *         {@link #server()} creates a server instance that can be used to connect to multiple
@@ -234,11 +233,11 @@ public final class CrowdControl implements SocketManager, RequestManager {
 					try {
 						Object result = method.invoke(object, request);
 						output = result == null
-								? request.buildResponse().type(ResultType.FAILURE).message("Effect handler returned a null response").build()
+								? request.buildResponse().type(Response.ResultType.FAILURE).message("Effect handler returned a null response").build()
 								: parser.apply(result);
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
-						output = request.buildResponse().type(ResultType.FAILURE).message("Failed to invoke method handler").build();
+						output = request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build();
 					}
 					return output;
 				});
@@ -248,7 +247,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 						method.invoke(object, request);
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
-						request.buildResponse().type(ResultType.FAILURE).message("Failed to invoke method handler").send();
+						request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").send();
 					}
 				});
 			} else {
@@ -323,7 +322,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	public void handle(@NotNull Request request) {
 		for (Function<Request, CheckResult> check : globalChecks) {
 			if (check.apply(request) == CheckResult.DISALLOW) {
-				request.buildResponse().type(ResultType.FAILURE).message("The game is unavailable").send();
+				request.buildResponse().type(Response.ResultType.FAILURE).message("The game is unavailable").send();
 			}
 		}
 
@@ -335,13 +334,13 @@ public final class CrowdControl implements SocketManager, RequestManager {
 			else if (asyncHandlers.containsKey(effect))
 				asyncHandlers.get(effect).accept(request);
 			else
-				request.buildResponse().type(ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
+				request.buildResponse().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
 		} catch (Exception e) {
 			if (ExceptionUtil.isCause(NoApplicableTarget.class, e)) {
-				request.buildResponse().type(ResultType.FAILURE).message("Streamer(s) unavailable").send();
+				request.buildResponse().type(Response.ResultType.FAILURE).message("Streamer(s) unavailable").send();
 			} else {
 				logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
-				request.buildResponse().type(ResultType.FAILURE).message("The effect encountered an exception").send();
+				request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").send();
 			}
 		}
 	}

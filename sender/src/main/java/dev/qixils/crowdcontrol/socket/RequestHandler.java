@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol.socket;
 import com.google.gson.JsonParseException;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.CrowdControlException;
+import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
 import dev.qixils.crowdcontrol.socket.Request.Builder;
 import dev.qixils.crowdcontrol.socket.Request.Type;
 import dev.qixils.crowdcontrol.socket.Response.PacketType;
@@ -154,7 +155,7 @@ final class RequestHandler implements SimulatedService<Response> {
 						// set availability of effect
 						String effectName = data.request.getEffect();
 						if (!effectAvailabilityMap.containsKey(effectName))
-							effectAvailabilityMap.put(effectName, response.getResultType() == ResultType.UNAVAILABLE);
+							effectAvailabilityMap.put(effectName, response.getResultType() != ResultType.UNAVAILABLE);
 
 						boolean toSchedule = false; // whether to schedule a fake FINISHED response
 						// handle the various possible response types/states
@@ -216,6 +217,10 @@ final class RequestHandler implements SimulatedService<Response> {
 
 		// create request (done first to ensure it is valid (i.e. doesn't throw))
 		Request request = builder.id(++nextRequestId).build();
+
+		// ensure effect is available
+		if (type.isEffectType() && isEffectAvailable(request.getEffect()) == TriState.FALSE)
+			throw new EffectUnavailableException("Effect " + request.getEffect() + " is known to be unavailable to this service");
 
 		// TODO: unit test
 		return Flux.<Response>create(sink -> {

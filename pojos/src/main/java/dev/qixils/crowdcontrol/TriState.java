@@ -47,7 +47,17 @@ public enum TriState {
 	 *
 	 * @return boolean equivalent
 	 */
+	@Nullable
 	public Boolean getBoolean() {
 		return value;
+	}
+
+	/**
+	 * Returns the primitive boolean equivalent of this {@code TriState}.
+	 *
+	 * @return primitive boolean equivalent
+	 */
+	public boolean getPrimitiveBoolean() {
+		return value != null && value;
 	}
 }

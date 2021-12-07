@@ -17,15 +17,14 @@ import java.util.concurrent.CompletableFuture;
  */
 @SuppressWarnings("BusyWait")
 public class SimpleTCPConnectorTests {
-	private static final int PORT = 53735;
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
 	@Test
 	public void singleClientTest() throws InterruptedException {
-		SimulatedServer server = new SimulatedServer(PORT);
+		SimulatedServer server = new SimulatedServer(0);
 		Assertions.assertDoesNotThrow(server::start);
 
-		CrowdControl client = CrowdControl.client().ip("localhost").port(PORT).build();
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 		client.registerHandlers(EFFECT_HANDLERS);
 
 		// give client time to connect
@@ -62,7 +61,7 @@ public class SimpleTCPConnectorTests {
 
 		Response response = Assertions.assertDoesNotThrow(firstFuture::join);
 		Assertions.assertNotNull(response);
-		Assertions.assertEquals(response.getResultType(), ResultType.SUCCESS);
+		Assertions.assertEquals(ResultType.SUCCESS, response.getResultType());
 
 		// cleanup
 		client.shutdown("Test completed");
@@ -74,14 +73,14 @@ public class SimpleTCPConnectorTests {
 
 	@Test
 	public void multipleClientsTest() throws InterruptedException {
-		SimulatedServer server = new SimulatedServer(PORT);
+		SimulatedServer server = new SimulatedServer(0);
 		Assertions.assertDoesNotThrow(server::start);
 
 		final int clients = 5;
 
 		List<CrowdControl> clientsList = new ArrayList<>(clients);
 		for (int i = 0; i < clients; i++) {
-			CrowdControl client = CrowdControl.client().ip("localhost").port(PORT).build();
+			CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 			client.registerHandlers(EFFECT_HANDLERS);
 			clientsList.add(client);
 		}
@@ -102,7 +101,7 @@ public class SimpleTCPConnectorTests {
 		Assertions.assertNotNull(responses);
 		Assertions.assertEquals(clients, responses.size());
 		for (Response response : responses) {
-			Assertions.assertEquals(response.getResultType(), ResultType.SUCCESS);
+			Assertions.assertEquals(ResultType.SUCCESS, response.getResultType());
 		}
 
 		// cleanup

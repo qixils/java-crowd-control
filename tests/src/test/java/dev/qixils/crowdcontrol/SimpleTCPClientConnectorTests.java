@@ -40,7 +40,7 @@ public class SimpleTCPClientConnectorTests {
 		// test request
 		Response response = client.sendRequest(new Request.Builder().effect("success").viewer("test")).blockFirst();
 		Assertions.assertNotNull(response);
-		Assertions.assertEquals(response.getResultType(), Response.ResultType.SUCCESS);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 
 		// cleanup
 		client.shutdown();
@@ -76,7 +76,7 @@ public class SimpleTCPClientConnectorTests {
 			Assertions.assertTrue(client.isAcceptingRequests());
 			Response response = client.sendRequest(new Request.Builder().effect("success").viewer("test")).blockFirst();
 			Assertions.assertNotNull(response);
-			Assertions.assertEquals(response.getResultType(), Response.ResultType.SUCCESS);
+			Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		}
 
 		// cleanup
