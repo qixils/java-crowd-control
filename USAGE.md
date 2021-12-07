@@ -1,56 +1,76 @@
-# Usage
+# Introduction
 
-This software is a Java library intended for use by other Java software.
-It is available in the Maven Central repositories which allows for easily
-importing the library into your build automation software of choice.
+This repository consists of several Java libraries. Most of which are intended for use by other Java
+software. They are available in the Maven Central Repositories which allows for easily importing the
+library into your build automation software of choice.
 
-### Maven
+_Tip: GitHub has a handy Table of Contents feature available by clicking the list icon on the top
+left of this document._
+
+# Receiver
+
+The **Receiver** library is the main library of the project. It allows your video game (or
+modification) to receive effect requests from a streamer using
+the [Crowd Control](https://crowdcontrol.live) desktop application. The set of effects supported by
+your game is known as your "Effect Pack".
+
+Testing of effect packs is generally performed using
+the [Crowd Control SDK](https://forum.warp.world/t/how-to-setup-and-use-the-crowd-control-sdk/5121).
+
+## Installation
+
+<details>
+<summary>Maven</summary>
 
 Add to the `dependencies` section of your `pom.xml` file:
 
 ```xml
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
-    <artifactId>java-crowd-control</artifactId>
-    <version>3.0.0</version>
+    <artifactId>crowd-control-receiver</artifactId>
+    <version>3.3.0</version>
 </dependency>
 ```
 
-### Gradle
+</details>
+
+<details>
+<summary>Gradle</summary>
 
 Add to the `dependencies` section of your `build.gradle` file:
 
 ```gradle
-compileOnly 'dev.qixils.crowdcontrol:java-crowd-control:3.0.0'
+compileOnly 'dev.qixils.crowdcontrol:crowd-control-receiver:3.3.0'
 ```
 
 Or, if using Kotlin (`build.gradle.kts`):
 
 ```kts
-compileOnly("dev.qixils.crowdcontrol:java-crowd-control:3.0.0")
+compileOnly("dev.qixils.crowdcontrol:crowd-control-receiver:3.3.0")
 ```
 
-## Quick Start
+</details>
 
-To start, you must create a [CrowdControl](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html)
-class using one of the two builder methods. This differs depending on
-which Crowd Control connection type you wish to use. The two connection
-types are outlined below.
+## Usage
 
-You will also need to create a `.cs` file which holds a list of all of
-your available effects as well as information about how the Crowd
-Control desktop app should connect to your application. Example files
-for each connector type are provided below.
+To start, you must create
+a [CrowdControl](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html)
+class using one of the two builder methods. This differs depending on which Crowd Control connection
+type you wish to use. The two connection types are outlined below.
+
+You will also need to create a `.cs` file which holds a list of all of your available effects as
+well as information about how the Crowd Control desktop app should connect to your application.
+Example files for each connector type are provided below.
 
 ### Client Mode
 
-This builder corresponds with the default `SimpleTCPConnector` used by
-Crowd Control. In this mode, the library runs as a client, meaning it
-receives commands from a central server that it connects to. This
-central server is (usually) the streamer's Crowd Control desktop
-application running on a local port.
+This builder corresponds with the default `SimpleTCPConnector` used by Crowd Control. In this mode,
+the library runs as a client, meaning it receives commands from a central server that it connects
+to. This central server is (usually) the streamer's Crowd Control desktop application running on a
+local port.
 
-To use this connector type, use the Crowd Control [client builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlClientBuilder.html):
+To use this connector type, use the Crowd
+Control [client builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlClientBuilder.html):
 
 ```java
 import dev.qixils.crowdcontrol.CrowdControl;
@@ -62,8 +82,8 @@ CrowdControl crowdControl = CrowdControl.client()
         .build();
 ```
 
-You must also use the `SimpleTCPConnector` type inside your effect
-pack's C# file that gets loaded into the Crowd Control app. Example:
+You must also use the `SimpleTCPConnector` type inside your effect pack's C# file that gets loaded
+into the Crowd Control app. Example:
 
 ```cs
 using System;
@@ -100,13 +120,12 @@ namespace CrowdControl.Games.Packs
 
 ### Server Mode
 
-This builder corresponds with the `SimpleTCPClientConnector`. In this
-mode, the library runs as a server, meaning it can establish connections
-with multiple clients (streamers) and process effects for each streamer
-individually. This may be ideal for multiplayer game servers like
-Minecraft.
+This builder corresponds with the `SimpleTCPClientConnector`. In this mode, the library runs as a
+server, meaning it can establish connections with multiple clients (streamers) and process effects
+for each streamer individually. This may be ideal for multiplayer game servers like Minecraft.
 
-To use this connector type, use the Crowd Control [server builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlServerBuilder.html):
+To use this connector type, use the Crowd
+Control [server builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlServerBuilder.html):
 
 ```java
 import dev.qixils.crowdcontrol.CrowdControl;
@@ -118,9 +137,8 @@ CrowdControl crowdControl = CrowdControl.server()
         .build();
 ```
 
-You must also define several variables inside your effect
-pack's C# file that gets loaded into the Crowd Control app.
-Example:
+You must also define several variables inside your effect pack's C# file that gets loaded into the
+Crowd Control app. Example:
 
 ```cs
 using System;
@@ -161,36 +179,50 @@ namespace CrowdControl.Games.Packs
 
 ### General Usage
 
-Once you've created your CrowdControl instance, you can start registering handlers
-for each of your effects.
+Once you've created your CrowdControl instance, you can start registering handlers for each of your
+effects.
 
 #### Registering Individual Handlers
 
-Two overloaded methods are provided for registering an effect handler.
-You can either provide a [`Function<Request,Response>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Function))
-which is a function that takes in a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
-and returns a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html),
-or a [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
-which takes in a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
-and returns nothing. As these functions are called on an asynchronous thread, the latter
-is usually used for effects that require an action to be run on the main thread. It is
-expected that [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
-handlers will eventually call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html#send())
-to manually issue a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html)
+Two overloaded methods are provided for registering an effect handler. You can either provide
+a [`Function<Request,Response>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Function))
+which is a function that takes in
+a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
+and returns
+a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html)
+, or
+a [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
+which takes in
+a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
+and returns nothing. As these functions are called on an asynchronous thread, the latter is usually
+used for effects that require an action to be run on the main thread. It is expected
+that [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
+handlers will eventually
+call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html#send())
+to manually issue
+a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html)
 to the requesting client.
 
 #### Registering Handler Classes
 
-Those who prefer working with annotated methods can use [`#registerHandlers(Object)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object))
-to automatically register effect handlers for every appropriately annotated method
-inside a class. All methods that are annotated with [@Subscribe](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/Subscribe.html);
-return [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html),
-[Response.Builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.Builder.html),
-or Void (for synchronous effects that will manually call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html#send()));
-have a single parameter that accepts only [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html);
-and are public will be registered as effect handlers.
+Those who prefer working with annotated methods can
+use [`#registerHandlers(Object)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object))
+to automatically register effect handlers for every appropriately annotated method inside a class.
+All methods that are annotated
+with [@Subscribe](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/Subscribe.html)
+;
+return [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html)
+,
+[Response.Builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.Builder.html)
+, or Void (for synchronous effects that will manually
+call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html#send()))
+; have a single parameter that accepts
+only [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
+; and are public will be registered as effect handlers.
 
-For more information, please view [the method's javadocs](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object)).
+For more information, please
+view [the method's javadocs](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object))
+.
 
 #### Registering Checks
 
@@ -204,12 +236,13 @@ and [`#registerCheck(Function<Request,CheckResult>)`](https://javadoc.io/doc/dev
 
 #### Further Reading
 
-The documentation for all classes and methods may be found [here](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/3.0.0/index.html).
+The documentation for all classes and methods may be
+found [here](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/index.html).
 
 ### Example
 
-The following code demonstrates what a very simple usage of this library may look like.
-It does not correspond to any specific video game.
+The following code demonstrates what a very simple usage of this library may look like. It does not
+correspond to any specific video game.
 ~~Any resemblance to Minecraft is purely circumstantial.~~
 
 ```java
@@ -347,3 +380,47 @@ static class DisableJumpEffect {
 	}
 }
 ```
+
+# Sender
+
+The **Sender** library allows you to simulate the Crowd Control desktop application by sending
+effect requests to a video game server or clients. This was primarily developed as an internal tool
+to test the **Receiver** library, though it can be used for numerous other applications.
+
+## Installation
+
+<details>
+<summary>Maven</summary>
+
+Add to the `dependencies` section of your `pom.xml` file:
+
+```xml
+<dependency>
+    <groupId>dev.qixils.crowdcontrol</groupId>
+    <artifactId>crowd-control-sender</artifactId>
+    <version>3.3.0</version>
+</dependency>
+```
+
+</details>
+
+<details>
+<summary>Gradle</summary>
+
+Add to the `dependencies` section of your `build.gradle` file:
+
+```gradle
+compileOnly 'dev.qixils.crowdcontrol:crowd-control-sender:3.3.0'
+```
+
+Or, if using Kotlin (`build.gradle.kts`):
+
+```kts
+compileOnly("dev.qixils.crowdcontrol:crowd-control-sender:3.3.0")
+```
+
+</details>
+
+## Usage
+
+TODO
