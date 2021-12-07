@@ -42,6 +42,8 @@ public class EffectResponseTests {
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(resultType, response.getResultType());
 
+		Thread.sleep(30); // must wait for map to update??
+
 		if (resultType == ResultType.UNAVAILABLE) {
 			Assertions.assertEquals(TriState.FALSE, server.isEffectAvailable(effectName));
 			//noinspection ReactiveStreamsUnusedPublisher
