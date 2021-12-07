@@ -37,7 +37,8 @@ public class SimpleTCPConnectorTests {
 
 		// basically asserting that only one response is received
 		Request.Builder request = new Request.Builder().effect("success").viewer("test");
-		Flux<Response> flux = server.sendRequest(request);
+		Flux<Response> flux = server.sendRequest(request).blockFirst();
+		Assertions.assertNotNull(flux);
 		CompletableFuture<Response> firstFuture = new CompletableFuture<>();
 		CompletableFuture<Void> validationFuture = new CompletableFuture<>();
 		flux.subscribe(
@@ -95,7 +96,7 @@ public class SimpleTCPConnectorTests {
 		// get all responses
 		Request.Builder request = new Request.Builder().effect("success").viewer("test");
 		Thread.sleep(40); // more delay for good measure
-		List<Response> responses = server.sendRequest(request).collectList().block();
+		List<Response> responses = server.sendRequest(request).mapNotNull(Flux::blockFirst).collectList().block();
 
 		Assertions.assertNotNull(responses);
 		Assertions.assertEquals(clients, responses.size());

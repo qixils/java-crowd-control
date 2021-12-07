@@ -1,8 +1,6 @@
 package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.Blocking;
-import org.jetbrains.annotations.NotNull;
 import org.reactivestreams.Publisher;
 
 import java.io.IOException;
@@ -12,7 +10,7 @@ import java.io.IOException;
  *
  * @param <R> the type of {@link Publisher} returned by the {@code #sendRequest} methods
  */
-public interface StartableService<R extends Publisher<@NotNull Response>> extends SimulatedService<R> {
+public interface StartableService<R> extends SimulatedService<R> {
 	/**
 	 * Starts the simulated server or client.
 	 *

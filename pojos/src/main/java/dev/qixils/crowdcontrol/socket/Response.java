@@ -195,6 +195,18 @@ public final class Response implements JsonObject {
 		return new Builder(this);
 	}
 
+	/**
+	 * Determines if this {@link Response} marks the end to a series of responses to a
+	 * {@link Request}.
+	 *
+	 * @return true if this response marks the end of a series of responses
+	 */
+	public boolean isTerminating() throws IllegalStateException {
+		if (packetType != PacketType.EFFECT_RESULT)
+			throw new IllegalStateException("This response is not an effect result");
+		return type.isTerminating() || (type == ResultType.SUCCESS && timeRemaining == 0);
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -306,37 +318,37 @@ public final class Response implements JsonObject {
 		/**
 		 * The effect was applied successfully.
 		 */
-		SUCCESS,
+		SUCCESS(false),
 		/**
 		 * The effect failed to be applied. Will refund the purchaser.
 		 */
-		FAILURE,
+		FAILURE(true),
 		/**
 		 * The requested effect is unusable and should not be requested again.
 		 */
-		UNAVAILABLE,
+		UNAVAILABLE(true),
 		/**
 		 * The effect is momentarily unavailable but may be retried in a few seconds.
 		 */
-		RETRY,
+		RETRY(false),
 		/**
 		 * The timed effect has been paused and is now waiting.
 		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
-		PAUSED((byte) 0x06),
+		PAUSED(false, (byte) 0x06),
 		/**
 		 * The timed effect has been resumed and is counting down again.
 		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
-		RESUMED((byte) 0x07),
+		RESUMED(false, (byte) 0x07),
 		/**
 		 * The timed effect has finished.
 		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
-		FINISHED((byte) 0x08),
+		FINISHED(true, (byte) 0x08),
 		/**
 		 * Indicates that this Crowd Control server is not yet accepting requests.
 		 * <p>
@@ -344,7 +356,7 @@ public final class Response implements JsonObject {
 		 * not yet completed. You should instead use {@link #FAILURE} to indicate a
 		 * temporary failure or {@link #UNAVAILABLE} to indicate a permanent failure.
 		 */
-		NOT_READY((byte) 0xFF);
+		NOT_READY(true, (byte) 0xFF);
 
 		private static final Map<Byte, ResultType> BY_BYTE;
 
@@ -355,13 +367,16 @@ public final class Response implements JsonObject {
 			BY_BYTE = map;
 		}
 
+		private final boolean terminating;
 		private final byte encodedByte;
 
-		ResultType(byte encodedByte) {
+		ResultType(boolean terminating, byte encodedByte) {
+			this.terminating = terminating;
 			this.encodedByte = encodedByte;
 		}
 
-		ResultType() {
+		ResultType(boolean terminating) {
+			this.terminating = terminating;
 			this.encodedByte = (byte) ordinal();
 		}
 
@@ -377,6 +392,16 @@ public final class Response implements JsonObject {
 
 		public byte getEncodedByte() {
 			return encodedByte;
+		}
+
+		/**
+		 * Determines if this result type always marks the end to a series of {@link Response}s to a
+		 * {@link Request}.
+		 *
+		 * @return true if this result type always marks the end of a series of {@link Response}s
+		 */
+		public boolean isTerminating() {
+			return terminating;
 		}
 	}
 

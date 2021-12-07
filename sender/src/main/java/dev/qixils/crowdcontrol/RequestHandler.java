@@ -9,25 +9,27 @@ import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class RequestHandler implements SimulatedService<Mono<Response>> {
+final class RequestHandler implements SimulatedService<Response> {
 	private static final Logger logger = Logger.getLogger("CC-RequestHandler");
 	private static final Executor executor = Executors.newCachedThreadPool();
-	private final Map<Integer, CompletableFuture<Response>> pendingResponses = new HashMap<>(1);
+	private final Map<Integer, List<FluxSink<Response>>> publishers = new ConcurrentHashMap<>(1);
 	private final Socket socket;
 	private final SimulatedService<?> parent;
 	private final InputStreamReader inputStream;
@@ -122,10 +124,17 @@ class RequestHandler implements SimulatedService<Mono<Response>> {
 						break;
 
 					case EFFECT_RESULT:
-						CompletableFuture<Response> future = pendingResponses.remove(response.getId());
-						if (future != null) {
+						List<FluxSink<Response>> sinks = publishers.get(response.getId());
+						if (sinks != null) {
 							logger.fine("Received response for request " + response.getId());
-							future.complete(response);
+							// todo: handle different response types
+							for (FluxSink<Response> sink : sinks) {
+								sink.next(response);
+								if (response.isTerminating()) {
+									sink.complete();
+									sinks.remove(sink);
+								}
+							}
 						} else
 							logger.warning("Received response for unknown request ID: " + response.getId());
 				}
@@ -137,29 +146,35 @@ class RequestHandler implements SimulatedService<Mono<Response>> {
 	}
 
 	@Override
-	public @NotNull Mono<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
 		Type type = builder.getType();
 		if (type == null)
-			throw new IllegalStateException("Request type is null");
-		if (type.isEffectType() && !isAcceptingRequests())
-			throw new IllegalStateException("RequestHandler is not accepting requests");
+			throw new IllegalArgumentException("Request type is null");
 
-		CompletableFuture<Response> responseFuture = new CompletableFuture<>();
-		Request request = builder.id(++nextRequestId).build();
-		pendingResponses.put(request.getId(), responseFuture);
-		executor.execute(() -> {
-			try {
-				outputStream.write(request.toJSON().getBytes(StandardCharsets.UTF_8));
-				outputStream.write(0x00);
-				outputStream.flush();
-			} catch (Exception e) {
-				logger.log(Level.WARNING, "Failed to send request", e);
-				responseFuture.completeExceptionally(e);
+		// TODO: unit test
+		return Flux.create(sink -> {
+			if (type.isEffectType() && !isAcceptingRequests()) {
+				sink.error(new IllegalStateException("RequestHandler is not accepting requests"));
+				return;
 			}
+			Request request = builder.id(++nextRequestId).build();
+			publishers.computeIfAbsent(request.getId(), $ -> new ArrayList<>()).add(sink);
+			executor.execute(() -> {
+				try {
+					outputStream.write(request.toJSON().getBytes(StandardCharsets.UTF_8));
+					outputStream.write(0x00);
+					outputStream.flush();
+				} catch (Exception e) {
+					logger.log(Level.WARNING, "Failed to send request", e);
+					sink.error(e);
+					List<FluxSink<Response>> sinks = publishers.get(request.getId());
+					// this really shouldn't be null, but just in case:
+					if (sinks != null)
+						sinks.remove(sink);
+				}
+			});
+			// TODO: timeout
+			// TODO: timeout unit test
 		});
-		Mono<Response> mono = Mono.fromFuture(responseFuture);
-		if (timeout)
-			mono = mono.timeout(TIMEOUT);
-		return mono;
 	}
 }

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
@@ -22,7 +21,7 @@ import java.util.logging.Logger;
  * A server that can connect to multiple video games running a Crowd Control client using the
  * {@code SimpleTCPConnector} and dispatches {@link Request}s.
  */
-public class SimulatedServer implements StartableService<Flux<Response>>, ServiceManager {
+public final class SimulatedServer implements StartableService<@NotNull Flux<@NotNull Response>>, ServiceManager {
 	private static final Logger logger = Logger.getLogger("CC-Simul-Server");
 	private final int port;
 	private final List<RequestHandler> rawHandlers = new ArrayList<>(1);
@@ -59,7 +58,7 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 	private List<RequestHandler> getHandlers() {
 		synchronized (rawHandlers) {
 			rawHandlers.removeIf(handler -> !handler.isRunning());
-			return rawHandlers;
+			return new ArrayList<>(rawHandlers);
 		}
 	}
 
@@ -140,18 +139,15 @@ public class SimulatedServer implements StartableService<Flux<Response>>, Servic
 	}
 
 	@Override
-	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder request, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Flux<@NotNull Response>> sendRequest(@NotNull Builder request, boolean timeout) throws IllegalStateException {
 		if (!isAcceptingRequests())
 			throw new IllegalStateException("Server is not accepting requests");
 
 		List<RequestHandler> handlers = getHandlers();
-		List<Mono<Response>> responses = new ArrayList<>(handlers.size());
+		List<Flux<Response>> responses = new ArrayList<>(handlers.size());
 		for (RequestHandler handler : handlers) {
-			responses.add(handler.sendRequest(request, false));
+			responses.add(handler.sendRequest(request, timeout));
 		}
-		Flux<Response> flux = Flux.merge(responses);
-		if (timeout)
-			flux = flux.timeout(TIMEOUT);
-		return flux;
+		return Flux.fromIterable(responses);
 	}
 }

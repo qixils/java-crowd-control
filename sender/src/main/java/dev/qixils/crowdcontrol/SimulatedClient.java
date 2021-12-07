@@ -6,7 +6,7 @@ import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * A client that connects to a video game hosting a Crowd Control server using the
  * {@code SimpleTCPClientConnector} and dispatches {@link Request}s.
  */
-public final class SimulatedClient implements AutomatableService<Mono<Response>>, ServiceManager {
+public final class SimulatedClient implements AutomatableService<Response>, ServiceManager {
 	private static final Logger logger = Logger.getLogger("CC-Simul-Client");
 	private final String ip;
 	private final int port;
@@ -126,7 +126,7 @@ public final class SimulatedClient implements AutomatableService<Mono<Response>>
 
 	@Override
 	@NonBlocking
-	public @NotNull Mono<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
-		return handler.sendRequest(builder, true);
+	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+		return handler.sendRequest(builder, timeout);
 	}
 }

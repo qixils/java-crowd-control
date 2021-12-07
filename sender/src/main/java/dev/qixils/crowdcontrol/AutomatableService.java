@@ -1,8 +1,6 @@
 package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NonBlocking;
-import org.jetbrains.annotations.NotNull;
 import org.reactivestreams.Publisher;
 
 /**
@@ -10,7 +8,7 @@ import org.reactivestreams.Publisher;
  *
  * @param <R> the type of {@link Publisher} returned by the {@code #sendRequest} methods
  */
-public interface AutomatableService<R extends Publisher<@NotNull Response>> extends StartableService<R> {
+public interface AutomatableService<R> extends StartableService<R> {
 	/**
 	 * Starts the simulated server or client and automatically restarts it if it disconnects
 	 * (until it is {@link #shutdown() stopped}).
