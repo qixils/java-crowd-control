@@ -41,4 +41,9 @@ public class EffectHandlers {
 		new TimedEffect(request, 1000, timedEffectCallback, $ -> {
 		}).queue();
 	}
+
+	@Subscribe(effect = "nothing")
+	public void nothing(Request request) {
+		// this should time out
+	}
 }
