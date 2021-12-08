@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 // doubles as a test for all the possible handlers available to #registerEffects!
+@SuppressWarnings("unused") // used by reflection
 public class EffectHandlers {
 	private final @NotNull Consumer<@NotNull TimedEffect> timedEffectCallback;
 
@@ -38,7 +39,7 @@ public class EffectHandlers {
 
 	@Subscribe(effect = "timed")
 	public void timed(Request request) {
-		new TimedEffect(request, 1000, timedEffectCallback, $ -> {
+		new TimedEffect(request, 200, timedEffectCallback, $ -> {
 		}).queue();
 	}
 

@@ -70,7 +70,7 @@ public class EffectResponseTests {
 	}
 
 	private void basicTest(Response.ResultType resultType) throws InterruptedException {
-		basicTest(resultType.name().toLowerCase(Locale.ENGLISH), resultType, client -> client.registerHandlers(EFFECT_HANDLERS));
+		basicTest(resultType.name().toLowerCase(Locale.ENGLISH), resultType, null);
 	}
 
 	@Test
@@ -175,5 +175,115 @@ public class EffectResponseTests {
 		Assertions.assertFalse(server.isRunning());
 	}
 
-	// TODO: retry, others
+	@Test // test TimedEffect class + RETRY type
+	public void timedEffectTest() throws InterruptedException {
+		SimulatedServer server = new SimulatedServer(0);
+		Assertions.assertDoesNotThrow(server::start);
+
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
+		CompletableFuture<Void> firstFuture = new CompletableFuture<>();
+		CompletableFuture<TimedEffect> secondFuture = new CompletableFuture<>();
+		client.registerHandlers(new EffectHandlers(timedEffect -> {
+			if (!firstFuture.isDone())
+				firstFuture.complete(null);
+			else
+				secondFuture.complete(timedEffect);
+		}));
+
+		// give client time to connect
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		// send first effect
+		// note: the timed effect duration, as defined in EffectHandlers, is 0.2 seconds
+		Request.Builder builder1 = new Request.Builder()
+				.effect("timed")
+				.viewer("test");
+		Request.Builder builder2 = builder1.clone();
+		Flux<Response> responseFlux = server.sendRequest(builder1).blockFirst();
+		Assertions.assertNotNull(responseFlux);
+		Response response = responseFlux.blockFirst();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		Assertions.assertEquals(200, response.getTimeRemaining());
+		Assertions.assertTrue(firstFuture.isDone());
+
+		// second request should initially "fail" (return RETRY)...
+		Flux<Response> newFlux = server.sendRequest(builder2).blockFirst();
+		Assertions.assertNotNull(newFlux);
+		response = newFlux.blockFirst();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.RETRY, response.getResultType());
+		Assertions.assertEquals(0, response.getTimeRemaining());
+
+		// (because the first effect is still running, which we should ensure is eventually going to finish)
+		response = responseFlux.blockLast(Duration.ofSeconds(2));
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
+		Assertions.assertEquals(0, response.getTimeRemaining());
+
+		// ...but should eventually succeed, so let's set up some listeners
+		CompletableFuture<Response> successDetector = new CompletableFuture<>();
+		CompletableFuture<Response> pauseDetector = new CompletableFuture<>();
+		CompletableFuture<Response> resumeDetector = new CompletableFuture<>();
+		CompletableFuture<Response> finishDetector = new CompletableFuture<>();
+		newFlux.subscribe(lResponse -> {
+			if (lResponse.getResultType() == Response.ResultType.SUCCESS)
+				successDetector.complete(lResponse);
+			else if (lResponse.getResultType() == Response.ResultType.PAUSED)
+				pauseDetector.complete(lResponse);
+			else if (lResponse.getResultType() == Response.ResultType.RESUMED)
+				resumeDetector.complete(lResponse);
+			else if (lResponse.getResultType() == Response.ResultType.FINISHED)
+				finishDetector.complete(lResponse);
+		}, successDetector::completeExceptionally, () -> successDetector.complete(null));
+
+		// and wait for the second effect to start
+		response = successDetector.join();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		Assertions.assertEquals(200, response.getTimeRemaining());
+		Assertions.assertTrue(secondFuture.isDone());
+
+		// let's try pausing the effect
+		TimedEffect effect = secondFuture.join();
+		Assertions.assertNotNull(effect);
+		Assertions.assertTrue(effect.hasStarted());
+		Assertions.assertFalse(effect.isPaused());
+		Assertions.assertTrue(effect.getCurrentDuration() > 0);
+		Assertions.assertFalse(effect.isComplete());
+		effect.pause();
+		Assertions.assertTrue(effect.isPaused());
+		response = pauseDetector.join();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.PAUSED, response.getResultType());
+		long timeRemaining = response.getTimeRemaining();
+		Assertions.assertTrue(timeRemaining > 0);
+
+		// and now let's resume the effect
+		effect.resume();
+		Assertions.assertFalse(effect.isPaused());
+		response = resumeDetector.join();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.RESUMED, response.getResultType());
+		Assertions.assertEquals(timeRemaining, response.getTimeRemaining());
+
+		// finally, let's test the manual completion method
+		effect.complete();
+		response = Assertions.assertDoesNotThrow(() -> finishDetector.get(30, TimeUnit.MILLISECONDS));
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
+		Assertions.assertEquals(0, response.getTimeRemaining());
+
+		// cleanup
+		client.shutdown("Test completed");
+		server.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
 }

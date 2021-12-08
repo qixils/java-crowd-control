@@ -312,6 +312,15 @@ public final class TimedEffect {
 		return effectGroup;
 	}
 
+	/**
+	 * Determines if the effect is paused.
+	 *
+	 * @return paused status
+	 */
+	public boolean isPaused() {
+		return paused;
+	}
+
 	// key class
 
 	private static final class MapKey {
