@@ -99,4 +99,6 @@ public class EffectResponseTests {
 		basicTest("check", Response.ResultType.FAILURE, modifier);
 		basicTest("success", Response.ResultType.SUCCESS, modifier);
 	}
+
+	// TODO: retry, others
 }

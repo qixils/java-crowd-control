@@ -60,50 +60,128 @@ public final class Response implements JsonObject {
 	 * @param message           result message
 	 * @param timeRemaining     time remaining in milliseconds until the effect completes
 	 *                          or {@code 0} if the effect is not time-based
-	 * @throws IllegalArgumentException if the {@code id} is negative
+	 * @throws IllegalArgumentException May be thrown in various circumstances:
+	 *                                  <ul>
+	 *                                      <li>if the {@code id} is negative</li>
+	 *                                      <li>if the {@code timeRemaining} is negative</li>
+	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT} and {@code type} is null</li>
+	 *                                      <li>if the {@code packetType} is not {@link PacketType#EFFECT_RESULT} and {@code type} is non-null</li>
+	 *                                  </ul>
 	 */
-	Response(int id,
-			 @Nullable Socket originatingSocket,
-			 @Nullable PacketType packetType,
-			 @Nullable ResultType type,
-			 @Nullable String message,
-			 long timeRemaining) throws IllegalArgumentException {
+	private Response(int id,
+					 @Nullable Socket originatingSocket,
+					 @Nullable PacketType packetType,
+					 @Nullable ResultType type,
+					 @Nullable String message,
+					 long timeRemaining) throws IllegalArgumentException {
 		this.id = id;
-		this.originatingSocket = originatingSocket;
-		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
-		this.type = type;
-		this.message = message;
-		this.timeRemaining = timeRemaining;
-	}
+		if (this.id < 0)
+			throw new IllegalArgumentException("ID cannot be negative");
 
-	/**
-	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
-	 * and information about the result of the execution.
-	 *
-	 * @param request       originating request
-	 * @param packetType    type of packet
-	 * @param type          result of execution
-	 * @param message       result message
-	 * @param timeRemaining time remaining in milliseconds until the effect completes,
-	 *                      or {@code 0} if the effect is not time-based
-	 */
-	@CheckReturnValue
-	Response(@NotNull Request request,
-			 @Nullable PacketType packetType,
-			 @Nullable ResultType type,
-			 @Nullable String message,
-			 long timeRemaining) {
-		this.originatingSocket = request.originatingSocket;
-		this.id = request.getId();
+		this.timeRemaining = timeRemaining;
+		if (this.timeRemaining < 0)
+			throw new IllegalArgumentException("timeRemaining cannot be negative");
+
+		this.originatingSocket = originatingSocket;
+
+		// validate packet type and result type
 		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
 		if (this.packetType == PacketType.EFFECT_RESULT && type == null)
 			throw new IllegalArgumentException("type cannot be null if packetType is EFFECT_RESULT");
+		else if (this.packetType != PacketType.EFFECT_RESULT && type != null)
+			throw new IllegalArgumentException("type cannot be non-null if packetType is not EFFECT_RESULT");
 		this.type = type;
-		if (this.type != null)
-			this.message = Objects.requireNonNullElseGet(message, type::name);
-		else
-			this.message = message;
-		this.timeRemaining = timeRemaining;
+
+		// set message
+		this.message = type == null
+				? message
+				: Objects.requireNonNullElseGet(message, type::name);
+	}
+
+	/**
+	 * Instantiates a new non-{@link PacketType#EFFECT_RESULT} {@link Response} to a
+	 * {@link Request} with the given ID and result.
+	 *
+	 * @param id                ID of the {@link Request} that was executed
+	 * @param originatingSocket the socket that originated the request
+	 * @param packetType        type of the packet (must not be {@link PacketType#EFFECT_RESULT})
+	 * @param message           result message
+	 * @throws IllegalArgumentException May be thrown in various circumstances:
+	 *                                  <ul>
+	 *                                      <li>if the {@code id} is negative</li>
+	 *                                      <li>if the {@code packetType} is null</li>
+	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}</li>
+	 *                                      <li>if the {@code message} is null</li>
+	 *                                  </ul>
+	 */
+	Response(int id,
+			 @Nullable Socket originatingSocket,
+			 @NotNull PacketType packetType,
+			 @NotNull String message) throws IllegalArgumentException {
+		if (packetType == PacketType.EFFECT_RESULT)
+			throw new IllegalArgumentException("packetType cannot be EFFECT_RESULT in this constructor");
+		this.id = id;
+		if (this.id < 0)
+			throw new IllegalArgumentException("ID cannot be negative");
+		this.originatingSocket = originatingSocket;
+		this.packetType = packetType;
+		this.type = null;
+		this.message = message;
+		this.timeRemaining = 0;
+	}
+
+	/**
+	 * Instantiates a new {@link Response} given an ID, the {@link Socket} that originated the
+	 * {@link Request}, and information about the result of the execution.
+	 *
+	 * @param id                ID of the {@link Request} that was executed
+	 * @param originatingSocket the socket that originated the request
+	 * @param type              result of the execution
+	 * @param message           result message
+	 * @param timeRemaining     time remaining in milliseconds until the effect completes
+	 *                          or {@code 0} if the effect is not time-based
+	 * @throws IllegalArgumentException May be thrown in various circumstances:
+	 *                                  <ul>
+	 *                                      <li>if the {@code id} is negative</li>
+	 *                                      <li>if the {@code timeRemaining} is negative</li>
+	 *                                      <li>if the {@code type} is null</li>
+	 *                                  </ul>
+	 */
+	Response(int id,
+			 @Nullable Socket originatingSocket,
+			 @NotNull ResultType type,
+			 @Nullable String message,
+			 long timeRemaining) throws IllegalArgumentException {
+		this(id, originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
+	}
+
+	/**
+	 * Instantiates a new non-{@link PacketType#EFFECT_RESULT} {@link Response} to a given
+	 * {@link Request}.
+	 *
+	 * @param request    originating request
+	 * @param packetType type of packet (must not be {@link PacketType#EFFECT_RESULT})
+	 * @param message    result message
+	 * @throws IllegalArgumentException May be thrown in various circumstances:
+	 *                                  <ul>
+	 *                                      <li>if the {@code request} is null</li>
+	 *                                      <li>if the {@code packetType} is null</li>
+	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}</li>
+	 *                                      <li>if the {@code message} is null</li>
+	 *                                  </ul>
+	 */
+	@CheckReturnValue
+	Response(@NotNull Request request,
+			 @NotNull PacketType packetType,
+			 @NotNull String message) throws IllegalArgumentException {
+		if (packetType == PacketType.EFFECT_RESULT)
+			throw new IllegalArgumentException("packetType cannot be EFFECT_RESULT in this constructor");
+		this.id = request.getId();
+		this.originatingSocket = request.originatingSocket;
+		this.packetType = packetType;
+		this.type = null;
+		this.message = message;
+		this.timeRemaining = 0;
 	}
 
 	/**
@@ -115,13 +193,19 @@ public final class Response implements JsonObject {
 	 * @param message       result message
 	 * @param timeRemaining time remaining in milliseconds until the effect completes
 	 *                      or {@code 0} if the effect is not time-based
+	 * @throws IllegalArgumentException May be thrown in various circumstances:
+	 *                                  <ul>
+	 *                                      <li>if the {@code request} is null</li>
+	 *                                      <li>if the {@code type} is null</li>
+	 *                                      <li>if the {@code timeRemaining} is negative</li>
+	 *                                  </ul>
 	 */
 	@CheckReturnValue
 	public Response(@NotNull Request request,
 					@NotNull ResultType type,
-					@NotNull String message,
+					@Nullable String message,
 					long timeRemaining) {
-		this(request, null, type, message, timeRemaining);
+		this(request.getId(), request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
 	}
 
 	/**
@@ -130,7 +214,7 @@ public final class Response implements JsonObject {
 	 * @param builder {@link Response} builder
 	 */
 	@CheckReturnValue
-	public Response(@NotNull Builder builder) {
+	private Response(@NotNull Builder builder) {
 		this(builder.id, builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining);
 	}
 
@@ -241,29 +325,40 @@ public final class Response implements JsonObject {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Response response = (Response) o;
-		return getId() == response.getId()
-				&& getTimeRemaining() == response.getTimeRemaining()
-				&& getPacketType() == response.getPacketType()
-				&& getResultType() == response.getResultType()
-				&& Objects.equals(getMessage(), response.getMessage());
+		return id == response.id
+				&& timeRemaining == response.timeRemaining
+				&& packetType == response.packetType
+				&& type == response.type
+				&& Objects.equals(message, response.message);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(getPacketType(), getId(), getResultType(), getMessage(), getTimeRemaining());
+		return Objects.hash(packetType, id, type, message, timeRemaining);
+	}
+
+	/**
+	 * Determines if the {@link Request} that originated this {@link Response} is known.
+	 * If not, {@link #send()} will throw an {@link IllegalStateException}.
+	 *
+	 * @return true if the request is known
+	 */
+	public boolean isOriginKnown() {
+		return originatingSocket != null;
 	}
 
 	/**
 	 * Sends this {@link Response} to the client or server that delivered the related {@link Request}.
 	 *
-	 * @throws IllegalStateException if the response was created without a {@link Request}
+	 * @throws IllegalStateException if {@link #isOriginKnown()} returns false
+	 *                               (i.e. the response was created without a {@link Request})
 	 */
 	public void send() throws IllegalStateException {
-		if (originatingSocket == null) {
+		if (!isOriginKnown()) {
 			throw new IllegalStateException("Response was constructed without a Request and thus cannot find where to be sent");
 		}
 
-		if (originatingSocket.isClosed()) {
+		if (originatingSocket.isClosed() || !originatingSocket.isConnected() || originatingSocket.isOutputShutdown()) {
 			return;
 		}
 
@@ -455,7 +550,7 @@ public final class Response implements JsonObject {
 		 * @param source source for a new builder
 		 */
 		@CheckReturnValue
-		public Builder(@NotNull Response source) {
+		private Builder(@NotNull Response source) {
 			Objects.requireNonNull(source, "source cannot be null");
 			this.id = source.getId();
 			this.originatingSocket = source.originatingSocket;
@@ -482,7 +577,7 @@ public final class Response implements JsonObject {
 		 * @param builder builder to copy
 		 */
 		@CheckReturnValue
-		public Builder(@NotNull Builder builder) {
+		private Builder(@NotNull Builder builder) {
 			this.id = builder.id;
 			this.originatingSocket = builder.originatingSocket;
 			this.type = builder.type;

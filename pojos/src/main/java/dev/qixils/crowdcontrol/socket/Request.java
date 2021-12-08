@@ -54,7 +54,9 @@ public final class Request implements JsonObject {
 	 *                                  <ul>
 	 *                                      <li>if the given ID is negative</li>
 	 *                                      <li>if the given packet type is null</li>
-	 *                                      <li>or if the given packet type is an {@link Type#isEffectType() effect type} and the effect or viewer is null</li>
+	 *                                      <li>if the given packet type is an {@link Type#isEffectType() effect type} and the effect or viewer is null</li>
+	 *                                      <li>if the given packet type is not an {@link Type#isEffectType()} effect type} and the effect, viewer, cost, or targets is non-null</li>
+	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
 	 */
 	public Request(int id,
@@ -64,6 +66,11 @@ public final class Request implements JsonObject {
 				   @Nullable String message,
 				   @Nullable Integer cost,
 				   Target @Nullable [] targets) throws IllegalArgumentException {
+		// validate request ID
+		this.id = id;
+		if (this.id < 0)
+			throw new IllegalArgumentException("ID cannot be negative");
+
 		// validate type & related arguments
 		this.type = type;
 		if (type.isEffectType()) {
@@ -71,12 +78,19 @@ public final class Request implements JsonObject {
 				throw new IllegalArgumentException("effect cannot be null for effect packets");
 			if (viewer == null)
 				throw new IllegalArgumentException("viewer cannot be null for effect packets");
-		}
+		} else {
+			if (effect != null)
+				throw new IllegalArgumentException("effect cannot be non-null for non-effect packets");
+			if (viewer != null)
+				throw new IllegalArgumentException("viewer cannot be non-null for non-effect packets");
+			if (cost != null)
+				throw new IllegalArgumentException("cost cannot be non-null for non-effect packets");
+			if (targets != null)
+				throw new IllegalArgumentException("targets cannot be non-null for non-effect packets");
 
-		// validate request ID
-		this.id = id;
-		if (this.id < 0)
-			throw new IllegalArgumentException("ID cannot be negative");
+			if (message == null && type == Type.LOGIN)
+				throw new IllegalArgumentException("message (password) cannot be null for login packets");
+		}
 
 		// other arguments
 		this.effect = effect == null ? null : effect.toLowerCase(Locale.ENGLISH);
@@ -87,11 +101,37 @@ public final class Request implements JsonObject {
 	}
 
 	/**
+	 * Instantiates a {@link Type#isEffectType() non-effect type} {@link Request} with the given parameters.
+	 *
+	 * @param id      the ID of the request
+	 * @param type    the packet type to send
+	 * @param message the message to be displayed
+	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
+	 *                                  <ul>
+	 *                                      <li>if the given ID is negative</li>
+	 *                                      <li>if the given packet type is null</li>
+	 *                                      <li>if the given packet type is an {@link Type#isEffectType() effect type}</li>
+	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
+	 *                                  </ul>
+	 */
+	public Request(int id, @NotNull Type type, @Nullable String message) {
+		if (id < 0)
+			throw new IllegalArgumentException("ID cannot be negative");
+		if (type.isEffectType())
+			throw new IllegalArgumentException("type cannot be an effect type");
+		if (message == null && type == Type.LOGIN)
+			throw new IllegalArgumentException("message (password) cannot be null for login packets");
+		this.id = id;
+		this.type = type;
+		this.message = message;
+	}
+
+	/**
 	 * Instantiates a {@link Request} object from a {@link Builder}.
 	 *
 	 * @param builder the {@link Builder} to use
 	 */
-	public Request(Request.@NotNull Builder builder) {
+	private Request(Request.@NotNull Builder builder) {
 		this(builder.id, builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.targets);
 	}
 
@@ -230,24 +270,22 @@ public final class Request implements JsonObject {
 	}
 
 	@Override
-	@CheckReturnValue
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Request request = (Request) o;
-		return getId() == request.getId()
-				&& Objects.equals(getEffect(), request.getEffect())
-				&& Objects.equals(getMessage(), request.getMessage())
-				&& Objects.equals(getViewer(), request.getViewer())
-				&& Objects.equals(getCost(), request.getCost())
-				&& getType() == request.getType()
+		return id == request.id
+				&& type == request.type
+				&& Objects.equals(effect, request.effect)
+				&& Objects.equals(message, request.message)
+				&& Objects.equals(viewer, request.viewer)
+				&& Objects.equals(cost, request.cost)
 				&& Arrays.equals(getTargets(), request.getTargets());
 	}
 
 	@Override
-	@CheckReturnValue
 	public int hashCode() {
-		int result = Objects.hash(getId(), getEffect(), getMessage(), getViewer(), getCost(), getType());
+		int result = Objects.hash(id, type, effect, message, viewer, cost);
 		result = 31 * result + Arrays.hashCode(getTargets());
 		return result;
 	}
@@ -416,6 +454,8 @@ public final class Request implements JsonObject {
 	/**
 	 * Mutable builder for the immutable {@link Request} class.
 	 */
+	@SuppressWarnings("DuplicatedCode")
+	// not really fixable unless I added a getter annotation (which is silly do to for this one constructor)
 	public static class Builder implements Cloneable {
 		private int id = -1;
 		private String effect;
@@ -423,7 +463,14 @@ public final class Request implements JsonObject {
 		private String viewer;
 		private @Nullable Integer cost;
 		private Type type = Type.START;
-		private Target[] targets;
+		private Target @Nullable [] targets;
+
+		/**
+		 * Creates a new builder.
+		 */
+		@CheckReturnValue
+		public Builder() {
+		}
 
 		/**
 		 * Creates a new builder using the data from a {@link Request}.
@@ -431,8 +478,7 @@ public final class Request implements JsonObject {
 		 * @param source source for a new builder
 		 */
 		@CheckReturnValue
-		public Builder(@NotNull Request source) {
-			Objects.requireNonNull(source, "source cannot be null");
+		private Builder(@NotNull Request source) {
 			this.id = source.id;
 			this.effect = source.effect;
 			this.message = source.message;
@@ -443,16 +489,25 @@ public final class Request implements JsonObject {
 		}
 
 		/**
-		 * Creates a new builder.
+		 * Creates a new builder from another builder.
+		 *
+		 * @param builder source for a new builder
 		 */
 		@CheckReturnValue
-		public Builder() {
+		private Builder(@NotNull Builder builder) {
+			this.id = builder.id;
+			this.effect = builder.effect;
+			this.message = builder.message;
+			this.viewer = builder.viewer;
+			this.cost = builder.cost;
+			this.type = builder.type;
+			this.targets = builder.targets;
 		}
 
 		// setters
 
 		/**
-		 * Sets the type of result being returned.
+		 * Sets the type of result being returned. Defaults to {@link Type#START}.
 		 *
 		 * @param type result type
 		 * @return this builder
@@ -640,7 +695,7 @@ public final class Request implements JsonObject {
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Request.Builder clone() {
-			return new Request.Builder().id(id).type(type).message(message).effect(effect).viewer(viewer).cost(cost).targets(targets);
+			return new Request.Builder(this);
 		}
 	}
 }

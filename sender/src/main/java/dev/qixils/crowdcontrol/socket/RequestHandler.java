@@ -185,7 +185,6 @@ final class RequestHandler implements SimulatedService<Response> {
 										data.sink.next(new Response(
 												response.getId(),
 												null,
-												Response.PacketType.EFFECT_RESULT,
 												Response.ResultType.FINISHED,
 												null,
 												0
