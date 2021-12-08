@@ -2,7 +2,6 @@ package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.TriState;
-import dev.qixils.crowdcontrol.socket.Request.Builder;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +133,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 
 	@Override
 	@NonBlocking
-	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, boolean timeout) throws IllegalStateException {
 		if (!isAcceptingRequests())
 			throw new IllegalStateException("Cannot send requests while not accepting requests");
 		//noinspection ConstantConditions: call to isRunning() ensures handler is not null

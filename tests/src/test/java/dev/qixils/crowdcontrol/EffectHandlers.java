@@ -2,7 +2,6 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
-import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,17 +23,17 @@ public class EffectHandlers {
 
 	@Subscribe(effect = "success")
 	public Response success(Request request) {
-		return request.buildResponse().type(ResultType.SUCCESS).build();
+		return request.buildResponse().type(Response.ResultType.SUCCESS).build();
 	}
 
 	@Subscribe(effect = "failure")
 	public Response.Builder failure(Request request) {
-		return request.buildResponse().type(ResultType.FAILURE);
+		return request.buildResponse().type(Response.ResultType.FAILURE);
 	}
 
 	@Subscribe(effect = "retry")
 	public void retry(Request request) {
-		request.buildResponse().type(ResultType.RETRY).send();
+		request.buildResponse().type(Response.ResultType.RETRY).send();
 	}
 
 	@Subscribe(effect = "timed")

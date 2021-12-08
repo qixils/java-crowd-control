@@ -2,7 +2,6 @@ package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
-import dev.qixils.crowdcontrol.socket.Request.Builder;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,7 @@ public interface SimulatedService<R> {
 	/**
 	 * Dispatches a {@link Request} to the connected video game(s).
 	 *
-	 * @param builder the {@link Builder} to dispatch
+	 * @param builder the {@link Response.Builder} to dispatch
 	 * @return a {@link Publisher} that will either emit the {@link Response}(s),
 	 * throw a {@link java.util.concurrent.TimeoutException} if no response is received in a {@link #TIMEOUT timely manner},
 	 * throw a {@link IOException} if an I/O error occurs trying to write the request,
@@ -120,7 +119,7 @@ public interface SimulatedService<R> {
 	/**
 	 * Dispatches a {@link Request} to the connected video game(s).
 	 *
-	 * @param builder the {@link Builder} to dispatch
+	 * @param builder the {@link Response.Builder} to dispatch
 	 * @param timeout whether the returned Flux should throw a {@link java.util.concurrent.TimeoutException}
 	 *                if no response is received in a {@link #TIMEOUT timely manner}
 	 * @return a {@link Publisher} that will either emit the {@link Response}(s),

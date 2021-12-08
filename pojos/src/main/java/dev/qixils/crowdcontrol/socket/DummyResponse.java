@@ -1,7 +1,5 @@
 package dev.qixils.crowdcontrol.socket;
 
-import dev.qixils.crowdcontrol.socket.Response.PacketType;
-import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,12 +9,13 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+// TODO: remove
 final class DummyResponse implements JsonObject {
 	int id = 0;
-	ResultType status;
+	Response.ResultType status;
 	String message;
 	long timeRemaining;
-	PacketType type;
+	Response.PacketType type;
 
 	static void write(@Nullable Socket socket, @NotNull String message) {
 		if (socket == null || socket.isClosed()) return;
@@ -34,7 +33,7 @@ final class DummyResponse implements JsonObject {
 		if (cause != null)
 			response.id = cause.getId();
 		response.message = Objects.requireNonNullElse(reason, "Disconnected");
-		response.type = PacketType.DISCONNECT;
+		response.type = Response.PacketType.DISCONNECT;
 		return response;
 	}
 

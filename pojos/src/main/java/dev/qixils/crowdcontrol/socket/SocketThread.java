@@ -1,6 +1,5 @@
 package dev.qixils.crowdcontrol.socket;
 
-import dev.qixils.crowdcontrol.socket.Response.PacketType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ final class SocketThread extends Thread implements SocketManager {
 
 	static {
 		DummyResponse resp = new DummyResponse();
-		resp.type = PacketType.LOGIN;
+		resp.type = Response.PacketType.LOGIN;
 		RAW_PASSWORD_REQUEST = resp.toJSON();
 		byte[] json = RAW_PASSWORD_REQUEST.getBytes(StandardCharsets.UTF_8);
 		// array copy adds an extra 0x00 byte to the end, indicating the end of the packet

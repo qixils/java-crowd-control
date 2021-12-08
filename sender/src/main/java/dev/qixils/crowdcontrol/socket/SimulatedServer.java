@@ -2,7 +2,6 @@ package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.TriState;
-import dev.qixils.crowdcontrol.socket.Request.Builder;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +151,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	}
 
 	@Override
-	public @NotNull Flux<@NotNull Flux<@NotNull Response>> sendRequest(@NotNull Builder request, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Flux<@NotNull Response>> sendRequest(Request.@NotNull Builder request, boolean timeout) throws IllegalStateException {
 		if (!isAcceptingRequests())
 			throw new IllegalStateException("Server is not accepting requests");
 

@@ -2,7 +2,6 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
-import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import dev.qixils.crowdcontrol.socket.SimulatedServer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -61,7 +60,7 @@ public class SimpleTCPConnectorTests {
 
 		Response response = Assertions.assertDoesNotThrow(firstFuture::join);
 		Assertions.assertNotNull(response);
-		Assertions.assertEquals(ResultType.SUCCESS, response.getResultType());
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 
 		// cleanup
 		client.shutdown("Test completed");
@@ -101,7 +100,7 @@ public class SimpleTCPConnectorTests {
 		Assertions.assertNotNull(responses);
 		Assertions.assertEquals(clients, responses.size());
 		for (Response response : responses) {
-			Assertions.assertEquals(ResultType.SUCCESS, response.getResultType());
+			Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		}
 
 		// cleanup

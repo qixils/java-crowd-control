@@ -4,10 +4,6 @@ import com.google.gson.JsonParseException;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.CrowdControlException;
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
-import dev.qixils.crowdcontrol.socket.Request.Builder;
-import dev.qixils.crowdcontrol.socket.Request.Type;
-import dev.qixils.crowdcontrol.socket.Response.PacketType;
-import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +122,7 @@ final class RequestHandler implements SimulatedService<Response> {
 
 						logger.info("Login prompted; sending password");
 						sendRequest(new Request.Builder()
-								.type(Type.LOGIN)
+								.type(Request.Type.LOGIN)
 								.message(encryptedPassword), true)
 								.subscribe();
 						break;
@@ -155,13 +151,13 @@ final class RequestHandler implements SimulatedService<Response> {
 						// set availability of effect
 						String effectName = data.request.getEffect();
 						if (!effectAvailabilityMap.containsKey(effectName))
-							effectAvailabilityMap.put(effectName, response.getResultType() != ResultType.UNAVAILABLE);
+							effectAvailabilityMap.put(effectName, response.getResultType() != Response.ResultType.UNAVAILABLE);
 
 						boolean toSchedule = false; // whether to schedule a fake FINISHED response
 						// handle the various possible response types/states
 						if (response.isTerminating()) {
 							data.sink.complete();
-						} else if (response.getResultType() == ResultType.RETRY) {
+						} else if (response.getResultType() == Response.ResultType.RETRY) {
 							int retryDelay = data.getRetryDelay();
 							if (retryDelay == -1)
 								data.sink.complete();
@@ -170,12 +166,12 @@ final class RequestHandler implements SimulatedService<Response> {
 										() -> writeRequest(data.request, data.sink),
 										retryDelay, TimeUnit.SECONDS
 								);
-						} else if (response.getResultType() == ResultType.PAUSED) {
+						} else if (response.getResultType() == Response.ResultType.PAUSED) {
 							data.pause();
-						} else if (response.getResultType() == ResultType.RESUMED) {
+						} else if (response.getResultType() == Response.ResultType.RESUMED) {
 							data.resume();
 							toSchedule = true;
-						} else if (response.getResultType() == ResultType.SUCCESS) {
+						} else if (response.getResultType() == Response.ResultType.SUCCESS) {
 							// this represents the start of a timed effect
 							// because this was not caught by the first if block
 							data.updateTimeRemaining(response.getTimeRemaining());
@@ -189,8 +185,8 @@ final class RequestHandler implements SimulatedService<Response> {
 										data.sink.next(new Response(
 												response.getId(),
 												null,
-												PacketType.EFFECT_RESULT,
-												ResultType.FINISHED,
+												Response.PacketType.EFFECT_RESULT,
+												Response.ResultType.FINISHED,
 												null,
 												0
 										));
@@ -209,9 +205,9 @@ final class RequestHandler implements SimulatedService<Response> {
 	}
 
 	@Override
-	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, boolean timeout) throws IllegalStateException {
 		Objects.requireNonNull(builder, "builder cannot be null");
-		Type type = builder.type();
+		Request.Type type = builder.type();
 		if (type == null)
 			throw new IllegalArgumentException("Request type is null");
 

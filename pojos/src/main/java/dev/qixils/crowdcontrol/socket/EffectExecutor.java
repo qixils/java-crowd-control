@@ -4,9 +4,6 @@ import com.google.gson.JsonParseException;
 import dev.qixils.crowdcontrol.RequestManager;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
-import dev.qixils.crowdcontrol.socket.Request.Type;
-import dev.qixils.crowdcontrol.socket.Response.PacketType;
-import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -67,21 +64,21 @@ final class EffectExecutor {
 
 		request.originatingSocket = socket;
 
-		if (request.getType() == Type.KEEP_ALIVE) {
-			request.buildResponse().packetType(PacketType.KEEP_ALIVE).send();
+		if (request.getType() == Request.Type.KEEP_ALIVE) {
+			request.buildResponse().packetType(Response.PacketType.KEEP_ALIVE).send();
 			return;
 		}
 
 		// login handling
 		if (!loggedIn && password != null && socketThread != null) {
-			if (request.getType() != Type.LOGIN) {
-				request.buildResponse().type(ResultType.NOT_READY).message("Client has not logged in").send();
+			if (request.getType() != Request.Type.LOGIN) {
+				request.buildResponse().type(Response.ResultType.NOT_READY).message("Client has not logged in").send();
 			} else if (password.equalsIgnoreCase(request.getMessage())) {
 				logger.info("New client successfully logged in (" + socketThread.displayName + ")");
 				DummyResponse resp = new DummyResponse();
 				resp.id = request.getId();
 				resp.message = "Successfully logged in";
-				resp.type = PacketType.LOGIN_SUCCESS;
+				resp.type = Response.PacketType.LOGIN_SUCCESS;
 				resp.write(socket);
 				loggedIn = true;
 			} else {
@@ -97,10 +94,10 @@ final class EffectExecutor {
 				crowdControl.handle(request);
 			} catch (Throwable exc) {
 				if (ExceptionUtil.isCause(NoApplicableTarget.class, exc)) {
-					request.buildResponse().type(ResultType.FAILURE).message("Streamer(s) unavailable").send();
+					request.buildResponse().type(Response.ResultType.FAILURE).message("Streamer(s) unavailable").send();
 				} else {
 					logger.log(Level.WARNING, "Request handler threw an exception", exc);
-					request.buildResponse().type(ResultType.FAILURE).message("Request handler threw an exception").send();
+					request.buildResponse().type(Response.ResultType.FAILURE).message("Request handler threw an exception").send();
 				}
 			}
 		});

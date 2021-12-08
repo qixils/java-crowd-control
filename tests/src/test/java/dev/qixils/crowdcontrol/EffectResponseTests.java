@@ -1,26 +1,31 @@
 package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
-import dev.qixils.crowdcontrol.socket.Request.Builder;
+import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
-import dev.qixils.crowdcontrol.socket.Response.ResultType;
 import dev.qixils.crowdcontrol.socket.SimulatedServer;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 
 @SuppressWarnings("BusyWait")
 public class EffectResponseTests {
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
-	private void basicTest(Response.ResultType resultType) throws InterruptedException {
+	private void basicTest(String effectName,
+						   Response.ResultType resultType,
+						   @Nullable Consumer<CrowdControl> clientModifier) throws InterruptedException {
 		SimulatedServer server = new SimulatedServer(0);
 		Assertions.assertDoesNotThrow(server::start);
 
 		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 		client.registerHandlers(EFFECT_HANDLERS);
+		if (clientModifier != null)
+			clientModifier.accept(client);
 
 		// give client time to connect
 		int delay = 1;
@@ -31,11 +36,10 @@ public class EffectResponseTests {
 		Assertions.assertTrue(server.isAcceptingRequests());
 
 		// send effect
-		final String effectName = resultType.name().toLowerCase(Locale.ENGLISH);
-		Builder builder1 = new Builder()
+		Request.Builder builder1 = new Request.Builder()
 				.effect(effectName)
 				.viewer("test");
-		Builder builder2 = builder1.clone();
+		Request.Builder builder2 = builder1.clone();
 		Flux<Response> responseFlux = server.sendRequest(builder1).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		Response response = responseFlux.blockFirst();
@@ -44,7 +48,7 @@ public class EffectResponseTests {
 
 		Thread.sleep(30); // must wait for map to update??
 
-		if (resultType == ResultType.UNAVAILABLE) {
+		if (resultType == Response.ResultType.UNAVAILABLE) {
 			Assertions.assertEquals(TriState.FALSE, server.isEffectAvailable(effectName));
 			//noinspection ReactiveStreamsUnusedPublisher
 			Assertions.assertThrows(EffectUnavailableException.class, () -> server.sendRequest(builder2));
@@ -61,18 +65,38 @@ public class EffectResponseTests {
 		Assertions.assertFalse(server.isRunning());
 	}
 
+	private void basicTest(Response.ResultType resultType) throws InterruptedException {
+		basicTest(resultType.name().toLowerCase(Locale.ENGLISH), resultType, client -> client.registerHandlers(EFFECT_HANDLERS));
+	}
+
 	@Test
 	public void successResponse() throws InterruptedException {
-		basicTest(ResultType.SUCCESS);
+		basicTest(Response.ResultType.SUCCESS);
 	}
 
 	@Test
 	public void failureResponse() throws InterruptedException {
-		basicTest(ResultType.FAILURE);
+		basicTest(Response.ResultType.FAILURE);
 	}
 
 	@Test
 	public void unavailableResponse() throws InterruptedException {
-		basicTest(ResultType.UNAVAILABLE);
+		basicTest(Response.ResultType.UNAVAILABLE);
+	}
+
+	@Test
+	public void globalCheckResponse() throws InterruptedException {
+		basicTest("success", Response.ResultType.FAILURE,
+				client -> client.registerCheck(() -> CheckResult.DISALLOW));
+	}
+
+	@Test
+	public void variableCheckResponse() throws InterruptedException {
+		Consumer<CrowdControl> modifier = client -> client.registerCheck(request ->
+				request.getEffect().equals("check")
+						? CheckResult.DISALLOW
+						: CheckResult.ALLOW);
+		basicTest("check", Response.ResultType.FAILURE, modifier);
+		basicTest("success", Response.ResultType.SUCCESS, modifier);
 	}
 }

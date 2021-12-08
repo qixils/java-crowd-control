@@ -1,7 +1,6 @@
 package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.socket.Request;
-import dev.qixils.crowdcontrol.socket.Request.Target;
 import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +73,7 @@ public final class TimedEffect {
 		this.effectGroup = Objects.requireNonNull(effectGroup, "effectGroup cannot be null");
 		this.globalKey = new MapKey(effectGroup);
 
-		Target[] targets = request.getTargets();
+		Request.Target[] targets = request.getTargets();
 		mapKeys = new MapKey[targets.length];
 		for (int i = 0; i < targets.length; i++) {
 			mapKeys[i] = new MapKey(effectGroup, targets[i]);
@@ -116,8 +115,8 @@ public final class TimedEffect {
 	 * @param targets     targeted streamers
 	 * @return whether the effect is active
 	 */
-	public static boolean isActive(@NotNull String effectGroup, Target @NotNull ... targets) {
-		for (Target target : targets) {
+	public static boolean isActive(@NotNull String effectGroup, Request.Target @NotNull ... targets) {
+		for (Request.Target target : targets) {
 			MapKey key = new MapKey(effectGroup, target);
 			if (ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete())
 				return true;
@@ -317,13 +316,13 @@ public final class TimedEffect {
 
 	private static final class MapKey {
 		private final @NotNull String effectGroup;
-		private final @Nullable Target target;
+		private final @Nullable Request.Target target;
 
 		private MapKey(@NotNull String effectGroup) {
 			this(effectGroup, null);
 		}
 
-		private MapKey(@NotNull String effectGroup, @Nullable Target target) {
+		private MapKey(@NotNull String effectGroup, @Nullable Request.Target target) {
 			this.effectGroup = effectGroup;
 			this.target = target;
 		}
