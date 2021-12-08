@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -123,8 +124,8 @@ final class RequestHandler implements SimulatedService<Response> {
 						logger.info("Login prompted; sending password");
 						sendRequest(new Request.Builder()
 								.type(Request.Type.LOGIN)
-								.message(encryptedPassword), true)
-								.subscribe();
+								.message(encryptedPassword)
+						).subscribe();
 						break;
 
 					case DISCONNECT:
@@ -204,7 +205,7 @@ final class RequestHandler implements SimulatedService<Response> {
 	}
 
 	@Override
-	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, @Nullable Duration timeout) throws IllegalStateException {
 		Objects.requireNonNull(builder, "builder cannot be null");
 		Request.Type type = builder.type();
 		if (type == null)
@@ -230,14 +231,14 @@ final class RequestHandler implements SimulatedService<Response> {
 			effectDataMap.put(request.getId(), data);
 
 			// manage responseReceivedMap for timeout functionality
-			if (timeout) {
+			if (timeout != null) {
 				scheduledExecutor.schedule(() -> {
 					if (!isAcceptingRequests()) return;
 					if (data.responseReceived) return;
 					final String error = "Timed out waiting for response for request " + request.getId();
 					logger.fine(error);
 					sink.error(new TimeoutException(error));
-				}, TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+				}, timeout.toMillis(), TimeUnit.MILLISECONDS);
 			}
 
 			// send request

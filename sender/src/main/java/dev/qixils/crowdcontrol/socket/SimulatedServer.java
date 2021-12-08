@@ -11,6 +11,7 @@ import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -151,7 +152,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	}
 
 	@Override
-	public @NotNull Flux<@NotNull Flux<@NotNull Response>> sendRequest(Request.@NotNull Builder request, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Flux<@NotNull Response>> sendRequest(Request.@NotNull Builder request, @Nullable Duration timeout) throws IllegalStateException {
 		if (!isAcceptingRequests())
 			throw new IllegalStateException("Server is not accepting requests");
 

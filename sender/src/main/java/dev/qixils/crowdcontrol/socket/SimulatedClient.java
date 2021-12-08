@@ -11,6 +11,7 @@ import reactor.core.publisher.Flux;
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
+import java.time.Duration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -133,7 +134,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 
 	@Override
 	@NonBlocking
-	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, boolean timeout) throws IllegalStateException {
+	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, @Nullable Duration timeout) throws IllegalStateException {
 		if (!isAcceptingRequests())
 			throw new IllegalStateException("Cannot send requests while not accepting requests");
 		//noinspection ConstantConditions: call to isRunning() ensures handler is not null
