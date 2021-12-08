@@ -50,7 +50,7 @@ public class RequestTests {
 	}
 
 	@Test
-	public void builderGetterTests() {
+	public void builderTests() {
 		Request request = new Request.Builder()
 				.id(1)
 				.type(Request.Type.START)
@@ -85,5 +85,37 @@ public class RequestTests {
 		Assertions.assertEquals(0, request.getTargets().length);
 		Assertions.assertNull(request.getMessage());
 		Assertions.assertNull(request.getCost());
+	}
+
+	@Test
+	public void builderGetterTests() {
+		Request.Builder builder = new Request.Builder()
+				.id(1)
+				.type(Request.Type.START)
+				.effect("success")
+				.viewer("qixils")
+				.message("Hello")
+				.cost(10)
+				.targets(new Request.Target[]{new Request.Target(12345, "streamer", "https://i.qixils.dev/favicon.png")})
+				.clone();
+		Assertions.assertEquals(1, builder.getId());
+		Assertions.assertEquals(Request.Type.START, builder.getType());
+		Assertions.assertEquals("success", builder.getEffect());
+		Assertions.assertEquals("qixils", builder.getViewer());
+		Assertions.assertEquals("Hello", builder.getMessage());
+		Assertions.assertEquals(10, builder.getCost());
+		Assertions.assertEquals(1, builder.getTargets().length);
+		Assertions.assertEquals(12345, builder.getTargets()[0].getId());
+		Assertions.assertEquals("streamer", builder.getTargets()[0].getName());
+		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.getTargets()[0].getAvatar());
+
+		builder.id(2);
+		builder.message(null);
+		builder.cost(null);
+		builder.targets(null);
+		Assertions.assertEquals(2, builder.getId());
+		Assertions.assertNull(builder.getTargets());
+		Assertions.assertNull(builder.getMessage());
+		Assertions.assertNull(builder.getCost());
 	}
 }
