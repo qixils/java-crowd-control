@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.time.temporal.Temporal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,7 +32,7 @@ public final class Response implements JsonObject {
 	private static final Logger logger = Logger.getLogger("CC-Response");
 	@SerializedName("type")
 	private PacketType packetType;
-	private transient Request request;
+	private transient Socket originatingSocket;
 	private int id;
 	@SerializedName("status")
 	private ResultType type;
@@ -42,76 +44,84 @@ public final class Response implements JsonObject {
 	 * <p>
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
+	@SuppressWarnings("unused")
+	// used by GSON
 	Response() {
 	}
 
 	/**
-	 * Instantiates a new {@link Response} given its ID, the result of executing the effect,
-	 * an associated message, the type of packet, the time until the effect completes,
-	 * and the associated {@link Request}.
+	 * Instantiates a new {@link Response} given an ID, the {@link Socket} that originated the
+	 * {@link Request}, and information about the result of the execution.
 	 *
-	 * @param id            ID of the {@link Request} that was executed
-	 * @param type          result of the execution
-	 * @param message       result message
-	 * @param timeRemaining time remaining in milliseconds until the effect completes
-	 * @param packetType    type of the packet
-	 * @param request       associated {@link Request}
+	 * @param id                ID of the {@link Request} that was executed
+	 * @param originatingSocket the socket that originated the request
+	 * @param packetType        type of the packet
+	 * @param type              result of the execution
+	 * @param message           result message
+	 * @param timeRemaining     time remaining in milliseconds until the effect completes
+	 *                          or {@code 0} if the effect is not time-based
+	 * @throws IllegalArgumentException if the {@code id} is negative
 	 */
 	Response(int id,
+			 @Nullable Socket originatingSocket,
+			 @Nullable PacketType packetType,
 			 @Nullable ResultType type,
 			 @Nullable String message,
-			 long timeRemaining,
-			 @Nullable PacketType packetType,
-			 @Nullable Request request) {
+			 long timeRemaining) throws IllegalArgumentException {
 		this.id = id;
+		this.originatingSocket = originatingSocket;
+		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
 		this.type = type;
 		this.message = message;
 		this.timeRemaining = timeRemaining;
-		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
-		this.request = request;
 	}
 
 	/**
-	 * Constructs a response to a {@link Request} given the {@link Request} that caused it, the
-	 * result of executing the effect, an associated message, the time until the effect
-	 * completes, and the type of packet.
+	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
+	 * and information about the result of the execution.
 	 *
 	 * @param request       originating request
+	 * @param packetType    type of packet
 	 * @param type          result of execution
 	 * @param message       result message
-	 * @param timeRemaining time remaining in milliseconds until the effect completes
-	 * @param packetType    type of packet
+	 * @param timeRemaining time remaining in milliseconds until the effect completes,
+	 *                      or {@code 0} if the effect is not time-based
 	 */
 	@CheckReturnValue
 	Response(@NotNull Request request,
-			 Response.@NotNull ResultType type,
-			 @NotNull String message,
-			 long timeRemaining,
-			 @Nullable PacketType packetType) {
-		this.request = Objects.requireNonNull(request, "request cannot be null");
+			 @Nullable PacketType packetType,
+			 @Nullable ResultType type,
+			 @Nullable String message,
+			 long timeRemaining) {
+		this.originatingSocket = request.originatingSocket;
 		this.id = request.getId();
-		this.type = Objects.requireNonNull(type, "type cannot be null");
-		this.message = Objects.requireNonNull(message, "message cannot be null");
-		this.timeRemaining = timeRemaining;
 		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
+		if (this.packetType == PacketType.EFFECT_RESULT && type == null)
+			throw new IllegalArgumentException("type cannot be null if packetType is EFFECT_RESULT");
+		this.type = type;
+		if (this.type != null)
+			this.message = Objects.requireNonNullElseGet(message, type::name);
+		else
+			this.message = message;
+		this.timeRemaining = timeRemaining;
 	}
 
 	/**
-	 * Constructs a response to a {@link Request} given the {@link Request} that caused it, the
-	 * result of executing the effect, an associated message, and the time until the effect
-	 * completes.
+	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
+	 * and information about the result of the execution.
 	 *
 	 * @param request       originating request
 	 * @param type          result of execution
 	 * @param message       result message
 	 * @param timeRemaining time remaining in milliseconds until the effect completes
+	 *                      or {@code 0} if the effect is not time-based
 	 */
 	@CheckReturnValue
 	public Response(@NotNull Request request,
-					@NotNull Response.ResultType type,
+					@NotNull ResultType type,
 					@NotNull String message,
 					long timeRemaining) {
-		this(request, type, message, timeRemaining, null);
+		this(request, null, type, message, timeRemaining);
 	}
 
 	/**
@@ -121,7 +131,7 @@ public final class Response implements JsonObject {
 	 */
 	@CheckReturnValue
 	public Response(@NotNull Builder builder) {
-		this(builder.request, builder.type, builder.message, builder.timeRemaining, builder.packetType);
+		this(builder.id, builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining);
 	}
 
 	/**
@@ -135,15 +145,6 @@ public final class Response implements JsonObject {
 	@CheckReturnValue
 	public static Response fromJSON(@NotNull String json) throws JsonSyntaxException {
 		return ByteAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Response.class);
-	}
-
-	/**
-	 * Gets the unique {@link Request} that caused this response.
-	 *
-	 * @return original request
-	 */
-	public Request getRequest() {
-		return request;
 	}
 
 	/**
@@ -255,22 +256,22 @@ public final class Response implements JsonObject {
 	/**
 	 * Sends this {@link Response} to the client or server that delivered the related {@link Request}.
 	 *
-	 * @throws IllegalStateException the related {@link Request} does not have an associated client or server
+	 * @throws IllegalStateException if the response was created without a {@link Request}
 	 */
 	public void send() throws IllegalStateException {
-		if (request == null || request.originatingSocket == null) {
-			throw new IllegalStateException("This Response was constructed with an illegal Request which is not associated with a client or server");
+		if (originatingSocket == null) {
+			throw new IllegalStateException("Response was constructed without a Request and thus cannot find where to be sent");
 		}
 
-		if (request.originatingSocket.isClosed()) {
+		if (originatingSocket.isClosed()) {
 			return;
 		}
 
 		//object is never updated after assignment, so we can ignore this error:
 		//noinspection SynchronizeOnNonFinalField
-		synchronized (request.originatingSocket) {
+		synchronized (originatingSocket) {
 			try {
-				OutputStream output = request.originatingSocket.getOutputStream();
+				OutputStream output = originatingSocket.getOutputStream();
 				output.write(toJSON().getBytes(StandardCharsets.UTF_8));
 				output.write(0x00);
 				output.flush();
@@ -437,7 +438,8 @@ public final class Response implements JsonObject {
 	 * Mutable builder for the immutable {@link Response} class.
 	 */
 	public static class Builder implements Cloneable {
-		private final Request request;
+		private final int id;
+		private final Socket originatingSocket;
 		private ResultType type;
 		private String message;
 		private long timeRemaining;
@@ -455,7 +457,8 @@ public final class Response implements JsonObject {
 		@CheckReturnValue
 		public Builder(@NotNull Response source) {
 			Objects.requireNonNull(source, "source cannot be null");
-			this.request = source.request;
+			this.id = source.getId();
+			this.originatingSocket = source.originatingSocket;
 			this.message = source.message;
 			this.type = source.type;
 			this.timeRemaining = source.timeRemaining;
@@ -469,7 +472,36 @@ public final class Response implements JsonObject {
 		 */
 		@CheckReturnValue
 		public Builder(@NotNull Request request) {
-			this.request = Objects.requireNonNull(request, "request cannot be null");
+			this.id = request.getId();
+			this.originatingSocket = request.originatingSocket;
+		}
+
+		/**
+		 * Creates a copy of the provided builder.
+		 *
+		 * @param builder builder to copy
+		 */
+		@CheckReturnValue
+		public Builder(@NotNull Builder builder) {
+			this.id = builder.id;
+			this.originatingSocket = builder.originatingSocket;
+			this.type = builder.type;
+			this.message = builder.message;
+			this.timeRemaining = builder.timeRemaining;
+			this.packetType = builder.packetType;
+			this.messageSet = builder.messageSet;
+		}
+
+		/**
+		 * Manually creates a new builder with the given id and socket.
+		 *
+		 * @param id                id of the response
+		 * @param originatingSocket socket that originated the request
+		 */
+		@CheckReturnValue
+		Builder(int id, @Nullable Socket originatingSocket) {
+			this.id = id;
+			this.originatingSocket = originatingSocket;
 		}
 
 		/**
@@ -507,6 +539,9 @@ public final class Response implements JsonObject {
 		 *
 		 * @param timeRemaining time in milliseconds
 		 * @return this builder
+		 * @throws IllegalArgumentException if timeRemaining is negative
+		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @see #timeRemaining(long, TimeUnit)
 		 */
 		@NotNull
 		@Contract("_ -> this")
@@ -520,13 +555,34 @@ public final class Response implements JsonObject {
 		/**
 		 * Sets the time left on the referenced effect.
 		 *
+		 * @param timeRemaining time in the specified time unit
+		 * @param timeUnit      time unit
+		 * @return this builder
+		 * @throws IllegalArgumentException if timeRemaining is negative
+		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 */
+		@NotNull
+		@Contract("_, _ -> this")
+		public Builder timeRemaining(long timeRemaining, @NotNull TimeUnit timeUnit) {
+			return timeRemaining(timeUnit.toMillis(timeRemaining));
+		}
+
+		/**
+		 * Sets the time left on the referenced effect.
+		 *
 		 * @param timeRemaining effect duration
 		 * @return this builder
+		 * @throws IllegalArgumentException if timeRemaining is negative
+		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		@NotNull
 		@Contract("_ -> this")
 		public Builder timeRemaining(@Nullable Duration timeRemaining) {
-			return timeRemaining != null ? timeRemaining(timeRemaining.toMillis()) : this;
+			if (timeRemaining == null) {
+				this.timeRemaining = 0;
+				return this;
+			}
+			return timeRemaining(timeRemaining.toMillis());
 		}
 
 		/**
@@ -534,13 +590,17 @@ public final class Response implements JsonObject {
 		 *
 		 * @param endEffectAt time to end effect
 		 * @return this builder
+		 * @throws IllegalArgumentException if endEffectAt is in the past
+		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Builder timeRemaining(@Nullable Temporal endEffectAt) {
-			return endEffectAt != null
-					? timeRemaining(ChronoUnit.MILLIS.between(LocalDateTime.now(), endEffectAt))
-					: this;
+		public Builder timeRemaining(@Nullable Temporal endEffectAt) throws IllegalArgumentException {
+			if (endEffectAt == null) {
+				timeRemaining = 0;
+				return this;
+			}
+			return timeRemaining(ChronoUnit.MILLIS.between(LocalDateTime.now(), endEffectAt));
 		}
 
 		/**
@@ -558,6 +618,68 @@ public final class Response implements JsonObject {
 			return this;
 		}
 
+		// getters
+
+		/**
+		 * Gets the ID of the {@link Request} that prompted this {@link Response}.
+		 *
+		 * @return request ID
+		 */
+		public int id() {
+			return id;
+		}
+
+		/**
+		 * Gets the {@link Socket} of the {@link Request} that prompted this {@link Response}.
+		 *
+		 * @return originating socket
+		 */
+		@Nullable
+		Socket originatingSocket() {
+			return originatingSocket;
+		}
+
+		/**
+		 * Gets the type of result being returned.
+		 *
+		 * @return result type
+		 */
+		@Nullable
+		public ResultType type() {
+			return type;
+		}
+
+		/**
+		 * Gets the message describing or explaining the response.
+		 *
+		 * @return response message
+		 */
+		@Nullable
+		public String message() {
+			return message;
+		}
+
+		/**
+		 * Gets the time left on the referenced effect in milliseconds.
+		 *
+		 * @return time in milliseconds
+		 */
+		public long timeRemaining() {
+			return timeRemaining;
+		}
+
+		/**
+		 * Gets the type of packet that this {@link Response} represents.
+		 *
+		 * @return packet type
+		 */
+		@Nullable
+		public PacketType packetType() {
+			return packetType;
+		}
+
+		// miscellaneous
+
 		/**
 		 * Builds a new {@link Response} object.
 		 *
@@ -572,9 +694,9 @@ public final class Response implements JsonObject {
 		/**
 		 * Builds this {@link Response} and then sends it to the client or server that delivered the related {@link Request}.
 		 *
-		 * @throws IllegalStateException the related {@link Request} does not have an associated client or server
+		 * @throws IllegalStateException if the response was created without a {@link Request}
 		 */
-		public void send() {
+		public void send() throws IllegalStateException {
 			build().send();
 		}
 
@@ -586,9 +708,7 @@ public final class Response implements JsonObject {
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Builder clone() {
-			Builder builder = new Builder(request).timeRemaining(timeRemaining).message(message).type(type).packetType(packetType);
-			builder.messageSet = messageSet;
-			return builder;
+			return new Builder(this);
 		}
 	}
 }

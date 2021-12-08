@@ -188,11 +188,11 @@ final class RequestHandler implements SimulatedService<Response> {
 										// send fake FINISHED packet to flux stream
 										data.sink.next(new Response(
 												response.getId(),
+												null,
+												PacketType.EFFECT_RESULT,
 												ResultType.FINISHED,
 												null,
-												0,
-												PacketType.EFFECT_RESULT,
-												null
+												0
 										));
 										// complete flux stream
 										data.sink.complete();
@@ -211,7 +211,7 @@ final class RequestHandler implements SimulatedService<Response> {
 	@Override
 	public @NotNull Flux<@NotNull Response> sendRequest(@NotNull Builder builder, boolean timeout) throws IllegalStateException {
 		Objects.requireNonNull(builder, "builder cannot be null");
-		Type type = builder.getType();
+		Type type = builder.type();
 		if (type == null)
 			throw new IllegalArgumentException("Request type is null");
 

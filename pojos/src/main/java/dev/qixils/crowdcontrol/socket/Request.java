@@ -65,7 +65,7 @@ public final class Request implements JsonObject {
 				   @Nullable Integer cost,
 				   Target @Nullable [] targets) throws IllegalArgumentException {
 		// validate type & related arguments
-		this.type = Objects.requireNonNull(type, "type cannot be null");
+		this.type = type;
 		if (type.isEffectType()) {
 			if (effect == null)
 				throw new IllegalArgumentException("effect cannot be null for effect packets");
@@ -550,7 +550,7 @@ public final class Request implements JsonObject {
 		 * @return request ID
 		 */
 		@CheckReturnValue
-		public int getId() {
+		public int id() {
 			return id;
 		}
 
@@ -561,7 +561,7 @@ public final class Request implements JsonObject {
 		 */
 		@Nullable
 		@CheckReturnValue
-		public String getEffect() {
+		public String effect() {
 			return effect;
 		}
 
@@ -572,7 +572,7 @@ public final class Request implements JsonObject {
 		 */
 		@Nullable
 		@CheckReturnValue
-		public String getMessage() {
+		public String message() {
 			return message;
 		}
 
@@ -583,7 +583,7 @@ public final class Request implements JsonObject {
 		 */
 		@Nullable
 		@CheckReturnValue
-		public String getViewer() {
+		public String viewer() {
 			return viewer;
 		}
 
@@ -592,8 +592,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @return cost of the effect
 		 */
+		@Nullable
 		@CheckReturnValue
-		public @Nullable Integer getCost() {
+		public Integer cost() {
 			return cost;
 		}
 
@@ -604,7 +605,7 @@ public final class Request implements JsonObject {
 		 */
 		@Nullable
 		@CheckReturnValue
-		public Type getType() {
+		public Type type() {
 			return type;
 		}
 
@@ -613,9 +614,8 @@ public final class Request implements JsonObject {
 		 *
 		 * @return targets of the effect
 		 */
-		@Nullable
 		@CheckReturnValue
-		public Target[] getTargets() {
+		public Target @Nullable[] targets() {
 			return targets;
 		}
 

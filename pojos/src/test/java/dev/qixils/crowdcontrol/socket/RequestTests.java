@@ -98,24 +98,24 @@ public class RequestTests {
 				.cost(10)
 				.targets(new Request.Target[]{new Request.Target(12345, "streamer", "https://i.qixils.dev/favicon.png")})
 				.clone();
-		Assertions.assertEquals(1, builder.getId());
-		Assertions.assertEquals(Request.Type.START, builder.getType());
-		Assertions.assertEquals("success", builder.getEffect());
-		Assertions.assertEquals("qixils", builder.getViewer());
-		Assertions.assertEquals("Hello", builder.getMessage());
-		Assertions.assertEquals(10, builder.getCost());
-		Assertions.assertEquals(1, builder.getTargets().length);
-		Assertions.assertEquals(12345, builder.getTargets()[0].getId());
-		Assertions.assertEquals("streamer", builder.getTargets()[0].getName());
-		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.getTargets()[0].getAvatar());
+		Assertions.assertEquals(1, builder.id());
+		Assertions.assertEquals(Request.Type.START, builder.type());
+		Assertions.assertEquals("success", builder.effect());
+		Assertions.assertEquals("qixils", builder.viewer());
+		Assertions.assertEquals("Hello", builder.message());
+		Assertions.assertEquals(10, builder.cost());
+		Assertions.assertEquals(1, builder.targets().length);
+		Assertions.assertEquals(12345, builder.targets()[0].getId());
+		Assertions.assertEquals("streamer", builder.targets()[0].getName());
+		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.targets()[0].getAvatar());
 
 		builder.id(2);
 		builder.message(null);
 		builder.cost(null);
 		builder.targets(null);
-		Assertions.assertEquals(2, builder.getId());
-		Assertions.assertNull(builder.getTargets());
-		Assertions.assertNull(builder.getMessage());
-		Assertions.assertNull(builder.getCost());
+		Assertions.assertEquals(2, builder.id());
+		Assertions.assertNull(builder.targets());
+		Assertions.assertNull(builder.message());
+		Assertions.assertNull(builder.cost());
 	}
 }
