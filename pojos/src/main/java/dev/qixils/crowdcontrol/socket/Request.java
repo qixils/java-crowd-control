@@ -22,12 +22,12 @@ import java.util.Objects;
 public final class Request implements JsonObject {
 	transient Socket originatingSocket;
 	private int id;
+	private Type type;
 	@SerializedName("code")
-	private String effect; // more sensible variable name for this library
+	private String effect;
 	private String message;
 	private String viewer;
-	private Integer cost; // I believe this is nullable
-	private Type type;
+	private Integer cost;
 	private Target[] targets;
 
 	/**
@@ -35,7 +35,55 @@ public final class Request implements JsonObject {
 	 * <p>
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
+	@SuppressWarnings("unused")
+	// used by GSON
 	Request() {
+	}
+
+	/**
+	 * Instantiates a {@link Request} with the given parameters.
+	 *
+	 * @param id      the ID of the request
+	 * @param effect  the effect to be played
+	 * @param message the message to be displayed
+	 * @param viewer  the viewer who requested the effect
+	 * @param cost    the cost of the effect
+	 * @param type    the packet type to send
+	 * @param targets the targets of the effect
+	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
+	 *                                  <ul>
+	 *                                      <li>if the given ID is negative</li>
+	 *                                      <li>if the given packet type is null</li>
+	 *                                      <li>or if the given packet type is an {@link Type#isEffectType() effect type} and the effect or viewer is null</li>
+	 *                                  </ul>
+	 */
+	public Request(int id,
+				   @NotNull Type type,
+				   @Nullable String effect,
+				   @Nullable String viewer,
+				   @Nullable String message,
+				   @Nullable Integer cost,
+				   Target @Nullable [] targets) throws IllegalArgumentException {
+		// validate type & related arguments
+		this.type = Objects.requireNonNull(type, "type cannot be null");
+		if (type.isEffectType()) {
+			if (effect == null)
+				throw new IllegalArgumentException("effect cannot be null for effect packets");
+			if (viewer == null)
+				throw new IllegalArgumentException("viewer cannot be null for effect packets");
+		}
+
+		// validate request ID
+		this.id = id;
+		if (this.id < 0)
+			throw new IllegalArgumentException("ID cannot be negative");
+
+		// other arguments
+		this.effect = effect == null ? null : effect.toLowerCase(Locale.ENGLISH);
+		this.viewer = viewer == null ? null : viewer.toLowerCase(Locale.ENGLISH);
+		this.message = message;
+		this.cost = cost;
+		this.targets = targets;
 	}
 
 	/**
@@ -44,25 +92,7 @@ public final class Request implements JsonObject {
 	 * @param builder the {@link Builder} to use
 	 */
 	public Request(Request.@NotNull Builder builder) {
-		this.type = Objects.requireNonNull(builder.type, "type cannot be null");
-
-		// request ID
-		if (builder.id < 0)
-			throw new IllegalArgumentException("id cannot be negative");
-		this.id = builder.id;
-
-		// request effect & viewer
-		if (type.isEffectType()) {
-			Objects.requireNonNull(builder.effect, "effect cannot be null");
-			Objects.requireNonNull(builder.viewer, "viewer cannot be null");
-		}
-		this.effect = builder.effect == null ? null : builder.effect.toLowerCase(Locale.ENGLISH);
-		this.viewer = builder.viewer == null ? null : builder.viewer.toLowerCase(Locale.ENGLISH);
-
-		// misc
-		this.message = builder.message;
-		this.cost = builder.cost;
-		this.targets = builder.targets;
+		this(builder.id, builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.targets);
 	}
 
 	/**
@@ -318,6 +348,7 @@ public final class Request implements JsonObject {
 		 * <p>
 		 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 		 */
+		@SuppressWarnings("unused") // used by GSON
 		Target() {
 		}
 
@@ -609,7 +640,7 @@ public final class Request implements JsonObject {
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Request.Builder clone() {
-			return new Request.Builder().type(type).message(message).effect(effect).viewer(viewer).cost(cost).targets(targets);
+			return new Request.Builder().id(id).type(type).message(message).effect(effect).viewer(viewer).cost(cost).targets(targets);
 		}
 	}
 }

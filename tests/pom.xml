@@ -13,7 +13,7 @@
     <packaging>jar</packaging>
 
     <name>Crowd Control Unit Test</name>
-    <description>Unit tests for crowdcontrol.live libraries</description>
+    <description>Unit tests for crowdcontrol.live socket libraries</description>
     <url>https://github.com/qixils/java-crowd-control</url>
     <scm>
         <connection>scm:git:https://github.com/qixils/java-crowd-control</connection>
@@ -56,18 +56,6 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.release>${java.version}</maven.compiler.release>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>5.8.2</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <dependency>

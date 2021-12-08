@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+// doubles as a test for all the possible handlers available to #registerEffects!
 public class EffectHandlers {
 	private final @NotNull Consumer<@NotNull TimedEffect> timedEffectCallback;
 
