@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.ClientSocketManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,9 @@ public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
 	@CheckReturnValue
 	@Contract("_ -> this")
 	public @NotNull CrowdControlClientBuilder ip(@NotNull String IP) throws IllegalArgumentException {
-		//noinspection ConstantConditions
-		if (IP == null || IP.isBlank()) {
-			throw new IllegalArgumentException("IP must be non-null and not blank");
+		ExceptionUtil.validateNotNull(IP, "IP");
+		if (IP.isBlank()) {
+			throw new IllegalArgumentException("IP cannot be blank");
 		}
 		this.IP = IP;
 		return this;

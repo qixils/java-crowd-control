@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ public final class Request implements JsonObject {
 			throw new IllegalArgumentException("ID cannot be negative");
 
 		// validate type & related arguments
-		this.type = type;
+		this.type = ExceptionUtil.validateNotNull(type, "type");
 		if (type.isEffectType()) {
 			if (effect == null)
 				throw new IllegalArgumentException("effect cannot be null for effect packets");
@@ -97,6 +98,14 @@ public final class Request implements JsonObject {
 		this.viewer = viewer == null ? null : viewer.toLowerCase(Locale.ENGLISH);
 		this.message = message;
 		this.cost = cost;
+
+		// validate targets are not null
+		if (targets != null) {
+			for (Target target : targets) {
+				if (target == null)
+					throw new IllegalArgumentException("targets cannot contain null elements");
+			}
+		}
 		this.targets = targets;
 	}
 
@@ -117,6 +126,7 @@ public final class Request implements JsonObject {
 	public Request(int id, @NotNull Type type, @Nullable String message) {
 		if (id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
+		ExceptionUtil.validateNotNull(type, "type");
 		if (type.isEffectType())
 			throw new IllegalArgumentException("type cannot be an effect type");
 		if (message == null && type == Type.LOGIN)
@@ -132,7 +142,9 @@ public final class Request implements JsonObject {
 	 * @param builder the {@link Builder} to use
 	 */
 	private Request(Request.@NotNull Builder builder) {
-		this(builder.id, builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.targets);
+		this(ExceptionUtil.validateNotNull(builder, "builder").id,
+				builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.targets);
+		originatingSocket = builder.originatingSocket;
 	}
 
 	/**
@@ -145,6 +157,7 @@ public final class Request implements JsonObject {
 	@NotNull
 	@CheckReturnValue
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
+		ExceptionUtil.validateNotNull(json, "json");
 		return ByteAdapter.GSON.fromJson(json, Request.class);
 	}
 
@@ -386,7 +399,8 @@ public final class Request implements JsonObject {
 		 * <p>
 		 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 		 */
-		@SuppressWarnings("unused") // used by GSON
+		@SuppressWarnings("unused")
+		// used by GSON
 		Target() {
 		}
 
@@ -396,11 +410,14 @@ public final class Request implements JsonObject {
 		 * @param id     streamer ID
 		 * @param name   streamer name
 		 * @param avatar streamer avatar
+		 * @throws IllegalArgumentException if the ID is not positive or one of the other parameters is null
 		 */
 		public Target(int id, @NotNull String name, @NotNull String avatar) {
+			if (id <= 0)
+				throw new IllegalArgumentException("ID must be positive");
 			this.id = id;
-			this.name = name;
-			this.avatar = avatar;
+			this.name = ExceptionUtil.validateNotNull(name, "name");
+			this.avatar = ExceptionUtil.validateNotNull(avatar, "avatar");
 		}
 
 		/**
@@ -457,6 +474,7 @@ public final class Request implements JsonObject {
 	@SuppressWarnings("DuplicatedCode")
 	// not really fixable unless I added a getter annotation (which is silly do to for this one constructor)
 	public static class Builder implements Cloneable {
+		private transient Socket originatingSocket;
 		private int id = -1;
 		private String effect;
 		private String message;
@@ -480,6 +498,7 @@ public final class Request implements JsonObject {
 		@CheckReturnValue
 		private Builder(@NotNull Request source) {
 			this.id = source.id;
+			this.originatingSocket = source.originatingSocket;
 			this.effect = source.effect;
 			this.message = source.message;
 			this.viewer = source.viewer;
@@ -496,6 +515,7 @@ public final class Request implements JsonObject {
 		@CheckReturnValue
 		private Builder(@NotNull Builder builder) {
 			this.id = builder.id;
+			this.originatingSocket = builder.originatingSocket;
 			this.effect = builder.effect;
 			this.message = builder.message;
 			this.viewer = builder.viewer;
@@ -514,7 +534,7 @@ public final class Request implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Request.Builder type(@Nullable Type type) {
+		public Builder type(@Nullable Type type) {
 			this.type = type;
 			return this;
 		}
@@ -527,7 +547,7 @@ public final class Request implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Request.Builder message(@Nullable String message) {
+		public Builder message(@Nullable String message) {
 			this.message = message;
 			return this;
 		}
@@ -540,7 +560,7 @@ public final class Request implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Request.Builder effect(@Nullable String effect) {
+		public Builder effect(@Nullable String effect) {
 			this.effect = effect;
 			return this;
 		}
@@ -553,7 +573,7 @@ public final class Request implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Request.Builder viewer(@Nullable String viewer) {
+		public Builder viewer(@Nullable String viewer) {
 			this.viewer = viewer;
 			return this;
 		}
@@ -566,7 +586,7 @@ public final class Request implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Request.Builder cost(@Nullable Integer cost) {
+		public Builder cost(@Nullable Integer cost) {
 			this.cost = cost;
 			return this;
 		}
@@ -579,7 +599,7 @@ public final class Request implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Request.Builder targets(Target @Nullable [] targets) {
+		public Builder targets(Target @Nullable ... targets) {
 			this.targets = targets;
 			return this;
 		}
@@ -592,8 +612,21 @@ public final class Request implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Request.Builder id(int id) {
+		public Builder id(int id) {
 			this.id = id;
+			return this;
+		}
+
+		/**
+		 * Sets the originating socket of the request.
+		 *
+		 * @param originatingSocket originating socket
+		 * @return this builder
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		Builder originatingSocket(@Nullable Socket originatingSocket) {
+			this.originatingSocket = originatingSocket;
 			return this;
 		}
 
@@ -670,8 +703,19 @@ public final class Request implements JsonObject {
 		 * @return targets of the effect
 		 */
 		@CheckReturnValue
-		public Target @Nullable[] targets() {
+		public Target @Nullable [] targets() {
 			return targets;
+		}
+
+		/**
+		 * Gets the originating socket of the request.
+		 *
+		 * @return originating socket
+		 */
+		@Nullable
+		@CheckReturnValue
+		Socket originatingSocket() {
+			return originatingSocket;
 		}
 
 		// build
@@ -694,8 +738,8 @@ public final class Request implements JsonObject {
 		 */
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
-		public Request.Builder clone() {
-			return new Request.Builder(this);
+		public Builder clone() {
+			return new Builder(this);
 		}
 	}
 }

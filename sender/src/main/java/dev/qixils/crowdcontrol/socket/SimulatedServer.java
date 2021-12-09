@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.TriState;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,6 +108,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 
 	@Override
 	public @NotNull TriState isEffectAvailable(@NotNull String effect) {
+		ExceptionUtil.validateNotNull(effect, "effect");
 		// the values returned by this are kinda weird, but it should be fine
 		boolean available = false;
 		for (RequestHandler handler : getHandlers()) {

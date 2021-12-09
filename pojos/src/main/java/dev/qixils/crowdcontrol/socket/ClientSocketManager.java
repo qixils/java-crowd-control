@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.RequestManager;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public final class ClientSocketManager implements SocketManager {
 	 */
 	@CheckReturnValue
 	public ClientSocketManager(@NotNull RequestManager serverConfig) {
-		this.crowdControl = serverConfig;
+		this.crowdControl = ExceptionUtil.validateNotNull(serverConfig, "serverConfig");
 		new Thread(this::loop, "crowd-control-socket-loop").start();
 	}
 

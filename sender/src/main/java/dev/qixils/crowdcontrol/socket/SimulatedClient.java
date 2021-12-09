@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.TriState;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 	 * @param password the password to use
 	 */
 	public SimulatedClient(@NotNull String ip, int port, @NotNull String password) {
-		this.ip = ip;
+		this.ip = ExceptionUtil.validateNotNull(ip, "ip");
 		this.port = port;
 		this.password = ServiceManager.encryptPassword(password);
 	}
@@ -121,7 +122,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 	@Override
 	public @NotNull TriState isEffectAvailable(@NotNull String effect) {
 		if (handler == null) return TriState.UNKNOWN;
-		return handler.isEffectAvailable(effect);
+		return handler.isEffectAvailable(ExceptionUtil.validateNotNull(effect, "effect"));
 	}
 
 	@Override

@@ -4,6 +4,7 @@ import com.google.gson.JsonParseException;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.CrowdControlException;
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +46,8 @@ final class RequestHandler implements SimulatedService<Response> {
 	private boolean loggedIn;
 
 	RequestHandler(@NotNull Socket socket, @NotNull SimulatedService<?> parent, @Nullable String encryptedPassword) throws IOException {
-		this.socket = socket;
-		this.parent = parent;
+		this.socket = ExceptionUtil.validateNotNull(socket, "socket");
+		this.parent = ExceptionUtil.validateNotNull(parent, "parent");
 		this.inputStream = new InputStreamReader(socket.getInputStream());
 		this.outputStream = socket.getOutputStream();
 		this.encryptedPassword = encryptedPassword;
@@ -206,6 +207,7 @@ final class RequestHandler implements SimulatedService<Response> {
 
 	@Override
 	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, @Nullable Duration timeout) throws IllegalStateException {
+		ExceptionUtil.validateNotNull(builder, "builder");
 		Request.Type type = builder.type();
 		if (type == null)
 			throw new IllegalArgumentException("Request type is null");

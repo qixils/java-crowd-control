@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -37,10 +39,12 @@ public final class TimedEffect {
 	private final @NotNull String effectGroup;
 	private final @NotNull Consumer<@NotNull TimedEffect> callback;
 	private final @Nullable Consumer<@NotNull TimedEffect> completionCallback;
+	private final long originalDuration;
 	private long startedAt = -1;
 	private long duration;
 	private boolean paused = false;
 	private boolean queued = false;
+	private @Nullable ScheduledFuture<?> future;
 
 	/**
 	 * Creates a new {@link TimedEffect}.
@@ -49,13 +53,20 @@ public final class TimedEffect {
 	 * @param duration           duration of the effect in milliseconds
 	 * @param callback           method to call once the effect is started
 	 * @param completionCallback optional method to call once the effect is completed
+	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
+	 *                                  <ul>
+	 *                                      <li>if the request is null</li>
+	 *                                      <li>if the callback is null</li>
+	 *                                      <li>if the duration is less than or equal to 0</li>
+	 *                                  </ul>
 	 */
 	@CheckReturnValue
 	public TimedEffect(@NotNull Request request,
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
-		this(request, request.getEffect(), duration, callback, completionCallback);
+		this(ExceptionUtil.validateNotNull(request, "request"),
+				request.getEffect(), duration, callback, completionCallback);
 	}
 
 	/**
@@ -66,24 +77,33 @@ public final class TimedEffect {
 	 * @param duration           duration of the effect in milliseconds
 	 * @param callback           method to call once the effect is started
 	 * @param completionCallback optional method to call once the effect is completed
+	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
+	 *                                  <ul>
+	 *                                      <li>if the request is null</li>
+	 *                                      <li>if the callback is null</li>
+	 *                                      <li>if the duration is less than or equal to 0</li>
+	 *                                  </ul>
 	 */
 	@CheckReturnValue
 	public TimedEffect(@NotNull Request request,
-					   @NotNull String effectGroup,
+					   @Nullable String effectGroup,
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
-		this.callback = callback;
+		this.callback = ExceptionUtil.validateNotNull(callback, "callback");
 		this.completionCallback = completionCallback;
+		if (duration <= 0)
+			throw new IllegalArgumentException("duration must be positive");
+		this.originalDuration = duration;
 		this.duration = duration;
-		this.request = request;
-		this.effectGroup = effectGroup;
-		this.globalKey = new MapKey(effectGroup);
+		this.request = ExceptionUtil.validateNotNull(request, "request");
+		this.effectGroup = Objects.requireNonNullElseGet(effectGroup, request::getEffect);
+		this.globalKey = new MapKey(this.effectGroup);
 
 		Request.Target[] targets = request.getTargets();
 		mapKeys = new MapKey[targets.length];
 		for (int i = 0; i < targets.length; i++) {
-			mapKeys[i] = new MapKey(effectGroup, targets[i]);
+			mapKeys[i] = new MapKey(this.effectGroup, targets[i]);
 		}
 	}
 
@@ -94,13 +114,20 @@ public final class TimedEffect {
 	 * @param duration           duration of the effect
 	 * @param callback           method to call once the effect is started
 	 * @param completionCallback optional method to call once the effect is completed
+	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
+	 *                                  <ul>
+	 *                                      <li>if the request is null</li>
+	 *                                      <li>if the callback is null</li>
+	 *                                      <li>if the duration is null or non-positive</li>
+	 *                                  </ul>
 	 */
 	@CheckReturnValue
 	public TimedEffect(@NotNull Request request,
 					   @NotNull Duration duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
-		this(request, request.getEffect(), duration, callback, completionCallback);
+		this(ExceptionUtil.validateNotNull(request, "request"),
+				request.getEffect(), duration, callback, completionCallback);
 	}
 
 	/**
@@ -111,14 +138,21 @@ public final class TimedEffect {
 	 * @param duration           duration of the effect
 	 * @param callback           method to call once the effect is started
 	 * @param completionCallback optional method to call once the effect is completed
+	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
+	 *                                  <ul>
+	 *                                      <li>if the request is null</li>
+	 *                                      <li>if the callback is null</li>
+	 *                                      <li>if the duration is null or non-positive</li>
+	 *                                  </ul>
 	 */
 	@CheckReturnValue
 	public TimedEffect(@NotNull Request request,
-					   @NotNull String effectGroup,
+					   @Nullable String effectGroup,
 					   @NotNull Duration duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
-		this(request, effectGroup, duration.toMillis(), callback, completionCallback);
+		this(request, effectGroup, ExceptionUtil.validateNotNull(duration, "duration").toMillis(),
+				callback, completionCallback);
 	}
 
 	/**
@@ -129,30 +163,49 @@ public final class TimedEffect {
 	 * @param targets     targeted streamers
 	 * @return whether the effect is active
 	 */
-	public static boolean isActive(@NotNull String effectGroup, Request.Target @NotNull ... targets) {
-		for (Request.Target target : targets) {
-			MapKey key = new MapKey(effectGroup, target);
-			if (ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete())
-				return true;
+	public static boolean isActive(@NotNull String effectGroup, Request.Target @Nullable ... targets) {
+		ExceptionUtil.validateNotNull(effectGroup, "effectGroup");
+		if (targets != null) {
+			for (Request.Target target : targets) {
+				if (target == null)
+					throw new IllegalArgumentException("targets cannot be null");
+				MapKey key = new MapKey(effectGroup, target);
+				if (ACTIVE_EFFECTS.containsKey(key) && !ACTIVE_EFFECTS.get(key).isComplete())
+					return true;
+			}
 		}
 
-		return false;
+		MapKey globalKey = new MapKey(effectGroup, null);
+		return ACTIVE_EFFECTS.containsKey(globalKey) && !ACTIVE_EFFECTS.get(globalKey).isComplete();
 	}
 
 	/**
 	 * Determines if an effect with the provided name is currently active for any streamer
-	 * targeted by the provided request.
+	 * targeted by the provided {@link Request}.
 	 *
 	 * @param effectGroup effect group
 	 * @param request     request to query for targeted streamers
 	 * @return whether the effect is active
 	 */
 	public static boolean isActive(@NotNull String effectGroup, @NotNull Request request) {
-		return isActive(effectGroup, request.getTargets());
+		return isActive(effectGroup, ExceptionUtil.validateNotNull(request, "request").getTargets());
 	}
 
 	/**
-	 * Returns the current milliseconds remaining in the effect, or 0 if it should be complete.
+	 * Determines if the given {@link Request} is active for any targeted streamer.
+	 *
+	 * @param request requested effect
+	 * @return whether the effect is active
+	 */
+	public static boolean isActive(@NotNull Request request) {
+		ExceptionUtil.validateNotNull(request, "request");
+		return isActive(request.getEffect(), request.getTargets());
+	}
+
+	/**
+	 * Returns the current milliseconds remaining in the effect.
+	 * If the effect has completed, this will return 0.
+	 * If the effect has not started, this will return the original duration set upon construction.
 	 *
 	 * @return time left in milliseconds
 	 */
@@ -160,6 +213,8 @@ public final class TimedEffect {
 	public long getCurrentDuration() {
 		if (duration == -1)
 			return 0;
+		if (startedAt == -1)
+			return originalDuration;
 		return Math.max(0, duration - (System.currentTimeMillis() - startedAt));
 	}
 
@@ -208,7 +263,7 @@ public final class TimedEffect {
 		} catch (Exception exception) {
 			logger.log(Level.WARNING, "Exception occurred during starting callback", exception);
 		}
-		EXECUTOR.schedule(this::tryComplete, duration, TimeUnit.MILLISECONDS);
+		future = EXECUTOR.schedule(this::complete, duration, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -221,10 +276,15 @@ public final class TimedEffect {
 			throw new IllegalStateException("Effect is already paused");
 		if (startedAt == -1)
 			throw new IllegalStateException("Effect has not started");
+		if (duration == -1)
+			throw new IllegalStateException("Effect has already completed");
 
 		duration = getCurrentDuration();
 		if (duration <= 0)
 			throw new IllegalStateException("Effect has already completed");
+
+		assert future != null;
+		future.cancel(false);
 
 		paused = true;
 		request.buildResponse().type(Response.ResultType.PAUSED).timeRemaining(duration).send();
@@ -246,7 +306,7 @@ public final class TimedEffect {
 		paused = false;
 		startedAt = System.currentTimeMillis();
 		request.buildResponse().type(Response.ResultType.RESUMED).timeRemaining(duration).send();
-		EXECUTOR.schedule(this::tryComplete, duration, TimeUnit.MILLISECONDS);
+		future = EXECUTOR.schedule(this::complete, duration, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -254,9 +314,13 @@ public final class TimedEffect {
 	 *
 	 * @return Whether the effect was marked as complete as a result of this method call.
 	 * If this effect was already complete, {@code false} is returned.
+	 * @throws IllegalStateException the effect has not {@link #hasStarted() started}
 	 */
 	public boolean complete() {
-		if (duration == -1) return false;
+		if (startedAt == -1)
+			throw new IllegalStateException("Effect has not started");
+		if (duration == -1)
+			return false;
 		duration = -1;
 
 		if (mapKeys.length == 0)
@@ -275,11 +339,6 @@ public final class TimedEffect {
 			}
 		}
 		return true;
-	}
-
-	private void tryComplete() {
-		if (getCurrentDuration() == 0)
-			complete();
 	}
 
 	// boilerplate
@@ -324,6 +383,16 @@ public final class TimedEffect {
 	@CheckReturnValue
 	public String getEffectGroup() {
 		return effectGroup;
+	}
+
+	/**
+	 * Gets the duration of this effect that was set on construction.
+	 *
+	 * @return duration in milliseconds
+	 */
+	@CheckReturnValue
+	public long getOriginalDuration() {
+		return originalDuration;
 	}
 
 	/**

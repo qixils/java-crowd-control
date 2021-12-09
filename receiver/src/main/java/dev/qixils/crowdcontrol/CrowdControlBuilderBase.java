@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ abstract class CrowdControlBuilderBase implements CrowdControlBuilder {
 	 */
 	@CheckReturnValue
 	CrowdControlBuilderBase(@NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
-		this.socketManagerCreator = socketManagerCreator;
+		this.socketManagerCreator = ExceptionUtil.validateNotNull(socketManagerCreator, "socketManagerCreator");
 	}
 
 	@Override

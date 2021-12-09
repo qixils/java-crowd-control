@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
 	private final @NotNull Function<@NotNull Byte, @Nullable T> fromByte;
 
 	public ByteAdapter(@NotNull Function<@NotNull Byte, @NotNull T> fromByte) {
-		this.fromByte = fromByte;
+		this.fromByte = ExceptionUtil.validateNotNull(fromByte, "fromByte");
 	}
 
 	@Override

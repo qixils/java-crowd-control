@@ -203,11 +203,12 @@ public class EffectResponseTests {
 
 		// send first effect
 		// note: the timed effect duration, as defined in EffectHandlers, is 0.2 seconds
-		Request.Builder builder1 = new Request.Builder()
+		Request.Target target = new Request.Target(1, "qixils", "https://i.qixils.dev/favicon.png");
+		Request.Builder builder = new Request.Builder()
 				.effect("timed")
-				.viewer("test");
-		Request.Builder builder2 = builder1.clone();
-		Flux<Response> responseFlux = server.sendRequest(builder1).blockFirst();
+				.viewer("test")
+				.targets(target);
+		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		Response response = responseFlux.blockFirst();
 		Assertions.assertNotNull(response);
@@ -215,7 +216,7 @@ public class EffectResponseTests {
 		Assertions.assertEquals(200, response.getTimeRemaining());
 
 		// second request should initially "fail" (return RETRY)...
-		Flux<Response> newFlux = server.sendRequest(builder2).blockFirst();
+		Flux<Response> newFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(newFlux);
 		response = newFlux.blockFirst();
 		Assertions.assertNotNull(response);
@@ -266,20 +267,56 @@ public class EffectResponseTests {
 		long timeRemaining = response.getTimeRemaining();
 		Assertions.assertTrue(timeRemaining > 0);
 
+		// while it's paused, let's test some miscellaneous methods
+		Assertions.assertEquals(200, effect.getOriginalDuration());
+		Assertions.assertThrows(IllegalStateException.class, effect::pause);
+		Assertions.assertThrows(IllegalStateException.class, effect::queue);
+		Request request = builder.build();
+		Assertions.assertTrue(TimedEffect.isActive(request));
+		Assertions.assertTrue(TimedEffect.isActive(request.getEffect(), target));
+		Assertions.assertFalse(TimedEffect.isActive(request.getEffect()));
+		Assertions.assertFalse(TimedEffect.isActive("blah", target));
+		Assertions.assertFalse(TimedEffect.isActive("blah", request));
+
 		// and now let's resume the effect
 		effect.resume();
 		Assertions.assertFalse(effect.isPaused());
+		Assertions.assertThrows(IllegalStateException.class, effect::resume);
 		response = resumeDetector.join();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.RESUMED, response.getResultType());
 		Assertions.assertEquals(timeRemaining, response.getTimeRemaining());
 
 		// finally, let's test the manual completion method
-		effect.complete();
+		Assertions.assertTrue(effect.complete());
 		response = Assertions.assertDoesNotThrow(() -> finishDetector.get(30, TimeUnit.MILLISECONDS));
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
 		Assertions.assertEquals(0, response.getTimeRemaining());
+
+		// and validate some more methods
+		Thread.sleep(10); // give the effect a chance to (get marked as) finish(ed)
+		Assertions.assertFalse(TimedEffect.isActive(request));
+		Assertions.assertThrows(IllegalStateException.class, effect::pause);
+		Assertions.assertThrows(IllegalStateException.class, effect::resume);
+		Assertions.assertFalse(effect.complete());
+		Assertions.assertTrue(effect.isComplete());
+		Assertions.assertEquals(0, effect.getCurrentDuration());
+
+		// truly finally, test the #isActive method in regard to global effects & custom names
+		Request noTargetsRequest = effect.getRequest().toBuilder().targets((Request.Target[]) null).build();
+		TimedEffect globalEffect = new TimedEffect(noTargetsRequest, "random_name", 100, timedEffect -> {
+		}, null);
+		globalEffect.queue();
+		Assertions.assertTrue(globalEffect.hasStarted());
+		Assertions.assertTrue(TimedEffect.isActive("random_name"));
+		Assertions.assertTrue(TimedEffect.isActive("random_name", target));
+		Assertions.assertTrue(TimedEffect.isActive("random_name", noTargetsRequest));
+		Assertions.assertFalse(TimedEffect.isActive(noTargetsRequest));
+		TimedEffect cannotStart = new TimedEffect(noTargetsRequest, "random_name", 100, timedEffect -> {
+		}, null);
+		cannotStart.queue();
+		Assertions.assertFalse(cannotStart.hasStarted());
 
 		// cleanup
 		client.shutdown("Test completed");

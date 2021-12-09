@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,10 @@ public interface JsonObject {
 	 */
 	@Nullable
 	@CheckReturnValue
-	static <T> T fromInputStream(@NotNull InputStreamReader input, Function<@NotNull String, @Nullable T> jsonMapper) throws IOException {
+	static <T> T fromInputStream(@NotNull InputStreamReader input, @NotNull Function<@NotNull String, @Nullable T> jsonMapper) throws IOException {
+		ExceptionUtil.validateNotNull(input, "input");
+		ExceptionUtil.validateNotNull(jsonMapper, "jsonMapper");
+
 		StringBuilder sb = new StringBuilder();
 		char[] results = new char[1];
 		int bytes_read = input.read(results);

@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ final class DummyResponse implements JsonObject {
 	Response.PacketType type;
 
 	static void write(@Nullable Socket socket, @NotNull String message) {
+		ExceptionUtil.validateNotNull(message, "message");
 		if (socket == null || socket.isClosed()) return;
 		try {
 			OutputStream output = socket.getOutputStream();

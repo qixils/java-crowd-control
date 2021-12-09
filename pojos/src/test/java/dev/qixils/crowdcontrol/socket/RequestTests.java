@@ -19,12 +19,28 @@ public class RequestTests {
 		// null viewer test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request(1, Request.Type.START, "success", null, null, null, null));
+		// null target test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request(1, Request.Type.START, "success", "qixils", null, null,
+						new Request.Target[]{null}));
 		// valid request test
 		Assertions.assertDoesNotThrow(
 				() -> new Request(1, Request.Type.START, "success", "qixils", null, null, null));
 		// valid builder test
 		Assertions.assertDoesNotThrow(
 				() -> new Request.Builder().id(1).type(Request.Type.START).effect("success").viewer("qixils").build());
+
+		// target constructor tests //
+
+		// negative ID test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request.Target(-1, "streamer", "https://i.qixils.dev/favicon.png"));
+		// null name test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request.Target(1, null, "https://i.qixils.dev/favicon.png"));
+		// null avatar test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request.Target(1, "streamer", null));
 	}
 
 	@Test
@@ -85,7 +101,7 @@ public class RequestTests {
 
 		// targets test
 		Assertions.assertNull(builder.targets());
-		builder = builder.targets(new Request.Target[]{new Request.Target(12345, "streamer", "https://i.qixils.dev/favicon.png")});
+		builder = builder.targets(new Request.Target(12345, "streamer", "https://i.qixils.dev/favicon.png"));
 		Assertions.assertEquals(1, builder.targets().length);
 		Assertions.assertEquals(12345, builder.targets()[0].getId());
 		Assertions.assertEquals("streamer", builder.targets()[0].getName());

@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,9 +125,9 @@ public final class Response implements JsonObject {
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
 		this.originatingSocket = originatingSocket;
-		this.packetType = packetType;
+		this.packetType = ExceptionUtil.validateNotNull(packetType, "packetType");
+		this.message = ExceptionUtil.validateNotNull(message, "message");
 		this.type = null;
-		this.message = message;
 		this.timeRemaining = 0;
 	}
 
@@ -176,11 +177,12 @@ public final class Response implements JsonObject {
 			 @NotNull String message) throws IllegalArgumentException {
 		if (packetType == PacketType.EFFECT_RESULT)
 			throw new IllegalArgumentException("packetType cannot be EFFECT_RESULT in this constructor");
+		ExceptionUtil.validateNotNull(request, "request");
 		this.id = request.getId();
 		this.originatingSocket = request.originatingSocket;
-		this.packetType = packetType;
+		this.packetType = ExceptionUtil.validateNotNull(packetType, "packetType");
 		this.type = null;
-		this.message = message;
+		this.message = ExceptionUtil.validateNotNull(message, "message");
 		this.timeRemaining = 0;
 	}
 
@@ -205,7 +207,8 @@ public final class Response implements JsonObject {
 					@NotNull ResultType type,
 					@Nullable String message,
 					long timeRemaining) {
-		this(request.getId(), request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
+		this(ExceptionUtil.validateNotNull(request, "request").getId(),
+				request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
 	}
 
 	/**
@@ -215,7 +218,8 @@ public final class Response implements JsonObject {
 	 */
 	@CheckReturnValue
 	private Response(@NotNull Builder builder) {
-		this(builder.id, builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining);
+		this(ExceptionUtil.validateNotNull(builder, "builder").id,
+				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining);
 	}
 
 	/**
@@ -228,6 +232,7 @@ public final class Response implements JsonObject {
 	@NotNull
 	@CheckReturnValue
 	public static Response fromJSON(@NotNull String json) throws JsonSyntaxException {
+		ExceptionUtil.validateNotNull(json, "json");
 		return ByteAdapter.GSON.fromJson(json, Response.class);
 	}
 

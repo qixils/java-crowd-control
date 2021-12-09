@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,8 @@ public interface ServiceManager {
 	@NotNull
 	@CheckReturnValue
 	static String encryptPassword(@NotNull String password, @NotNull String algorithm) throws NoSuchAlgorithmException {
+		ExceptionUtil.validateNotNull(password, "password");
+		ExceptionUtil.validateNotNull(algorithm, "algorithm");
 		MessageDigest md = MessageDigest.getInstance(algorithm);
 		byte[] digest = md.digest(password.getBytes(StandardCharsets.UTF_8));
 		return new BigInteger(1, digest).toString(16);

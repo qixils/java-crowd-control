@@ -97,10 +97,10 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	CrowdControl(@NotNull String IP,
 				 int port,
 				 @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
-		this.IP = IP;
+		this.IP = ExceptionUtil.validateNotNull(IP, "IP");
 		this.port = port;
 		this.password = null;
-		this.socketManager = socketManagerCreator.apply(this);
+		this.socketManager = ExceptionUtil.validateNotNull(socketManagerCreator, "socketManagerCreator").apply(this);
 	}
 
 	/**
@@ -115,8 +115,8 @@ public final class CrowdControl implements SocketManager, RequestManager {
 				 @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
 		this.IP = null;
 		this.port = port;
-		this.password = ServiceManager.encryptPassword(password);
-		this.socketManager = socketManagerCreator.apply(this);
+		this.password = ServiceManager.encryptPassword(ExceptionUtil.validateNotNull(password, "password"));
+		this.socketManager = ExceptionUtil.validateNotNull(socketManagerCreator, "socketManagerCreator").apply(this);
 	}
 
 	/**

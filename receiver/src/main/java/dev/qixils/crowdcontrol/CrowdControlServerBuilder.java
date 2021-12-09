@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.ServerSocketManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,9 @@ public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
 	@CheckReturnValue
 	@Contract("_ -> this")
 	public @NotNull CrowdControlServerBuilder password(@NotNull String password) throws IllegalArgumentException {
-		//noinspection ConstantConditions
-		if (password == null || password.isBlank()) {
-			throw new IllegalArgumentException("password must be non-null and not blank");
+		ExceptionUtil.validateNotNull(password, "password");
+		if (password.isBlank()) {
+			throw new IllegalArgumentException("password cannot be blank");
 		}
 		this.password = password;
 		return this;
