@@ -202,12 +202,8 @@ public final class CrowdControl implements SocketManager, RequestManager {
 		Class<?> clazz = object.getClass();
 		for (Method method : clazz.getMethods()) {
 			if (!method.isAnnotationPresent(Subscribe.class)) continue;
+			// effect name literally can't be null because java doesn't let you
 			String nullableEffect = method.getAnnotation(Subscribe.class).effect();
-			//noinspection ConstantConditions
-			if (nullableEffect == null) {
-				methodHandlerWarning(method, "effect name is null");
-				continue;
-			}
 
 			final String effect = nullableEffect.toLowerCase(Locale.ENGLISH);
 			if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
@@ -369,7 +365,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @see #shutdown(Request, String)
 	 * @deprecated providing error messages via {@link #shutdown(String)} is recommended
 	 */
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({"deprecation", "DeprecatedIsStillUsed"})
 	// yes, I know that I am overriding a deprecated method, deal with it
 	@Deprecated
 	public void shutdown() {

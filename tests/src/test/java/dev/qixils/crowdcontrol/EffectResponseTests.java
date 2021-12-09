@@ -40,11 +40,10 @@ public class EffectResponseTests {
 		Assertions.assertTrue(server.isAcceptingRequests());
 
 		// send effect
-		Request.Builder builder1 = new Request.Builder()
+		Request.Builder builder = new Request.Builder()
 				.effect(effectName)
 				.viewer("test");
-		Request.Builder builder2 = builder1.clone();
-		Flux<Response> responseFlux = server.sendRequest(builder1).blockFirst();
+		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		Response response = responseFlux.blockFirst();
 		Assertions.assertNotNull(response);
@@ -55,14 +54,14 @@ public class EffectResponseTests {
 		if (resultType == Response.ResultType.UNAVAILABLE) {
 			Assertions.assertEquals(TriState.FALSE, server.isEffectAvailable(effectName));
 			//noinspection ReactiveStreamsUnusedPublisher
-			Assertions.assertThrows(EffectUnavailableException.class, () -> server.sendRequest(builder2));
+			Assertions.assertThrows(EffectUnavailableException.class, () -> server.sendRequest(builder));
 		} else {
 			Assertions.assertEquals(TriState.TRUE, server.isEffectAvailable(effectName));
-			Assertions.assertDoesNotThrow(() -> server.sendRequest(builder2));
+			Assertions.assertDoesNotThrow(() -> server.sendRequest(builder));
 		}
 
 		// cleanup
-		client.shutdown("Test completed");
+		client.shutdown(builder.build(), "Test completed");
 		Thread.sleep(10);
 		server.shutdown();
 
