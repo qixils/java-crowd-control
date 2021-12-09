@@ -206,7 +206,6 @@ final class RequestHandler implements SimulatedService<Response> {
 
 	@Override
 	public @NotNull Flux<@NotNull Response> sendRequest(Request.@NotNull Builder builder, @Nullable Duration timeout) throws IllegalStateException {
-		Objects.requireNonNull(builder, "builder cannot be null");
 		Request.Type type = builder.type();
 		if (type == null)
 			throw new IllegalArgumentException("Request type is null");

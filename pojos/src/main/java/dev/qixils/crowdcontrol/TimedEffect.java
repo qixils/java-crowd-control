@@ -51,7 +51,10 @@ public final class TimedEffect {
 	 * @param completionCallback optional method to call once the effect is completed
 	 */
 	@CheckReturnValue
-	public TimedEffect(@NotNull Request request, long duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+	public TimedEffect(@NotNull Request request,
+					   long duration,
+					   @NotNull Consumer<@NotNull TimedEffect> callback,
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
 		this(request, request.getEffect(), duration, callback, completionCallback);
 	}
 
@@ -65,12 +68,16 @@ public final class TimedEffect {
 	 * @param completionCallback optional method to call once the effect is completed
 	 */
 	@CheckReturnValue
-	public TimedEffect(@NotNull Request request, @NotNull String effectGroup, long duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
-		this.callback = Objects.requireNonNull(callback, "callback cannot be null");
+	public TimedEffect(@NotNull Request request,
+					   @NotNull String effectGroup,
+					   long duration,
+					   @NotNull Consumer<@NotNull TimedEffect> callback,
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+		this.callback = callback;
 		this.completionCallback = completionCallback;
 		this.duration = duration;
-		this.request = Objects.requireNonNull(request, "effect cannot be null");
-		this.effectGroup = Objects.requireNonNull(effectGroup, "effectGroup cannot be null");
+		this.request = request;
+		this.effectGroup = effectGroup;
 		this.globalKey = new MapKey(effectGroup);
 
 		Request.Target[] targets = request.getTargets();
@@ -89,7 +96,10 @@ public final class TimedEffect {
 	 * @param completionCallback optional method to call once the effect is completed
 	 */
 	@CheckReturnValue
-	public TimedEffect(@NotNull Request request, @NotNull Duration duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+	public TimedEffect(@NotNull Request request,
+					   @NotNull Duration duration,
+					   @NotNull Consumer<@NotNull TimedEffect> callback,
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
 		this(request, request.getEffect(), duration, callback, completionCallback);
 	}
 
@@ -103,7 +113,11 @@ public final class TimedEffect {
 	 * @param completionCallback optional method to call once the effect is completed
 	 */
 	@CheckReturnValue
-	public TimedEffect(@NotNull Request request, @NotNull String effectGroup, @NotNull Duration duration, @NotNull Consumer<@NotNull TimedEffect> callback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+	public TimedEffect(@NotNull Request request,
+					   @NotNull String effectGroup,
+					   @NotNull Duration duration,
+					   @NotNull Consumer<@NotNull TimedEffect> callback,
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
 		this(request, effectGroup, duration.toMillis(), callback, completionCallback);
 	}
 

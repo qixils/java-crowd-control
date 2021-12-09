@@ -1,6 +1,5 @@
-package dev.qixils.crowdcontrol.builder;
+package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.CrowdControl;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,7 +8,7 @@ import javax.annotation.CheckReturnValue;
 /**
  * Builds a new {@link CrowdControl} instance.
  */
-public interface CrowdControlBuilder {
+interface CrowdControlBuilder {
 	/**
 	 * Sets the port that will be used by the Crowd Control client or server.
 	 *

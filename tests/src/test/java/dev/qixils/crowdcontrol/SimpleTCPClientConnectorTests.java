@@ -43,8 +43,9 @@ public class SimpleTCPClientConnectorTests {
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 
 		// cleanup
-		client.shutdown();
 		server.shutdown("Test completed");
+		Thread.sleep(10);
+		client.shutdown();
 
 		Thread.sleep(40); // give server time to shut down
 		Assertions.assertFalse(client.isRunning());
@@ -80,8 +81,9 @@ public class SimpleTCPClientConnectorTests {
 		}
 
 		// cleanup
-		clientList.forEach(SimulatedClient::shutdown);
 		server.shutdown("Test completed");
+		Thread.sleep(10);
+		clientList.forEach(SimulatedClient::shutdown);
 
 		Thread.sleep(40); // give server time to shut down
 	}
@@ -107,6 +109,8 @@ public class SimpleTCPClientConnectorTests {
 
 		// cleanup
 		server.shutdown("Test completed");
+		Thread.sleep(10);
+		client.shutdown();
 
 		Thread.sleep(40); // give server time to shut down
 	}

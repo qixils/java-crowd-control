@@ -228,7 +228,7 @@ public final class Response implements JsonObject {
 	@NotNull
 	@CheckReturnValue
 	public static Response fromJSON(@NotNull String json) throws JsonSyntaxException {
-		return ByteAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Response.class);
+		return ByteAdapter.GSON.fromJson(json, Response.class);
 	}
 
 	/**
@@ -551,7 +551,6 @@ public final class Response implements JsonObject {
 		 */
 		@CheckReturnValue
 		private Builder(@NotNull Response source) {
-			Objects.requireNonNull(source, "source cannot be null");
 			this.id = source.getId();
 			this.originatingSocket = source.originatingSocket;
 			this.message = source.message;

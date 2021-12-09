@@ -1,12 +1,10 @@
-package dev.qixils.crowdcontrol.builder;
+package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.CrowdControl;
 import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.CheckReturnValue;
-import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -31,7 +29,7 @@ abstract class CrowdControlBuilderBase implements CrowdControlBuilder {
 	 */
 	@CheckReturnValue
 	CrowdControlBuilderBase(@NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
-		this.socketManagerCreator = Objects.requireNonNull(socketManagerCreator, "socketManagerCreator cannot be null");
+		this.socketManagerCreator = socketManagerCreator;
 	}
 
 	@Override

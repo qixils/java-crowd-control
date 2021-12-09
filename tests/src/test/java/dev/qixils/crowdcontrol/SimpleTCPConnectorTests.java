@@ -64,6 +64,7 @@ public class SimpleTCPConnectorTests {
 
 		// cleanup
 		client.shutdown("Test completed");
+		Thread.sleep(10);
 		server.shutdown();
 
 		Thread.sleep(40); // give server time to shut down
@@ -105,6 +106,7 @@ public class SimpleTCPConnectorTests {
 
 		// cleanup
 		clientsList.forEach(client -> client.shutdown("Test completed"));
+		Thread.sleep(10);
 		server.shutdown();
 
 		Thread.sleep(40); // give server time to shut down

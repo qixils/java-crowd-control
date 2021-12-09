@@ -1,7 +1,5 @@
 package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.builder.CrowdControlClientBuilder;
-import dev.qixils.crowdcontrol.builder.CrowdControlServerBuilder;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request;
@@ -21,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -29,8 +26,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * API for interacting with <a href="https://crowdcontrol.live">Crowd Control</a> via the
- * {@code SimpleTCPConnector} or {@code SimpleTCPClientConnector}.
+ * API for receiving effect requests from a <a href="https://crowdcontrol.live">Crowd Control</a>
+ * service (a streamer) via the {@code SimpleTCPConnector} or {@code SimpleTCPClientConnector}.
  * <h2>Creating an instance</h2>
  * <p>
  * To create an instance of this class, use either the {@link #client()} or {@link #server()}
@@ -39,7 +36,7 @@ import java.util.logging.Logger;
  * <ul>
  *     <li>
  *         {@link #client()} creates a client instance that can be used to connect to a central
- *         Crowd Control server. It corresponds with the {@code SimpleTCPConnector} in your
+ *         Crowd Control instance. It corresponds with the {@code SimpleTCPConnector} in your
  *         project's .cs file. In this mode, your project will only be able to connect to one
  *         streamer, although multiple instances of your project will all be able to connect to
  *         this streamer at the same time. This mode is ideal for single-player games.
@@ -90,26 +87,36 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	private final SocketManager socketManager;
 
 	/**
-	 * Creates a new Crowd Control client or server instance.
-	 * <p>
-	 * You should generally be using {@link #server()} or {@link #client()} instead.
-	 * This constructor's parameters are prone to changes.
+	 * Creates a new receiver client that receives {@link Request}s from a streamer's Crowd Control
+	 * desktop application.
 	 *
 	 * @param IP                   IP address to connect to (if applicable)
 	 * @param port                 port to listen on or connect to
-	 * @param password             password required to connect (if applicable)
 	 * @param socketManagerCreator creator of a new {@link SocketManager}
 	 */
-	public CrowdControl(@Nullable String IP,
-						int port,
-						@Nullable String password,
-						@NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
+	CrowdControl(@NotNull String IP,
+				 int port,
+				 @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
 		this.IP = IP;
 		this.port = port;
+		this.password = null;
 		this.socketManager = socketManagerCreator.apply(this);
-		this.password = password == null
-				? null
-				: ServiceManager.encryptPassword(password);
+	}
+
+	/**
+	 * Creates a new receiver server that receives {@link Request}s from multiple streamers.
+	 *
+	 * @param port                 port to listen on or connect to
+	 * @param password             password to use to connect to the server
+	 * @param socketManagerCreator creator of a new {@link SocketManager}
+	 */
+	CrowdControl(int port,
+				 @NotNull String password,
+				 @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
+		this.IP = null;
+		this.port = port;
+		this.password = ServiceManager.encryptPassword(password);
+		this.socketManager = socketManagerCreator.apply(this);
 	}
 
 	/**
@@ -166,7 +173,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 
 	/**
 	 * Returns the password required for clients to connect to this server as a SHA-512 encrypted,
-	 * Base64-encoded string. If running in client mode, this will be null.
+	 * hexadecimal string. If running in client mode, this will be null.
 	 *
 	 * @return password required to connect
 	 */
@@ -192,7 +199,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @param object class instance to register
 	 */
 	public void registerHandlers(@NotNull Object object) {
-		Class<?> clazz = Objects.requireNonNull(object, "object").getClass();
+		Class<?> clazz = object.getClass();
 		for (Method method : clazz.getMethods()) {
 			if (!method.isAnnotationPresent(Subscribe.class)) continue;
 			String nullableEffect = method.getAnnotation(Subscribe.class).effect();
@@ -264,11 +271,11 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @see #registerHandler(String, Consumer)
 	 */
 	public void registerHandler(@NotNull String effect, @NotNull Function<Request, Response> handler) {
-		effect = Objects.requireNonNull(effect, "effect").toLowerCase(Locale.ENGLISH);
+		effect = effect.toLowerCase(Locale.ENGLISH);
 		if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
 			throw new IllegalArgumentException("The effect \"" + effect + "\" already has a handler.");
 		}
-		effectHandlers.put(effect, Objects.requireNonNull(handler, "handler"));
+		effectHandlers.put(effect, handler);
 	}
 
 	/**
@@ -280,11 +287,11 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @see #registerHandler(String, Function)
 	 */
 	public void registerHandler(@NotNull String effect, @NotNull Consumer<Request> handler) {
-		effect = Objects.requireNonNull(effect, "effect").toLowerCase(Locale.ENGLISH);
+		effect = effect.toLowerCase(Locale.ENGLISH);
 		if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
 			throw new IllegalArgumentException("The effect \"" + effect + "\" already has a handler.");
 		}
-		asyncHandlers.put(effect, Objects.requireNonNull(handler, "handler"));
+		asyncHandlers.put(effect, handler);
 	}
 
 	/**
@@ -297,7 +304,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @param check global check to register
 	 */
 	public void registerCheck(@NotNull Function<Request, CheckResult> check) {
-		globalChecks.add(Objects.requireNonNull(check, "check"));
+		globalChecks.add(check);
 	}
 
 	/**
@@ -310,8 +317,18 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @param check global check to register
 	 */
 	public void registerCheck(@NotNull Supplier<CheckResult> check) {
-		Objects.requireNonNull(check, "check");
 		globalChecks.add($ -> check.get());
+	}
+
+	/**
+	 * Determines if the given effect has a registered handler.
+	 *
+	 * @param effect effect to check
+	 * @return true if the effect has a registered handler
+	 */
+	public boolean hasHandler(@NotNull String effect) {
+		effect = effect.toLowerCase(Locale.ENGLISH);
+		return effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect);
 	}
 
 	/**
@@ -326,7 +343,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 			}
 		}
 
-		String effect = Objects.requireNonNull(request, "request").getEffect();
+		String effect = request.getEffect();
 
 		try {
 			if (effectHandlers.containsKey(effect))

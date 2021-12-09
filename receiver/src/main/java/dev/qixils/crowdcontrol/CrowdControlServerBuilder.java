@@ -1,6 +1,5 @@
-package dev.qixils.crowdcontrol.builder;
+package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.CrowdControl;
 import dev.qixils.crowdcontrol.socket.ServerSocketManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +69,6 @@ public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
 		if (password == null) {
 			throw new IllegalStateException("Password must be set using #password(String)");
 		}
-		return new CrowdControl(null, port, password, socketManagerCreator);
+		return new CrowdControl(port, password, socketManagerCreator);
 	}
 }

@@ -1,6 +1,5 @@
-package dev.qixils.crowdcontrol.builder;
+package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.CrowdControl;
 import dev.qixils.crowdcontrol.socket.ClientSocketManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +68,6 @@ public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
 		if (IP == null) {
 			throw new IllegalStateException("IP must be set using #ip(String)");
 		}
-		return new CrowdControl(IP, port, null, socketManagerCreator);
+		return new CrowdControl(IP, port, socketManagerCreator);
 	}
 }

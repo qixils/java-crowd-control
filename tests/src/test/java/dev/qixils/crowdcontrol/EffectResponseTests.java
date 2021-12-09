@@ -63,6 +63,7 @@ public class EffectResponseTests {
 
 		// cleanup
 		client.shutdown("Test completed");
+		Thread.sleep(10);
 		server.shutdown();
 
 		Thread.sleep(40); // give server time to shut down
@@ -135,6 +136,7 @@ public class EffectResponseTests {
 
 		// cleanup
 		client.shutdown("Test completed");
+		Thread.sleep(10);
 		server.shutdown();
 
 		Thread.sleep(40); // give server time to shut down
@@ -169,6 +171,7 @@ public class EffectResponseTests {
 
 		// cleanup
 		client.shutdown("Test completed");
+		Thread.sleep(10);
 		server.shutdown();
 
 		Thread.sleep(40); // give server time to shut down
@@ -210,7 +213,6 @@ public class EffectResponseTests {
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals(200, response.getTimeRemaining());
-		Assertions.assertTrue(firstFuture.isDone());
 
 		// second request should initially "fail" (return RETRY)...
 		Flux<Response> newFlux = server.sendRequest(builder2).blockFirst();
@@ -281,6 +283,7 @@ public class EffectResponseTests {
 
 		// cleanup
 		client.shutdown("Test completed");
+		Thread.sleep(10);
 		server.shutdown();
 
 		Thread.sleep(40); // give server time to shut down

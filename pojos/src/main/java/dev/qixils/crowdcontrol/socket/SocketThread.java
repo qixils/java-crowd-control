@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,8 +36,8 @@ final class SocketThread extends Thread implements SocketManager {
 	private volatile boolean running = true;
 
 	SocketThread(@NotNull ServerSocketManager socketManager, @NotNull Socket clientSocket) {
-		this.socketManager = Objects.requireNonNull(socketManager, "socketManager cannot be null");
-		this.socket = Objects.requireNonNull(clientSocket, "clientSocket cannot be null");
+		this.socketManager = socketManager;
+		this.socket = clientSocket;
 	}
 
 	public void run() {

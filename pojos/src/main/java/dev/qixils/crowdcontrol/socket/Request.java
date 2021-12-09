@@ -145,7 +145,7 @@ public final class Request implements JsonObject {
 	@NotNull
 	@CheckReturnValue
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
-		return ByteAdapter.GSON.fromJson(Objects.requireNonNull(json, "json"), Request.class);
+		return ByteAdapter.GSON.fromJson(json, Request.class);
 	}
 
 	/**
