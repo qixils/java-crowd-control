@@ -76,7 +76,7 @@ final class RequestHandler implements SimulatedService<Response> {
 		scheduledExecutor.schedule(() -> {
 			effectDataMap.forEach(($, data) -> data.sink.error(new CrowdControlException("RequestHandler shutting down")));
 			effectDataMap.clear();
-		}, 1, TimeUnit.SECONDS);
+		}, 2, TimeUnit.SECONDS);
 	}
 
 	@Override

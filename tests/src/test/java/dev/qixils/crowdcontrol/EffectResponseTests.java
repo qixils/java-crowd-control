@@ -249,6 +249,7 @@ public class EffectResponseTests {
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals(200, response.getTimeRemaining());
+		Thread.sleep(30); // wait for future to complete
 		Assertions.assertTrue(secondFuture.isDone());
 
 		// let's try pausing the effect
