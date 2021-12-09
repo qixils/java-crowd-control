@@ -12,7 +12,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>java-crowd-control</artifactId>
-    <version>3.0.0</version>
+    <version>3.2.1</version>
 </dependency>
 ```
 
@@ -21,13 +21,13 @@ Add to the `dependencies` section of your `pom.xml` file:
 Add to the `dependencies` section of your `build.gradle` file:
 
 ```gradle
-compileOnly 'dev.qixils.crowdcontrol:java-crowd-control:3.0.0'
+compileOnly 'dev.qixils.crowdcontrol:java-crowd-control:3.2.1'
 ```
 
 Or, if using Kotlin (`build.gradle.kts`):
 
 ```kts
-compileOnly("dev.qixils.crowdcontrol:java-crowd-control:3.0.0")
+compileOnly("dev.qixils.crowdcontrol:java-crowd-control:3.2.1")
 ```
 
 ## Quick Start
@@ -204,7 +204,7 @@ and [`#registerCheck(Function<Request,CheckResult>)`](https://javadoc.io/doc/dev
 
 #### Further Reading
 
-The documentation for all classes and methods may be found [here](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/3.0.0/index.html).
+The documentation for all classes and methods may be found [here](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/index.html).
 
 ### Example
 
