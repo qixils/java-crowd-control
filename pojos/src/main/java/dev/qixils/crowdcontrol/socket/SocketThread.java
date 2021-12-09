@@ -2,6 +2,8 @@ package dev.qixils.crowdcontrol.socket;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -10,8 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Handles the connection to a Crowd Control client when operating in server mode.
@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 final class SocketThread extends Thread implements SocketManager {
 	private static final @NotNull String RAW_PASSWORD_REQUEST;
 	private static final byte @NotNull [] PASSWORD_REQUEST;
-	private static final @NotNull Logger logger = Logger.getLogger("CC-SocketThread");
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-SocketThread");
 
 	static {
 		DummyResponse resp = new DummyResponse();
@@ -71,7 +71,7 @@ final class SocketThread extends Thread implements SocketManager {
 
 			// log disconnection
 			if (running)
-				logger.log(Level.WARNING, "Erroneously disconnected from client socket (" + displayName + ")", exc);
+				logger.warn("Erroneously disconnected from client socket (" + displayName + ")", exc);
 			else
 				logger.info("Client socket shutting down (" + displayName + ")");
 		}

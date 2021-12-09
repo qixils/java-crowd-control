@@ -5,19 +5,19 @@ import dev.qixils.crowdcontrol.RequestManager;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Processes incoming requests from a Crowd Control socket and executes them.
  */
 final class EffectExecutor {
-	private static final Logger logger = Logger.getLogger("CC-EffectExecutor");
+	private static final Logger logger = LoggerFactory.getLogger("CC-EffectExecutor");
 	private final @Nullable SocketThread socketThread;
 	private final Socket socket;
 	private final Executor effectPool;
@@ -50,7 +50,7 @@ final class EffectExecutor {
 		try {
 			request = JsonObject.fromInputStream(input, Request::fromJSON);
 		} catch (JsonParseException e) {
-			logger.log(Level.WARNING, "Failed to parse JSON from socket", e);
+			logger.error("Failed to parse JSON from socket", e);
 			return;
 		}
 
@@ -96,7 +96,7 @@ final class EffectExecutor {
 				if (ExceptionUtil.isCause(NoApplicableTarget.class, exc)) {
 					request.buildResponse().type(Response.ResultType.FAILURE).message("Streamer(s) unavailable").send();
 				} else {
-					logger.log(Level.WARNING, "Request handler threw an exception", exc);
+					logger.error("Request handler threw an exception", exc);
 					request.buildResponse().type(Response.ResultType.FAILURE).message("Request handler threw an exception").send();
 				}
 			}

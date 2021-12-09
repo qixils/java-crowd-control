@@ -6,6 +6,8 @@ import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import javax.annotation.CheckReturnValue;
@@ -16,15 +18,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A server that can connect to multiple video games running a Crowd Control client using the
  * {@code SimpleTCPConnector} and dispatches {@link Request}s.
  */
 public final class SimulatedServer implements StartableService<@NotNull Flux<@NotNull Response>>, ServiceManager {
-	private static final Logger logger = Logger.getLogger("CC-Simul-Server");
+	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Server");
 	private final int port;
 	private final List<RequestHandler> rawHandlers = Collections.synchronizedList(new ArrayList<>(1));
 	private @Nullable ServerSocket serverSocket;
@@ -85,7 +85,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 				rawHandlers.add(handler);
 			} catch (IOException e) {
 				if (running)
-					logger.log(Level.WARNING, "Failed to accept connection", e);
+					logger.warn("Failed to accept connection", e);
 			}
 		}
 		shutdown(); // something went wrong; close the server
@@ -145,7 +145,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 			try {
 				serverSocket.close();
 			} catch (IOException e) {
-				logger.log(Level.WARNING, "Failed to close server socket", e);
+				logger.warn("Failed to close server socket", e);
 			}
 		}
 		for (RequestHandler handler : getHandlers()) {

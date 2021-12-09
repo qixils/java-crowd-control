@@ -5,6 +5,8 @@ import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.time.Duration;
@@ -16,8 +18,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A wrapper for safely executing exclusive timed effects.
@@ -32,7 +32,7 @@ public final class TimedEffect {
 
 	private static final Map<MapKey, TimedEffect> ACTIVE_EFFECTS = new HashMap<>();
 	private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
-	private static final Logger logger = Logger.getLogger("CC-TimedEffect");
+	private static final Logger logger = LoggerFactory.getLogger("CC-TimedEffect");
 	private final @NotNull Request request;
 	private final @NotNull MapKey globalKey;
 	private final MapKey @NotNull [] mapKeys;
@@ -261,7 +261,7 @@ public final class TimedEffect {
 		try {
 			callback.accept(this);
 		} catch (Exception exception) {
-			logger.log(Level.WARNING, "Exception occurred during starting callback", exception);
+			logger.error("Exception occurred during starting callback", exception);
 		}
 		future = EXECUTOR.schedule(this::complete, duration, TimeUnit.MILLISECONDS);
 	}
@@ -335,7 +335,7 @@ public final class TimedEffect {
 			try {
 				completionCallback.accept(this);
 			} catch (Exception exception) {
-				logger.log(Level.WARNING, "Exception occurred during completion callback", exception);
+				logger.error("Exception occurred during completion callback", exception);
 			}
 		}
 		return true;

@@ -7,21 +7,21 @@ import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A client that connects to a video game hosting a Crowd Control server using the
  * {@code SimpleTCPClientConnector} and dispatches {@link Request}s.
  */
 public final class SimulatedClient implements AutomatableService<Response>, ServiceManager {
-	private static final Logger logger = Logger.getLogger("CC-Simul-Client");
+	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Client");
 	private final String ip;
 	private final int port;
 	private final String password;
@@ -91,7 +91,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 					}
 				}
 			} catch (IOException e) {
-				logger.log(Level.WARNING, "Failed to connect to server", e);
+				logger.warn("Failed to connect to server", e);
 				// exponential backoff
 				try {
 					Thread.sleep(1000 * (long) Math.pow(2, reconnectionAttempts++));

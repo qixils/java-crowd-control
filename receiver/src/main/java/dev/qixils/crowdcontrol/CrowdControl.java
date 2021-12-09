@@ -7,6 +7,8 @@ import dev.qixils.crowdcontrol.socket.Response;
 import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
@@ -22,8 +24,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * API for receiving effect requests from a <a href="https://crowdcontrol.live">Crowd Control</a>
@@ -73,7 +73,7 @@ import java.util.logging.Logger;
  */
 public final class CrowdControl implements SocketManager, RequestManager {
 
-	private static final Logger logger = Logger.getLogger("CC-Core");
+	private static final Logger logger = LoggerFactory.getLogger("CC-Core");
 	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS = Map.of(
 			Response.class, response -> (Response) response,
 			Response.Builder.class, builder -> ((Response.Builder) builder).build()
@@ -146,7 +146,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @param errorDescription issue with the method
 	 */
 	private static void methodHandlerWarning(@NotNull Method method, @NotNull String errorDescription) {
-		logger.warning("Method " + method.getName() + " is improperly configured: " + errorDescription);
+		logger.warn("Method " + method.getName() + " is improperly configured: " + errorDescription);
 	}
 
 	/**
@@ -239,7 +239,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 								? request.buildResponse().type(Response.ResultType.FAILURE).message("Effect handler returned a null response").build()
 								: parser.apply(result);
 					} catch (IllegalAccessException | InvocationTargetException e) {
-						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
+						logger.error("Failed to invoke method handler for effect \"" + effect + "\"", e);
 						output = request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").build();
 					}
 					return output;
@@ -249,7 +249,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 					try {
 						method.invoke(object, request);
 					} catch (IllegalAccessException | InvocationTargetException e) {
-						logger.log(Level.WARNING, "Failed to invoke method handler for effect \"" + effect + "\"", e);
+						logger.error("Failed to invoke method handler for effect \"" + effect + "\"", e);
 						request.buildResponse().type(Response.ResultType.FAILURE).message("Failed to invoke method handler").send();
 					}
 				});
@@ -352,7 +352,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 			if (ExceptionUtil.isCause(NoApplicableTarget.class, e)) {
 				request.buildResponse().type(Response.ResultType.FAILURE).message("Streamer(s) unavailable").send();
 			} else {
-				logger.log(Level.WARNING, "Failed to handle effect \"" + effect + "\"", e);
+				logger.error("Failed to handle effect \"" + effect + "\"", e);
 				request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").send();
 			}
 		}
@@ -372,7 +372,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 		try {
 			socketManager.shutdown(null, null);
 		} catch (IOException e) {
-			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
+			logger.warn("Encountered an exception while shutting down socket", e);
 		}
 	}
 
@@ -386,7 +386,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 		try {
 			socketManager.shutdown(null, reason);
 		} catch (IOException e) {
-			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
+			logger.warn("Encountered an exception while shutting down socket", e);
 		}
 	}
 
@@ -401,7 +401,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 		try {
 			socketManager.shutdown(cause, reason);
 		} catch (IOException e) {
-			logger.log(Level.WARNING, "Encountered an exception while shutting down socket", e);
+			logger.warn("Encountered an exception while shutting down socket", e);
 		}
 	}
 

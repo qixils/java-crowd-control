@@ -6,6 +6,8 @@ import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
@@ -20,8 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * An outgoing packet to the Crowd Control TCP server carrying the result of executing
@@ -30,7 +30,7 @@ import java.util.logging.Logger;
  * @see Request
  */
 public final class Response implements JsonObject {
-	private static final Logger logger = Logger.getLogger("CC-Response");
+	private static final Logger logger = LoggerFactory.getLogger("CC-Response");
 	@SerializedName("type")
 	private PacketType packetType;
 	private transient Socket originatingSocket;
@@ -376,7 +376,7 @@ public final class Response implements JsonObject {
 				output.write(0x00);
 				output.flush();
 			} catch (IOException exc) {
-				logger.log(Level.WARNING, "Failed to write response to socket", exc);
+				logger.warn("Failed to write response to socket", exc);
 			}
 		}
 	}

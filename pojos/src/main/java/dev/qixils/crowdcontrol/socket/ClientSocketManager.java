@@ -4,20 +4,20 @@ import dev.qixils.crowdcontrol.RequestManager;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Manages the connection to the Crowd Control server.
  */
 public final class ClientSocketManager implements SocketManager {
-	private static final @NotNull Logger logger = Logger.getLogger("CC-ClientSocket");
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-ClientSocket");
 	private final @NotNull RequestManager crowdControl;
 	private final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	private @Nullable Socket socket;
@@ -76,7 +76,7 @@ public final class ClientSocketManager implements SocketManager {
 				socket = null;
 				String error = connected ? "Socket loop encountered an error" : "Could not connect to the Crowd Control server";
 				Throwable exc = connected ? e : null;
-				logger.log(Level.WARNING, error + ". Reconnecting in " + sleep + "s", exc);
+				logger.warn(error + ". Reconnecting in " + sleep + "s", exc);
 				try {
 					//noinspection BusyWait
 					Thread.sleep(sleep * 1000L);

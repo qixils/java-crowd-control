@@ -4,6 +4,8 @@ import dev.qixils.crowdcontrol.RequestManager;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
@@ -13,14 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Manages the connection to Crowd Control clients.
  */
 public final class ServerSocketManager implements SocketManager {
-	private static final Logger logger = Logger.getLogger("CC-ServerSocket");
+	private static final Logger logger = LoggerFactory.getLogger("CC-ServerSocket");
 	final RequestManager crowdControl;
 	final Executor effectPool = Executors.newCachedThreadPool();
 	private final List<SocketThread> socketThreads = new ArrayList<>();
@@ -45,7 +45,7 @@ public final class ServerSocketManager implements SocketManager {
 		try {
 			serverSocket = new ServerSocket(crowdControl.getPort());
 		} catch (IOException exc) {
-			logger.log(Level.SEVERE, "Could not register port " + crowdControl.getPort() + ". This is a fatal exception; attempts to reconnect will not be made.", exc);
+			logger.error("Could not register port " + crowdControl.getPort() + ". This is a fatal exception; attempts to reconnect will not be made.", exc);
 			return;
 		}
 
@@ -62,7 +62,7 @@ public final class ServerSocketManager implements SocketManager {
 				socketThread.start();
 			} catch (IOException exc) {
 				if (running)
-					logger.log(Level.WARNING, "Failed to accept new socket connection", exc);
+					logger.warn("Failed to accept new socket connection", exc);
 			}
 		}
 	}

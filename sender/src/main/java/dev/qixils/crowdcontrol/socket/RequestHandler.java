@@ -8,6 +8,8 @@ import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
@@ -26,11 +28,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 final class RequestHandler implements SimulatedService<Response> {
-	private static final Logger logger = Logger.getLogger("CC-RequestHandler");
+	private static final Logger logger = LoggerFactory.getLogger("CC-RequestHandler");
 	private static final Executor executor = Executors.newCachedThreadPool();
 	private static final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Map<Integer, EffectData> effectDataMap = new ConcurrentHashMap<>(1);
@@ -68,7 +68,7 @@ final class RequestHandler implements SimulatedService<Response> {
 		try {
 			socket.close();
 		} catch (IOException e) {
-			logger.log(Level.WARNING, "Failed to close socket", e);
+			logger.warn("Failed to close socket", e);
 		}
 		parent.shutdown();
 
@@ -107,7 +107,7 @@ final class RequestHandler implements SimulatedService<Response> {
 				try {
 					response = JsonObject.fromInputStream(inputStream, Response::fromJSON);
 				} catch (JsonParseException e) {
-					logger.log(Level.WARNING, "Failed to parse JSON from socket", e);
+					logger.error("Failed to parse JSON from socket", e);
 					return;
 				}
 
@@ -130,7 +130,7 @@ final class RequestHandler implements SimulatedService<Response> {
 						break;
 
 					case DISCONNECT:
-						logger.warning("Disconnected from service: " + response.getMessage());
+						logger.warn("Disconnected from service: " + response.getMessage());
 						shutdown();
 						break;
 
@@ -142,10 +142,10 @@ final class RequestHandler implements SimulatedService<Response> {
 					case EFFECT_RESULT:
 						EffectData data = effectDataMap.get(response.getId());
 						if (data == null) {
-							logger.warning("Received response for unknown request ID: " + response.getId());
+							logger.debug("Received response for unknown request ID: " + response.getId());
 							break;
 						}
-						logger.fine("Received response for request " + response.getId());
+						logger.debug("Received response for request " + response.getId());
 
 						data.responseReceived = true;
 						data.sink.next(response); // send response to subscriber
@@ -201,7 +201,7 @@ final class RequestHandler implements SimulatedService<Response> {
 			}
 		} catch (IOException e) {
 			if (running)
-				logger.log(Level.SEVERE, "Failed to read from socket", e);
+				logger.error("Failed to read from socket", e);
 		}
 	}
 
@@ -237,7 +237,7 @@ final class RequestHandler implements SimulatedService<Response> {
 					if (!isAcceptingRequests()) return;
 					if (data.responseReceived) return;
 					final String error = "Timed out waiting for response for request " + request.getId();
-					logger.fine(error);
+					logger.debug(error);
 					sink.error(new TimeoutException(error));
 				}, timeout.toMillis(), TimeUnit.MILLISECONDS);
 			}
@@ -255,7 +255,7 @@ final class RequestHandler implements SimulatedService<Response> {
 			outputStream.write(0x00);
 			outputStream.flush();
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "Failed to send request", e);
+			logger.warn("Failed to send request", e);
 			sink.error(e);
 		}
 	}
