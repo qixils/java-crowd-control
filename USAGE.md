@@ -18,7 +18,7 @@ implementation to your project's dependencies in Maven or Gradle. Popular implem
 [Logback](https://logback.qos.ch/), and SLF4J's adapter for the built-in
 [java.util.logging](https://mvnrepository.com/artifact/org.slf4j/slf4j-jdk14) framework.
 
-# Receiver
+# Receiver [![javadoc](https://javadoc.io/badge2/dev.qixils.crowdcontrol/crowd-control-receiver/javadoc.svg)](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver?color=success)
 
 The **Receiver** library is the main library of the project. It allows your video game (or
 modification) to receive effect requests from a streamer using
@@ -393,7 +393,7 @@ static class DisableJumpEffect {
 }
 ```
 
-# Sender
+# Sender [![javadoc](https://javadoc.io/badge2/dev.qixils.crowdcontrol/crowd-control-sender/javadoc.svg)](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender?color=success)
 
 The **Sender** library allows you to simulate the Crowd Control desktop application by sending
 effect requests to a video game server or clients. This was primarily developed as an internal tool
