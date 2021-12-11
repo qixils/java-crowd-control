@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>java-crowd-control</artifactId>
+        <groupId>dev.qixils.crowdcontrol</groupId>
+        <version>3.3.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>crowd-control-sender</artifactId>
+
+    <name>Crowd Control Sender</name>
+    <description>Library for sending effect requests to a receiving game server or clients
+    </description>
+    <url>https://github.com/qixils/java-crowd-control</url>
+    <scm>
+        <connection>scm:git:https://github.com/qixils/java-crowd-control</connection>
+        <developerConnection>scm:git:https://github.com/qixils/java-crowd-control
+        </developerConnection>
+        <url>https://github.com/qixils/java-crowd-control.git</url>
+        <tag>v3.3.0</tag>
+    </scm>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://github.com/qixils/java-crowd-control/blob/master/LICENSE</url>
+            <distribution>repo</distribution>
+            <comments>A short and simple permissive license</comments>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>qixils</id>
+            <name>Lexi Larkin</name>
+            <email>lexi@qixils.dev</email>
+            <url>https://qixils.dev/</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>America/New_York</timezone>
+            <properties>
+                <picUrl>https://i.qixils.dev/avatar.png</picUrl>
+                <twitter>lexikiq</twitter>
+                <github>qixils</github>
+                <gitlab>lexikiq</gitlab>
+            </properties>
+        </developer>
+    </developers>
+
+    <dependencies>
+        <dependency>
+            <groupId>dev.qixils.crowdcontrol</groupId>
+            <artifactId>crowd-control-pojos</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>3.4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>publish</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
