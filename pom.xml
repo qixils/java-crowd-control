@@ -99,12 +99,6 @@
     <profiles>
         <profile>
             <id>publish</id>
-            <modules>
-                <module>sender</module>
-                <module>receiver</module>
-                <module>pojos</module>
-                <!-- don't deploy tests module -->
-            </modules>
             <build>
                 <pluginManagement>
                     <plugins>

@@ -32,6 +32,7 @@ public class ExceptionUtil {
 	 * Validates that the provided object is not null.
 	 *
 	 * @param object object to validate
+	 * @param <T>    type of object
 	 * @return the object if not null
 	 * @throws IllegalArgumentException if the object is null
 	 */
