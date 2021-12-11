@@ -220,7 +220,6 @@ final class RequestHandler implements SimulatedService<Response> {
 		if (type.isEffectType() && isEffectAvailable(request.getEffect()) == TriState.FALSE)
 			throw new EffectUnavailableException("Effect " + request.getEffect() + " is known to be unavailable to this service");
 
-		// TODO: unit test
 		return Flux.<Response>create(sink -> {
 			// ensure service is accepting requests
 			if (type.isEffectType() && !isAcceptingRequests()) {
@@ -245,7 +244,6 @@ final class RequestHandler implements SimulatedService<Response> {
 
 			// send request
 			executor.execute(() -> writeRequest(request, sink));
-			// TODO: timeout unit test
 		}).doOnComplete(() -> effectDataMap.remove(request.getId()));
 	}
 
