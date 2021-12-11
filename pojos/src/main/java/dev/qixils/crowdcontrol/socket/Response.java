@@ -206,7 +206,7 @@ public final class Response implements JsonObject {
 	public Response(@NotNull Request request,
 					@NotNull ResultType type,
 					@Nullable String message,
-					long timeRemaining) {
+					long timeRemaining) throws IllegalArgumentException {
 		this(ExceptionUtil.validateNotNull(request, "request").getId(),
 				request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
 	}
@@ -644,7 +644,7 @@ public final class Response implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Builder timeRemaining(long timeRemaining) {
+		public Builder timeRemaining(long timeRemaining) throws IllegalArgumentException {
 			if (timeRemaining < 0)
 				throw new IllegalArgumentException("'timeRemaining' must be positive");
 			this.timeRemaining = timeRemaining;
@@ -662,7 +662,7 @@ public final class Response implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_, _ -> this")
-		public Builder timeRemaining(long timeRemaining, @NotNull TimeUnit timeUnit) {
+		public Builder timeRemaining(long timeRemaining, @NotNull TimeUnit timeUnit) throws IllegalArgumentException {
 			return timeRemaining(timeUnit.toMillis(timeRemaining));
 		}
 
@@ -676,7 +676,7 @@ public final class Response implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Builder timeRemaining(@Nullable Duration timeRemaining) {
+		public Builder timeRemaining(@Nullable Duration timeRemaining) throws IllegalArgumentException {
 			if (timeRemaining == null) {
 				this.timeRemaining = 0;
 				return this;

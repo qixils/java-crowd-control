@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * {@link CrowdControl#registerHandlers(Object) registered}.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(value = {ElementType.METHOD})
+@Target(ElementType.METHOD)
 public @interface Subscribe {
 	/**
 	 * The name of the effect to listen to.

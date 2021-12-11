@@ -365,7 +365,7 @@ Collection<Player> getPlayersFromRequest(Request request) {
 
 static class DisableJumpEffect {
 	private static final Duration EFFECT_DURATION = Duration.ofSeconds(5);
-	private Set<Integer> disabledPlayers = new HashSet<>();
+	private final Set<Integer> disabledPlayers = new HashSet<>();
 
 	// Game Listener
 	@EventHandler

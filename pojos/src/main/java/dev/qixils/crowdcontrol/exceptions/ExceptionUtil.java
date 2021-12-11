@@ -37,7 +37,7 @@ public class ExceptionUtil {
 	 * @throws IllegalArgumentException if the object is null
 	 */
 	@Contract("null -> fail; !null -> !null")
-	public static <T> T validateNotNull(@Nullable T object) {
+	public static <T> T validateNotNull(@Nullable T object) throws IllegalArgumentException {
 		return validateNotNull(object, null);
 	}
 
@@ -51,7 +51,7 @@ public class ExceptionUtil {
 	 * @throws IllegalArgumentException if the object is null
 	 */
 	@Contract("null, _ -> fail; !null, _ -> !null")
-	public static <T> T validateNotNull(@Nullable T object, @Nullable String variableName) {
+	public static <T> T validateNotNull(@Nullable T object, @Nullable String variableName) throws IllegalArgumentException {
 		if (object == null)
 			throw new IllegalArgumentException(Objects.requireNonNullElse(variableName, "Object") + " cannot be null");
 		return object;

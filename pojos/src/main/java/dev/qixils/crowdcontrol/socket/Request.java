@@ -123,7 +123,7 @@ public final class Request implements JsonObject {
 	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
 	 */
-	public Request(int id, @NotNull Type type, @Nullable String message) {
+	public Request(int id, @NotNull Type type, @Nullable String message) throws IllegalArgumentException {
 		if (id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
 		ExceptionUtil.validateNotNull(type, "type");
@@ -389,7 +389,7 @@ public final class Request implements JsonObject {
 	 * <p>
 	 * This corresponds to a Twitch streamer connected to the Crowd Control server.
 	 */
-	public final static class Target {
+	public static final class Target {
 		private int id;
 		private String name;
 		private String avatar;
@@ -412,7 +412,7 @@ public final class Request implements JsonObject {
 		 * @param avatar streamer avatar
 		 * @throws IllegalArgumentException if the ID is not positive or one of the other parameters is null
 		 */
-		public Target(int id, @NotNull String name, @NotNull String avatar) {
+		public Target(int id, @NotNull String name, @NotNull String avatar) throws IllegalArgumentException {
 			if (id <= 0)
 				throw new IllegalArgumentException("ID must be positive");
 			this.id = id;

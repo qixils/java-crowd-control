@@ -64,7 +64,7 @@ public final class TimedEffect {
 	public TimedEffect(@NotNull Request request,
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
-					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
 		this(ExceptionUtil.validateNotNull(request, "request"),
 				request.getEffect(), duration, callback, completionCallback);
 	}
@@ -89,7 +89,7 @@ public final class TimedEffect {
 					   @Nullable String effectGroup,
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
-					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
 		this.callback = ExceptionUtil.validateNotNull(callback, "callback");
 		this.completionCallback = completionCallback;
 		if (duration <= 0)
@@ -125,7 +125,7 @@ public final class TimedEffect {
 	public TimedEffect(@NotNull Request request,
 					   @NotNull Duration duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
-					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
 		this(ExceptionUtil.validateNotNull(request, "request"),
 				request.getEffect(), duration, callback, completionCallback);
 	}
@@ -150,7 +150,7 @@ public final class TimedEffect {
 					   @Nullable String effectGroup,
 					   @NotNull Duration duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
-					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
 		this(request, effectGroup, ExceptionUtil.validateNotNull(duration, "duration").toMillis(),
 				callback, completionCallback);
 	}
@@ -316,7 +316,7 @@ public final class TimedEffect {
 	 * If this effect was already complete, {@code false} is returned.
 	 * @throws IllegalStateException the effect has not {@link #hasStarted() started}
 	 */
-	public boolean complete() {
+	public boolean complete() throws IllegalStateException {
 		if (startedAt == -1)
 			throw new IllegalStateException("Effect has not started");
 		if (duration == -1)
