@@ -1,7 +1,8 @@
-package dev.qixils.crowdcontrol.socket;
+package dev.qixils.crowdcontrol;
 
-import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
+import dev.qixils.crowdcontrol.socket.Request;
+import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,8 @@ public interface SimulatedService<R> {
 
 	/**
 	 * Dispatches a {@link Request} to the connected video game(s).
+	 * <p>
+	 * Note: the ID of the {@link Request} will be ignored.
 	 *
 	 * @param request the {@link Request} to dispatch
 	 * @return a {@link Publisher} that will either emit the {@link Response}(s),
@@ -98,6 +101,8 @@ public interface SimulatedService<R> {
 
 	/**
 	 * Dispatches a {@link Request} to the connected video game(s).
+	 * <p>
+	 * Note: the ID of the {@link Request} will be ignored.
 	 *
 	 * @param request the {@link Request} to dispatch
 	 * @param timeout the duration to wait for an initial response before throwing a {@link java.util.concurrent.TimeoutException},

@@ -1,4 +1,4 @@
-package dev.qixils.crowdcontrol.socket;
+package dev.qixils.crowdcontrol;
 
 import org.jetbrains.annotations.NonBlocking;
 import org.reactivestreams.Publisher;

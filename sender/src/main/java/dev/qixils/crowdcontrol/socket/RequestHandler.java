@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonParseException;
+import dev.qixils.crowdcontrol.SimulatedService;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.CrowdControlException;
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;

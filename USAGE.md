@@ -65,7 +65,7 @@ compileOnly("dev.qixils.crowdcontrol:crowd-control-receiver:3.3.0")
 ## Usage
 
 To start, you must create
-a [CrowdControl](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html)
+a [CrowdControl](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html)
 class using one of the two builder methods. This differs depending on which Crowd Control connection
 type you wish to use. The two connection types are outlined below.
 
@@ -81,7 +81,7 @@ to. This central server is (usually) the streamer's Crowd Control desktop applic
 local port.
 
 To use this connector type, use the Crowd
-Control [client builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlClientBuilder.html):
+Control [client builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControlClientBuilder.html):
 
 ```java
 import dev.qixils.crowdcontrol.CrowdControl;
@@ -136,7 +136,7 @@ server, meaning it can establish connections with multiple clients (streamers) a
 for each streamer individually. This may be ideal for multiplayer game servers like Minecraft.
 
 To use this connector type, use the Crowd
-Control [server builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/builder/CrowdControlServerBuilder.html):
+Control [server builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControlServerBuilder.html):
 
 ```java
 import dev.qixils.crowdcontrol.CrowdControl;
@@ -196,59 +196,60 @@ effects.
 #### Registering Individual Handlers
 
 Two overloaded methods are provided for registering an effect handler. You can either provide
-a [`Function<Request,Response>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Function))
+a [`Function<Request,Response>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Function))
 which is a function that takes in
-a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
+a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Request.html)
 and returns
-a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html)
+a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Response.html)
 , or
-a [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
+a [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
 which takes in
-a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
+a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Request.html)
 and returns nothing. As these functions are called on an asynchronous thread, the latter is usually
 used for effects that require an action to be run on the main thread. It is expected
-that [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
+that [`Consumer<Request>`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandler(java.lang.String,java.util.function.Consumer))
 handlers will eventually
-call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html#send())
+call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Response.html#send())
 to manually issue
-a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html)
+a [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Response.html)
 to the requesting client.
 
 #### Registering Handler Classes
 
 Those who prefer working with annotated methods can
-use [`#registerHandlers(Object)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object))
+use [`#registerHandlers(Object)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object))
 to automatically register effect handlers for every appropriately annotated method inside a class.
 All methods that are annotated
-with [@Subscribe](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/Subscribe.html)
+with [@Subscribe](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/Subscribe.html)
 ;
-return [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html)
+return [Response](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Response.html)
 ,
-[Response.Builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.Builder.html)
+[Response.Builder](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Response.Builder.html)
 , or Void (for synchronous effects that will manually
-call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Response.html#send()))
+call [`Response#send`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Response.html#send()))
 ; have a single parameter that accepts
-only [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
+only [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Request.html)
 ; and are public will be registered as effect handlers.
 
 For more information, please
-view [the method's javadocs](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object))
+view [the method's javadocs](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerHandlers(java.lang.Object))
 .
 
 #### Registering Checks
 
 Checks are functions that are called every time
-a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/socket/Request.html)
+a [Request](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-pojos/latest/dev/qixils/crowdcontrol/socket/Request.html)
 is received which may or may not have knowledge of the Request. They are used to prevent the
 execution of effects if your game has not yet loaded or if your players have not yet connected.
 These can be registered
-using [`#registerCheck(Supplier<CheckResult>)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerCheck(java.util.function.Supplier))
-and [`#registerCheck(Function<Request,CheckResult>)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerCheck(java.util.function.Function))
+using [`#registerCheck(Supplier<CheckResult>)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerCheck(java.util.function.Supplier))
+and [`#registerCheck(Function<Request,CheckResult>)`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/dev/qixils/crowdcontrol/CrowdControl.html#registerCheck(java.util.function.Function))
 
 #### Further Reading
 
 The documentation for all classes and methods may be
-found [here](https://javadoc.io/doc/dev.qixils.crowdcontrol/java-crowd-control/latest/index.html).
+found [here](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-receiver/latest/index.html)
+.
 
 ### Example
 
@@ -434,4 +435,43 @@ compileOnly("dev.qixils.crowdcontrol:crowd-control-sender:3.3.0")
 
 ## Usage
 
-TODO
+This section assumes you have read the above documentation for the **Receiver** library and are
+familiar with the two different types of TCP connectors.
+
+To create a server for the `SimpleTCPConnector`, you should instantiate a new
+[`SimulatedServer`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/socket/SimulatedServer.html)
+. For creating a client (or several) for the `SimpleTCPClientConnector`, you should instantiate a
+new
+[`SimulatedClient`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/socket/SimulatedClient.html)
+. Both of these classes implement
+[`StartableService`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/StartableService.html)
+which holds all the important methods for working with these simulated services.
+
+To start the service, you must call the
+[`#start`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/StartableService.html#start())
+method on your service. For clients, you may call the
+[`#autoStart`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/AutomatableService.html#autoStart())
+method to automatically reconnect to the server when the connection is lost.
+
+Requests may be dispatched to connected services using the
+[`#sendRequest`](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/SimulatedService.html#sendRequest(dev.qixils.crowdcontrol.socket.Request.Builder))
+method. For the server, this will return a Flux of Fluxes of Responses which correspond to the
+Responses received from the connected clients. The client will return a single Flux of Responses.
+
+The Response Fluxes will emit a Response each time one corresponding to the Request is received from
+the connected service, and it will complete upon a Response indicating that the effect has finished
+executing. It may also error if the effect times out or the connected service disconnects before
+completion.
+
+Before sending Requests, you should ensure that the effect being requested is known to be available
+by checking the result of
+[#isEffectAvailable](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/SimulatedService.html#isEffectAvailable(java.lang.String))
+. If the server states that an effect does not exist, then it will be marked as unavailable and the
+`#sendRequest` method will throw an
+[EffectUnavailableException](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/dev/qixils/crowdcontrol/exceptions/EffectUnavailableException.html)
+if you try to use it.
+
+### Further Reading
+
+The documentation for all classes and methods may be
+found [here](https://javadoc.io/doc/dev.qixils.crowdcontrol/crowd-control-sender/latest/index.html).

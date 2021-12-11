@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.ServiceManager;
+import dev.qixils.crowdcontrol.StartableService;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.Blocking;

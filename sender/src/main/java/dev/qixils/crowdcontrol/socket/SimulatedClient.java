@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
+import dev.qixils.crowdcontrol.AutomatableService;
 import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
@@ -84,11 +85,13 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 			try {
 				start();
 				reconnectionAttempts = 0;
-				while (handler != null && handler.isRunning()) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException ignored) {
+				try {
+					// TODO: avoid busy-waiting
+					Thread.sleep(2000); // wait for service to start up
+					while (handler != null && handler.isRunning()) {
+						Thread.sleep(1000); // wait for service to shut down
 					}
+				} catch (InterruptedException ignored) {
 				}
 			} catch (IOException e) {
 				logger.warn("Failed to connect to server", e);
