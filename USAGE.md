@@ -7,6 +7,17 @@ library into your build automation software of choice.
 _Tip: GitHub has a handy Table of Contents feature available by clicking the list icon on the top
 left of this document._
 
+## Logging
+
+The libraries maintained in this repository utilize the SLF4J 1.7.32 logging framework. It provides
+no logging implementation by default, meaning that logs will be silently ignored. To enable logging,
+you must add a logging implementation to your class path which is typically done by adding the
+implementation to your project's dependencies in Maven or Gradle. Popular implementations include
+[log4j2](https://logging.apache.org/log4j/2.x/index.html),
+[slf4j-simple](https://mvnrepository.com/artifact/org.slf4j/slf4j-simple),
+[Logback](https://logback.qos.ch/), and SLF4J's adapter for the built-in
+[java.util.logging](https://mvnrepository.com/artifact/org.slf4j/slf4j-jdk14) framework.
+
 # Receiver
 
 The **Receiver** library is the main library of the project. It allows your video game (or
