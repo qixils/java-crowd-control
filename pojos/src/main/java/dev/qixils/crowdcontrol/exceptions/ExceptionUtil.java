@@ -32,7 +32,7 @@ public class ExceptionUtil {
 	 * Validates that the provided object is not null.
 	 *
 	 * @param object object to validate
-	 * @param <T>    type of object
+	 * @param <T>    type of object to accept and return
 	 * @return the object if not null
 	 * @throws IllegalArgumentException if the object is null
 	 */
@@ -41,6 +41,15 @@ public class ExceptionUtil {
 		return validateNotNull(object, null);
 	}
 
+	/**
+	 * Validates that the provided object is not null.
+	 *
+	 * @param object       object to validate
+	 * @param variableName name of the variable being validated
+	 * @param <T>          type of object to accept and return
+	 * @return the object if not null
+	 * @throws IllegalArgumentException if the object is null
+	 */
 	@Contract("null, _ -> fail; !null, _ -> !null")
 	public static <T> T validateNotNull(@Nullable T object, @Nullable String variableName) {
 		if (object == null)
