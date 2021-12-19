@@ -33,7 +33,7 @@ public final class CrowdControlClientBuilder extends CrowdControlBuilderBase {
 	@Contract("_ -> this")
 	public @NotNull CrowdControlClientBuilder ip(@NotNull String IP) throws IllegalArgumentException {
 		ExceptionUtil.validateNotNull(IP, "IP");
-		if (IP.isBlank()) {
+		if (IP.isEmpty()) {
 			throw new IllegalArgumentException("IP cannot be blank");
 		}
 		this.IP = IP;

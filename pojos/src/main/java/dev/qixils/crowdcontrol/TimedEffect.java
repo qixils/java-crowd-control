@@ -97,7 +97,7 @@ public final class TimedEffect {
 		this.originalDuration = duration;
 		this.duration = duration;
 		this.request = ExceptionUtil.validateNotNull(request, "request");
-		this.effectGroup = Objects.requireNonNullElseGet(effectGroup, request::getEffect);
+		this.effectGroup = ExceptionUtil.validateNotNullElseGet(effectGroup, request::getEffect);
 		this.globalKey = new MapKey(this.effectGroup);
 
 		Request.Target[] targets = request.getTargets();

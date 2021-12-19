@@ -33,7 +33,7 @@ public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
 	@Contract("_ -> this")
 	public @NotNull CrowdControlServerBuilder password(@NotNull String password) throws IllegalArgumentException {
 		ExceptionUtil.validateNotNull(password, "password");
-		if (password.isBlank()) {
+		if (password.isEmpty()) {
 			throw new IllegalArgumentException("password cannot be blank");
 		}
 		this.password = password;

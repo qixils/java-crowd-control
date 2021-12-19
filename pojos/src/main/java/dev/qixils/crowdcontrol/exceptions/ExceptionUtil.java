@@ -4,11 +4,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Utility class containing common methods relating to exceptions.
  */
+@SuppressWarnings("Contract")
 public class ExceptionUtil {
 	private ExceptionUtil() {
 		throw new IllegalStateException("Utility class");
@@ -53,7 +54,42 @@ public class ExceptionUtil {
 	@Contract("null, _ -> fail; !null, _ -> !null")
 	public static <T> T validateNotNull(@Nullable T object, @Nullable String variableName) throws IllegalArgumentException {
 		if (object == null)
-			throw new IllegalArgumentException(Objects.requireNonNullElse(variableName, "Object") + " cannot be null");
+			throw new IllegalArgumentException(validateNotNullElse(variableName, "Object") + " cannot be null");
 		return object;
+	}
+
+	/**
+	 * Returns the first parameter if it is not null, else the second parameter.
+	 *
+	 * @param object1 object to check for nullness
+	 * @param object2 backup object to return instead
+	 * @param <T>     type of object to accept and return
+	 * @return the first object if not null, else the second
+	 * @throws IllegalArgumentException if the second parameter is null
+	 */
+	@Contract("null, null -> fail; !null, _ -> param1; null, !null -> param2")
+	public static <T> T validateNotNullElse(@Nullable T object1, @NotNull T object2) {
+		if (object1 != null) {
+			return object1;
+		}
+		return validateNotNull(object2);
+	}
+
+	/**
+	 * Returns the first parameter if it is not null, else the object provided by the second
+	 * parameter.
+	 *
+	 * @param object   object to check for nullness
+	 * @param provider provider of a backup object to return instead
+	 * @param <T>      type of object to accept and return
+	 * @return the first object if not null, else the object provided by the supplier
+	 * @throws IllegalArgumentException if the object provided by the second parameter is null
+	 */
+	@Contract("null, null -> fail; !null, _ -> param1; null, !null -> param2")
+	public static <T> T validateNotNullElseGet(@Nullable T object, @NotNull Supplier<@NotNull T> provider) {
+		if (object != null) {
+			return object;
+		}
+		return validateNotNull(validateNotNull(provider).get());
 	}
 }

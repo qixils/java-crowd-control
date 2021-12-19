@@ -1,11 +1,11 @@
 package dev.qixils.crowdcontrol;
 
+import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 // doubles as a test for all the possible handlers available to #registerEffects!
@@ -14,7 +14,7 @@ public class EffectHandlers {
 	private final @NotNull Consumer<@NotNull TimedEffect> timedEffectCallback;
 
 	EffectHandlers(@Nullable Consumer<@NotNull TimedEffect> timedEffectCallback) {
-		this.timedEffectCallback = Objects.requireNonNullElse(timedEffectCallback, $ -> {
+		this.timedEffectCallback = ExceptionUtil.validateNotNullElse(timedEffectCallback, $ -> {
 		});
 	}
 

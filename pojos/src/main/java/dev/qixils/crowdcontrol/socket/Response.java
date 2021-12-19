@@ -86,7 +86,7 @@ public final class Response implements JsonObject {
 		this.originatingSocket = originatingSocket;
 
 		// validate packet type and result type
-		this.packetType = Objects.requireNonNullElse(packetType, PacketType.EFFECT_RESULT);
+		this.packetType = ExceptionUtil.validateNotNullElse(packetType, PacketType.EFFECT_RESULT);
 		if (this.packetType == PacketType.EFFECT_RESULT && type == null)
 			throw new IllegalArgumentException("type cannot be null if packetType is EFFECT_RESULT");
 		else if (this.packetType != PacketType.EFFECT_RESULT && type != null)
@@ -96,7 +96,7 @@ public final class Response implements JsonObject {
 		// set message
 		this.message = type == null
 				? message
-				: Objects.requireNonNullElseGet(message, type::name);
+				: ExceptionUtil.validateNotNullElseGet(message, type::name);
 	}
 
 	/**

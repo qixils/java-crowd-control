@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -74,10 +75,7 @@ import java.util.function.Supplier;
 public final class CrowdControl implements SocketManager, RequestManager {
 
 	private static final Logger logger = LoggerFactory.getLogger("CC-Core");
-	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS = Map.of(
-			Response.class, response -> (Response) response,
-			Response.Builder.class, builder -> ((Response.Builder) builder).build()
-	);
+	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS;
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();
 	private final List<Function<Request, CheckResult>> globalChecks = new ArrayList<>();
@@ -85,6 +83,13 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	private final int port;
 	private final @Nullable String password;
 	private final SocketManager socketManager;
+
+	static {
+		Map<Class<?>, Function<Object, Response>> parsers = new HashMap<>(2);
+		parsers.put(Response.class, response -> (Response) response);
+		parsers.put(Response.Builder.class, builder -> ((Response.Builder) builder).build());
+		RETURN_TYPE_PARSERS = Collections.unmodifiableMap(parsers);
+	}
 
 	/**
 	 * Creates a new receiver client that receives {@link Request}s from a streamer's Crowd Control

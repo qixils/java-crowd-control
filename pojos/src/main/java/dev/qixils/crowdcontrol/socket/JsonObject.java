@@ -37,8 +37,19 @@ public interface JsonObject {
 		}
 
 		String inJSON = sb.toString();
-		if (inJSON.isBlank())
+		// isBlank impl for java 8
+		if (inJSON.isEmpty())
 			return null;
+		boolean eligible = false;
+		for (char chr : inJSON.toCharArray()) {
+			if (!Character.isWhitespace(chr)) {
+				eligible = true;
+				break;
+			}
+		}
+		if (!eligible)
+			return null;
+		// end impl
 		return jsonMapper.apply(inJSON);
 	}
 

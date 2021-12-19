@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 // TODO: remove
 final class DummyResponse implements JsonObject {
@@ -34,7 +33,7 @@ final class DummyResponse implements JsonObject {
 		DummyResponse response = new DummyResponse();
 		if (cause != null)
 			response.id = cause.getId();
-		response.message = Objects.requireNonNullElse(reason, "Disconnected");
+		response.message = ExceptionUtil.validateNotNullElse(reason, "Disconnected");
 		response.type = Response.PacketType.DISCONNECT;
 		return response;
 	}
