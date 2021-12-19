@@ -39,7 +39,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>crowd-control-receiver</artifactId>
-    <version>3.3.1</version>
+    <version>3.3.2</version>
 </dependency>
 ```
 
@@ -51,13 +51,13 @@ Add to the `dependencies` section of your `pom.xml` file:
 Add to the `dependencies` section of your `build.gradle` file:
 
 ```gradle
-compileOnly 'dev.qixils.crowdcontrol:crowd-control-receiver:3.3.1'
+compileOnly 'dev.qixils.crowdcontrol:crowd-control-receiver:3.3.2'
 ```
 
 Or, if using Kotlin (`build.gradle.kts`):
 
 ```kts
-compileOnly("dev.qixils.crowdcontrol:crowd-control-receiver:3.3.1")
+compileOnly("dev.qixils.crowdcontrol:crowd-control-receiver:3.3.2")
 ```
 
 </details>
@@ -410,7 +410,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>crowd-control-sender</artifactId>
-    <version>3.3.1</version>
+    <version>3.3.2</version>
 </dependency>
 ```
 
@@ -422,13 +422,13 @@ Add to the `dependencies` section of your `pom.xml` file:
 Add to the `dependencies` section of your `build.gradle` file:
 
 ```gradle
-compileOnly 'dev.qixils.crowdcontrol:crowd-control-sender:3.3.1'
+compileOnly 'dev.qixils.crowdcontrol:crowd-control-sender:3.3.2'
 ```
 
 Or, if using Kotlin (`build.gradle.kts`):
 
 ```kts
-compileOnly("dev.qixils.crowdcontrol:crowd-control-sender:3.3.1")
+compileOnly("dev.qixils.crowdcontrol:crowd-control-sender:3.3.2")
 ```
 
 </details>
