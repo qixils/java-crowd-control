@@ -304,9 +304,9 @@ public final class Response implements JsonObject {
 	}
 
 	/**
-	 * Gets a mutable {@link Builder} representing this Response.
+	 * Creates a mutable {@link Builder} with a copy of the data in this {@link Response}.
 	 *
-	 * @return new builder
+	 * @return a new {@link Builder}
 	 */
 	@NotNull
 	@CheckReturnValue

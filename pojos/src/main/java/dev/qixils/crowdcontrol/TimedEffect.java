@@ -34,6 +34,7 @@ import java.util.function.Function;
  * </p>
  * This class can be constructed via {@link Builder}.
  */
+@SuppressWarnings("DeprecatedIsStillUsed") // used in unit tests
 public final class TimedEffect {
 
 	private static final Map<MapKey, TimedEffect> ACTIVE_EFFECTS = new HashMap<>();
@@ -450,6 +451,18 @@ public final class TimedEffect {
 		return paused;
 	}
 
+	/**
+	 * Creates a mutable {@link Builder} with a copy of the data in this {@link TimedEffect}.
+	 *
+	 * @return a new {@link Builder}
+	 */
+	@NotNull
+	@CheckReturnValue
+	@Contract(" -> new")
+	public Builder toBuilder() {
+		return new Builder(this);
+	}
+
 	// key class
 
 	private static final class MapKey {
@@ -485,13 +498,50 @@ public final class TimedEffect {
 	 * @see TimedEffect
 	 * @since 3.3.2
 	 */
+	@SuppressWarnings("UnusedReturnValue") // used in method chaining
 	@ParametersAreNullableByDefault
-	public static final class Builder {
+	public static final class Builder implements Cloneable {
 		private Request request;
 		private String effectGroup;
 		private Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
 		private Consumer<@NotNull TimedEffect> completionCallback;
 		private long duration = -1;
+
+		/**
+		 * Creates a new {@link TimedEffect.Builder}.
+		 */
+		public Builder() {
+		}
+
+		/**
+		 * Creates a copy of the given {@link TimedEffect.Builder}.
+		 *
+		 * @param builder the builder to copy
+		 * @throws IllegalArgumentException if the given builder is {@code null}
+		 */
+		private Builder(@NotNull Builder builder) {
+			ExceptionUtil.validateNotNull(builder, "builder");
+			this.request = builder.request;
+			this.effectGroup = builder.effectGroup;
+			this.callback = builder.callback;
+			this.completionCallback = builder.completionCallback;
+			this.duration = builder.duration;
+		}
+
+		/**
+		 * Creates a new {@link TimedEffect.Builder} from the provided {@link TimedEffect}.
+		 *
+		 * @param effect the timed effect to copy
+		 * @throws IllegalArgumentException if the given effect is {@code null}
+		 */
+		private Builder(@NotNull TimedEffect effect) {
+			ExceptionUtil.validateNotNull(effect, "effect");
+			this.request = effect.request;
+			this.effectGroup = effect.effectGroup;
+			this.callback = effect.callback;
+			this.completionCallback = effect.completionCallback;
+			this.duration = effect.originalDuration;
+		}
 
 		/**
 		 * Sets the request that this timed effect corresponds to.
@@ -641,7 +691,9 @@ public final class TimedEffect {
 
 		/**
 		 * Gets the effect group which this effect will be queued in.
-		 * May be {@code null} if not yet set.
+		 * <p>
+		 * <b>Note:</b> unlike a built {@link TimedEffect}, this value will return {@code null} if
+		 * unset rather than the result of {@link Request#getEffect()}.
 		 *
 		 * @return effect group
 		 * @since 3.3.2
@@ -663,7 +715,7 @@ public final class TimedEffect {
 		@Nullable
 		@Contract(pure = true)
 		@CheckReturnValue
-		public Function<@NotNull TimedEffect, Response.@Nullable Builder> callback() {
+		public Function<@NotNull TimedEffect, Response.@Nullable Builder> startCallback() {
 			return callback;
 		}
 
@@ -704,7 +756,7 @@ public final class TimedEffect {
 		 *                               <ul>
 		 *                                   <li>if the {@link #request() request} is null</li>
 		 *                                   <li>if the {@link #duration() duration} is negative</li>
-		 *                                   <li>if the {@link #callback() callback} is null</li>
+		 *                                   <li>if the {@link #startCallback() callback} is null</li>
 		 *                               </ul>
 		 * @since 3.3.2
 		 */
@@ -713,6 +765,13 @@ public final class TimedEffect {
 		@CheckReturnValue
 		public TimedEffect build() throws IllegalStateException {
 			return new TimedEffect(this);
+		}
+
+		@SuppressWarnings("MethodDoesntCallSuperMethod")
+		@Override
+		@Contract(" -> new")
+		public Builder clone() {
+			return new Builder(this);
 		}
 	}
 }

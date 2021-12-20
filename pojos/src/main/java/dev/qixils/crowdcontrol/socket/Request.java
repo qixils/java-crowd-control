@@ -262,7 +262,7 @@ public final class Request implements JsonObject {
 	}
 
 	/**
-	 * Creates a {@link Builder} for this {@link Request}.
+	 * Creates a mutable {@link Builder} with a copy of the data in this {@link Request}.
 	 *
 	 * @return a new {@link Builder}
 	 */
