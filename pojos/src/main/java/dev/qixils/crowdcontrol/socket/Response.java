@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol.socket;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -392,18 +393,22 @@ public final class Response implements JsonObject {
 		/**
 		 * <b>Internal value</b> used to prompt a connecting client for a password.
 		 */
+		@ApiStatus.Internal
 		LOGIN((byte) 0xF0),
 		/**
 		 * <b>Internal value</b> used to indicate a successful login.
 		 */
+		@ApiStatus.Internal
 		LOGIN_SUCCESS((byte) 0xF1),
 		/**
 		 * <b>Internal value</b> used to indicate that the socket is being disconnected.
 		 */
+		@ApiStatus.Internal
 		DISCONNECT((byte) 0xFE),
 		/**
 		 * <b>Internal value</b> used to reply to a keep alive packet.
 		 */
+		@ApiStatus.Internal
 		KEEP_ALIVE((byte) 0xFF);
 
 		private static final Map<Byte, PacketType> BY_BYTE;
@@ -485,6 +490,7 @@ public final class Response implements JsonObject {
 		 * not yet completed. You should instead use {@link #FAILURE} to indicate a
 		 * temporary failure or {@link #UNAVAILABLE} to indicate a permanent failure.
 		 */
+		@ApiStatus.Internal
 		NOT_READY(true, (byte) 0xFF);
 
 		private static final Map<Byte, ResultType> BY_BYTE;
@@ -712,7 +718,8 @@ public final class Response implements JsonObject {
 		 */
 		@NotNull
 		@Contract("_ -> this")
-		public Builder packetType(@Nullable PacketType packetType) {
+		@ApiStatus.Internal
+		Builder packetType(@Nullable PacketType packetType) {
 			this.packetType = packetType;
 			return this;
 		}
@@ -769,11 +776,14 @@ public final class Response implements JsonObject {
 
 		/**
 		 * Gets the type of packet that this {@link Response} represents.
+		 * <p>
+		 * Note: this is intended only for internal library use.
 		 *
 		 * @return packet type
 		 */
 		@Nullable
-		public PacketType packetType() {
+		@ApiStatus.Internal
+		PacketType packetType() {
 			return packetType;
 		}
 

@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
  * Tests for the {@code SimpleTCPConnector} socket protocol.
  */
 @SuppressWarnings("BusyWait")
-public class SimpleTCPConnectorTests {
+public final class SimpleTCPConnectorTests {
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
 	@Test

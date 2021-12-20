@@ -358,7 +358,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 				request.buildResponse().type(Response.ResultType.FAILURE).message("Streamer(s) unavailable").send();
 			} else {
 				logger.error("Failed to handle effect \"" + effect + "\"", e);
-				request.buildResponse().type(Response.ResultType.FAILURE).message("The effect encountered an exception").send();
+				request.buildResponse().type(Response.ResultType.FAILURE).message("Requested effect failed to execute").send();
 			}
 		}
 	}

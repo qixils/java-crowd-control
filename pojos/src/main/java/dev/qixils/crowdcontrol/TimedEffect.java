@@ -3,12 +3,15 @@ package dev.qixils.crowdcontrol;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
+import javax.annotation.ParametersAreNullableByDefault;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +21,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A wrapper for safely executing exclusive timed effects.
@@ -27,6 +31,8 @@ import java.util.function.Consumer;
  * To enqueue this effect, execute {@link #queue()} after instantiating a new object.
  * Similarly, the effect can be {@link #pause() paused}, {@link #resume() resumed},
  * or {@link #complete() stopped}.
+ * </p>
+ * This class can be constructed via {@link Builder}.
  */
 public final class TimedEffect {
 
@@ -37,7 +43,7 @@ public final class TimedEffect {
 	private final @NotNull MapKey globalKey;
 	private final MapKey @NotNull [] mapKeys;
 	private final @NotNull String effectGroup;
-	private final @NotNull Consumer<@NotNull TimedEffect> callback;
+	private final @NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
 	private final @Nullable Consumer<@NotNull TimedEffect> completionCallback;
 	private final long originalDuration;
 	private long startedAt = -1;
@@ -57,10 +63,13 @@ public final class TimedEffect {
 	 *                                  <ul>
 	 *                                      <li>if the request is null</li>
 	 *                                      <li>if the callback is null</li>
-	 *                                      <li>if the duration is less than or equal to 0</li>
+	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
 	 */
 	@CheckReturnValue
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
 	public TimedEffect(@NotNull Request request,
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
@@ -81,30 +90,22 @@ public final class TimedEffect {
 	 *                                  <ul>
 	 *                                      <li>if the request is null</li>
 	 *                                      <li>if the callback is null</li>
-	 *                                      <li>if the duration is less than or equal to 0</li>
+	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
 	 */
 	@CheckReturnValue
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
 	public TimedEffect(@NotNull Request request,
 					   @Nullable String effectGroup,
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
-		this.callback = ExceptionUtil.validateNotNull(callback, "callback");
-		this.completionCallback = completionCallback;
-		if (duration <= 0)
-			throw new IllegalArgumentException("duration must be positive");
-		this.originalDuration = duration;
-		this.duration = duration;
-		this.request = ExceptionUtil.validateNotNull(request, "request");
-		this.effectGroup = ExceptionUtil.validateNotNullElseGet(effectGroup, request::getEffect);
-		this.globalKey = new MapKey(this.effectGroup);
-
-		Request.Target[] targets = request.getTargets();
-		mapKeys = new MapKey[targets.length];
-		for (int i = 0; i < targets.length; i++) {
-			mapKeys[i] = new MapKey(this.effectGroup, targets[i]);
-		}
+		this(request, effectGroup, duration, effect -> {
+			callback.accept(effect);
+			return null;
+		}, completionCallback);
 	}
 
 	/**
@@ -118,10 +119,13 @@ public final class TimedEffect {
 	 *                                  <ul>
 	 *                                      <li>if the request is null</li>
 	 *                                      <li>if the callback is null</li>
-	 *                                      <li>if the duration is null or non-positive</li>
+	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
 	 */
 	@CheckReturnValue
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
 	public TimedEffect(@NotNull Request request,
 					   @NotNull Duration duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
@@ -142,10 +146,13 @@ public final class TimedEffect {
 	 *                                  <ul>
 	 *                                      <li>if the request is null</li>
 	 *                                      <li>if the callback is null</li>
-	 *                                      <li>if the duration is null or non-positive</li>
+	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
 	 */
 	@CheckReturnValue
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
 	public TimedEffect(@NotNull Request request,
 					   @Nullable String effectGroup,
 					   @NotNull Duration duration,
@@ -153,6 +160,31 @@ public final class TimedEffect {
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
 		this(request, effectGroup, ExceptionUtil.validateNotNull(duration, "duration").toMillis(),
 				callback, completionCallback);
+	}
+
+	private TimedEffect(@NotNull Request request,
+						@Nullable String effectGroup,
+						long duration,
+						@NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback,
+						@Nullable Consumer<TimedEffect> completionCallback) throws IllegalArgumentException {
+		this.request = ExceptionUtil.validateNotNull(request, "request");
+		this.effectGroup = ExceptionUtil.validateNotNullElseGet(effectGroup, request::getEffect);
+		this.globalKey = new MapKey(this.effectGroup);
+		if (duration < 0)
+			throw new IllegalArgumentException("duration must not be negative");
+		this.originalDuration = duration;
+		this.callback = ExceptionUtil.validateNotNull(callback, "callback");
+		this.completionCallback = completionCallback;
+
+		Request.Target[] targets = request.getTargets();
+		mapKeys = new MapKey[targets.length];
+		for (int i = 0; i < targets.length; i++) {
+			mapKeys[i] = new MapKey(this.effectGroup, targets[i]);
+		}
+	}
+
+	private TimedEffect(@NotNull Builder builder) {
+		this(builder.request, builder.effectGroup, builder.duration, builder.callback, builder.completionCallback);
 	}
 
 	/**
@@ -257,13 +289,27 @@ public final class TimedEffect {
 				ACTIVE_EFFECTS.put(mapKey, this);
 		}
 		startedAt = System.currentTimeMillis();
-		request.buildResponse().type(Response.ResultType.SUCCESS).timeRemaining(duration).send();
+		duration = originalDuration;
+		Response.Builder response;
 		try {
-			callback.accept(this);
-		} catch (Exception exception) {
+			response = callback.apply(this);
+		} catch (Throwable exception) {
 			logger.error("Exception occurred during starting callback", exception);
+			request.buildResponse().type(Response.ResultType.FAILURE).message("Requested effect failed to execute").send();
+			return;
 		}
-		future = EXECUTOR.schedule(this::complete, duration, TimeUnit.MILLISECONDS);
+
+		if (response == null)
+			response = request.buildResponse().type(Response.ResultType.SUCCESS);
+		else if (response.type() == null)
+			response.type(Response.ResultType.SUCCESS);
+
+		if (response.type() == Response.ResultType.SUCCESS) {
+			response.timeRemaining(duration);
+			future = EXECUTOR.schedule(this::complete, duration, TimeUnit.MILLISECONDS);
+		}
+
+		response.send();
 	}
 
 	/**
@@ -430,6 +476,243 @@ public final class TimedEffect {
 		@Override
 		public int hashCode() {
 			return Objects.hash(effectGroup, target);
+		}
+	}
+
+	/**
+	 * Builds a new {@link TimedEffect}, a wrapper for safely executing exclusive timed effects.
+	 *
+	 * @see TimedEffect
+	 * @since 3.3.2
+	 */
+	@ParametersAreNullableByDefault
+	public static final class Builder {
+		private Request request;
+		private String effectGroup;
+		private Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
+		private Consumer<@NotNull TimedEffect> completionCallback;
+		private long duration = -1;
+
+		/**
+		 * Sets the request that this timed effect corresponds to.
+		 *
+		 * @param request originating request
+		 * @return this builder
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		public Builder request(@Nullable Request request) {
+			this.request = request;
+			return this;
+		}
+
+		/**
+		 * Sets the effect group which this effect will be queued in.
+		 *
+		 * @param effectGroup effect group
+		 * @return this builder
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		public Builder effectGroup(@Nullable String effectGroup) {
+			this.effectGroup = effectGroup;
+			return this;
+		}
+
+		/**
+		 * Sets the callback that will be executed when the effect starts.
+		 * <p>
+		 * If the callback returns {@code null}, it will be interpreted as a successful completion.
+		 *
+		 * @param callback callback to execute
+		 * @return this builder
+		 * @see #legacyStartCallback(Consumer)
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		public Builder startCallback(@Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> callback) {
+			this.callback = callback;
+			return this;
+		}
+
+		/**
+		 * Sets the callback that will be executed when the effect starts.
+		 * The callback is assumed to be always successful.
+		 *
+		 * @param callback callback to execute
+		 * @return this builder
+		 * @see #startCallback(Function)
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		public Builder legacyStartCallback(@Nullable Consumer<@NotNull TimedEffect> callback) {
+			return startCallback(callback == null
+					? null
+					: effect -> {
+				callback.accept(effect);
+				return null;
+			});
+		}
+
+		/**
+		 * Sets the callback that will be executed if and when the effect completes.
+		 *
+		 * @param completionCallback callback to execute upon completion
+		 * @return this builder
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		public Builder completionCallback(@Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+			this.completionCallback = completionCallback;
+			return this;
+		}
+
+		/**
+		 * Sets the duration of this effect.
+		 *
+		 * @param duration duration in milliseconds
+		 * @return this builder
+		 * @see #duration(Duration)
+		 * @see #duration(TimeUnit, long)
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		public Builder duration(long duration) {
+			this.duration = duration;
+			return this;
+		}
+
+		/**
+		 * Sets the duration of this effect.
+		 *
+		 * @param duration duration
+		 * @return this builder
+		 * @see #duration(long)
+		 * @see #duration(TimeUnit, long)
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_ -> this")
+		public Builder duration(@Nullable Duration duration) {
+			if (duration != null)
+				this.duration = duration.toMillis();
+			return this;
+		}
+
+		/**
+		 * Sets the duration of this effect.
+		 *
+		 * @param unit     duration unit
+		 * @param duration duration amount
+		 * @return this builder
+		 * @throws IllegalArgumentException if the unit is null
+		 * @see #duration(long)
+		 * @see #duration(Duration)
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract("_, _ -> this")
+		public Builder duration(@NotNull TimeUnit unit, long duration) throws IllegalArgumentException {
+			this.duration = ExceptionUtil.validateNotNull(unit, "unit").toMillis(duration);
+			return this;
+		}
+
+		// getters
+
+		/**
+		 * Gets the request that caused this timed effect to be created.
+		 * May be {@code null} if not yet set.
+		 *
+		 * @return originating request
+		 * @since 3.3.2
+		 */
+		@Nullable
+		@Contract(pure = true)
+		@CheckReturnValue
+		public Request request() {
+			return request;
+		}
+
+		/**
+		 * Gets the effect group which this effect will be queued in.
+		 * May be {@code null} if not yet set.
+		 *
+		 * @return effect group
+		 * @since 3.3.2
+		 */
+		@Nullable
+		@Contract(pure = true)
+		@CheckReturnValue
+		public String effectGroup() {
+			return effectGroup;
+		}
+
+		/**
+		 * Gets the callback that will be executed when the effect starts.
+		 * May be {@code null} if not yet set.
+		 *
+		 * @return callback to execute
+		 * @since 3.3.2
+		 */
+		@Nullable
+		@Contract(pure = true)
+		@CheckReturnValue
+		public Function<@NotNull TimedEffect, Response.@Nullable Builder> callback() {
+			return callback;
+		}
+
+		/**
+		 * Gets the callback that will be executed if and when the effect completes.
+		 * May be {@code null} if not yet set.
+		 *
+		 * @return callback to execute upon completion
+		 * @since 3.3.2
+		 */
+		@Nullable
+		@Contract(pure = true)
+		@CheckReturnValue
+		public Consumer<@NotNull TimedEffect> completionCallback() {
+			return completionCallback;
+		}
+
+		/**
+		 * Gets the duration of this effect.
+		 * May be {@code -1} if not yet set.
+		 *
+		 * @return duration in milliseconds
+		 * @since 3.3.2
+		 */
+		@Contract(pure = true)
+		@CheckReturnValue
+		public long duration() {
+			return duration;
+		}
+
+		// build
+
+		/**
+		 * Builds a new timed effect.
+		 *
+		 * @return new timed effect
+		 * @throws IllegalStateException may be thrown in various circumstances:
+		 *                               <ul>
+		 *                                   <li>if the {@link #request() request} is null</li>
+		 *                                   <li>if the {@link #duration() duration} is negative</li>
+		 *                                   <li>if the {@link #callback() callback} is null</li>
+		 *                               </ul>
+		 * @since 3.3.2
+		 */
+		@NotNull
+		@Contract(pure = true)
+		@CheckReturnValue
+		public TimedEffect build() throws IllegalStateException {
+			return new TimedEffect(this);
 		}
 	}
 }

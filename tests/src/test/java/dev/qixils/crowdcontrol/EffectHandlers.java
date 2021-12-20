@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 // doubles as a test for all the possible handlers available to #registerEffects!
 @SuppressWarnings("unused") // used by reflection
-public class EffectHandlers {
+public final class EffectHandlers {
 	private final @NotNull Consumer<@NotNull TimedEffect> timedEffectCallback;
 
 	EffectHandlers(@Nullable Consumer<@NotNull TimedEffect> timedEffectCallback) {

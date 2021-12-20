@@ -13,7 +13,7 @@ import java.util.List;
  * Tests for the {@code SimpleTCPClientConnector} socket protocol.
  */
 @SuppressWarnings("BusyWait")
-public class SimpleTCPClientConnectorTests {
+public final class SimpleTCPClientConnectorTests {
 	private static final int PORT = 53736;
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 	private static final String CORRECT_PASSWORD = "correct";

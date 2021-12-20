@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol.socket;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,6 +327,7 @@ public final class Request implements JsonObject {
 		 * This value is only used internally by the library. You will not encounter this value
 		 * and should assume it does not exist.
 		 */
+		@ApiStatus.Internal
 		LOGIN(false, (byte) 0xF0),
 		/**
 		 * This packet's sole purpose is to establish that the connection with the
@@ -334,6 +336,7 @@ public final class Request implements JsonObject {
 		 * This value is only used internally by the library. You will not encounter this value
 		 * and should assume it does not exist.
 		 */
+		@ApiStatus.Internal
 		KEEP_ALIVE(false, (byte) 0xFF);
 
 		private static final Map<Byte, Type> BY_BYTE;

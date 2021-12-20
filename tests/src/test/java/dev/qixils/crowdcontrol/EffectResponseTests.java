@@ -17,7 +17,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 @SuppressWarnings("BusyWait")
-public class EffectResponseTests {
+public final class EffectResponseTests {
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
 	private void basicTest(String effectName,
