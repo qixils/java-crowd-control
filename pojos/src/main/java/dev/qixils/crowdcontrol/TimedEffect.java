@@ -159,8 +159,11 @@ public final class TimedEffect {
 					   @NotNull Duration duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
-		this(request, effectGroup, ExceptionUtil.validateNotNull(duration, "duration").toMillis(),
-				callback, completionCallback);
+		this(request,
+				effectGroup,
+				ExceptionUtil.validateNotNull(duration, "duration").toMillis(),
+				callback,
+				completionCallback);
 	}
 
 	private TimedEffect(@NotNull Request request,

@@ -12,7 +12,7 @@ import java.util.function.Function;
 /**
  * Miscellaneous tests for the TimedEffect class that can be run in isolation.
  */
-@SuppressWarnings({"ConstantConditions", "deprecation"})
+@SuppressWarnings("ConstantConditions")
 public class TimedEffectTests {
 	private static final Request request = new Request(1,
 			Request.Type.START,
@@ -24,6 +24,7 @@ public class TimedEffectTests {
 	);
 
 	@Test
+	@SuppressWarnings("deprecation") // deprecated constructors still need to be tested! :)
 	public void constructorTest() {
 		// Constructor 1
 
@@ -42,10 +43,10 @@ public class TimedEffectTests {
 				null,
 				null
 		));
-		// non-positive duration throws IllegalArgumentException
+		// negative duration throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new TimedEffect(
 				request,
-				0,
+				-1,
 				$ -> {
 				},
 				null
@@ -70,11 +71,11 @@ public class TimedEffectTests {
 				null,
 				null
 		));
-		// non-positive duration throws IllegalArgumentException
+		// negative duration throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new TimedEffect(
 				request,
 				"test",
-				0,
+				-1,
 				$ -> {
 				},
 				null
@@ -97,10 +98,10 @@ public class TimedEffectTests {
 				null,
 				null
 		));
-		// non-positive duration throws IllegalArgumentException
+		// negative duration throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new TimedEffect(
 				request,
-				Duration.ZERO,
+				Duration.ofSeconds(-1),
 				$ -> {
 				},
 				null
@@ -125,11 +126,11 @@ public class TimedEffectTests {
 				null,
 				null
 		));
-		// non-positive duration throws IllegalArgumentException
+		// negative duration throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new TimedEffect(
 				request,
 				"test",
-				Duration.ZERO,
+				Duration.ofSeconds(-1),
 				$ -> {
 				},
 				null
@@ -138,8 +139,12 @@ public class TimedEffectTests {
 
 	@Test
 	public void methodTests() {
-		TimedEffect timedEffect = new TimedEffect(request, 1000, $ -> {
-		}, null);
+		TimedEffect timedEffect = new TimedEffect.Builder()
+				.request(request)
+				.duration(1000)
+				.legacyStartCallback($ -> {
+				})
+				.build();
 
 		// getters
 		Assertions.assertEquals(request, timedEffect.getRequest());
@@ -157,8 +162,7 @@ public class TimedEffectTests {
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::queue); // will throw because effect is already queued
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::complete); // will throw because effect has not started
 
-		timedEffect = new TimedEffect(request, "blah", 1000, $ -> {
-		}, null);
+		timedEffect = timedEffect.toBuilder().effectGroup("blah").build();
 		Assertions.assertEquals("blah", timedEffect.getEffectGroup());
 	}
 
