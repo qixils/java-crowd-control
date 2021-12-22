@@ -55,7 +55,7 @@ final class SocketThread extends Thread implements SocketManager {
 				effectExecutor.run();
 			}
 
-			logger.info("Client socket shutting down (" + displayName + ")");
+			logger.info("Disconnecting from client socket (" + displayName + ")");
 			DummyResponse.from(null, "Server is shutting down").write(socket);
 		} catch (IOException exc) {
 			if ("Connection reset".equals(exc.getMessage())) {
