@@ -6,6 +6,7 @@ import dev.qixils.crowdcontrol.socket.Response;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 // doubles as a test for all the possible handlers available to #registerEffects!
@@ -46,5 +47,27 @@ public final class EffectHandlers {
 	@Subscribe(effect = "nothing")
 	public void nothing(Request request) {
 		// this should time out
+	}
+
+	@Subscribe(effect = "timedEffectError")
+	public void timedEffectError(Request request) {
+		new TimedEffect.Builder()
+				.request(request)
+				.duration(Duration.ofMillis(30))
+				.startCallback($ -> {
+					throw new RuntimeException("This is an error");
+				})
+				.completionCallback(timedEffectCallback)
+				.build().queue();
+	}
+
+	@Subscribe(effect = "timedEffectRetry")
+	public void timedEffectRetry(Request request) {
+		new TimedEffect.Builder()
+				.request(request)
+				.duration(Duration.ofMillis(30))
+				.startCallback($ -> request.buildResponse().type(Response.ResultType.RETRY))
+				.completionCallback(timedEffectCallback)
+				.build().queue();
 	}
 }

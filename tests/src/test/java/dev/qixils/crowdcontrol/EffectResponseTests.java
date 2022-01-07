@@ -326,4 +326,80 @@ public final class EffectResponseTests {
 		Thread.sleep(40); // give server time to shut down
 		Assertions.assertFalse(server.isRunning());
 	}
+
+	@Test
+	public void failingTimedEffectTest() throws InterruptedException {
+		SimulatedServer server = new SimulatedServer(0);
+		Assertions.assertDoesNotThrow(server::start);
+
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
+		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+		client.registerHandlers(new EffectHandlers($ -> completionFuture.complete(null)));
+
+		// give client time to connect
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		Request.Builder builder = new Request.Builder()
+				.effect("timedEffectError")
+				.viewer("test");
+		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
+		Assertions.assertNotNull(responseFlux);
+		Response response = responseFlux.blockFirst();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.FAILURE, response.getResultType());
+		Assertions.assertEquals(0, response.getTimeRemaining());
+		Thread.sleep(50); // wait for completion callback (not that it should execute)
+		Assertions.assertFalse(completionFuture.isDone());
+
+		// cleanup
+		client.shutdown("Test completed");
+		Thread.sleep(10);
+		server.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
+
+	@Test
+	public void customTimedEffectTest() throws InterruptedException {
+		SimulatedServer server = new SimulatedServer(0);
+		Assertions.assertDoesNotThrow(server::start);
+
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
+		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+		client.registerHandlers(new EffectHandlers($ -> completionFuture.complete(null)));
+
+		// give client time to connect
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		Request.Builder builder = new Request.Builder()
+				.effect("timedEffectRetry")
+				.viewer("test");
+		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
+		Assertions.assertNotNull(responseFlux);
+		Response response = responseFlux.blockFirst();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.RETRY, response.getResultType());
+		Assertions.assertEquals(0, response.getTimeRemaining());
+		Thread.sleep(50); // wait for completion callback (not that it should execute)
+		Assertions.assertFalse(completionFuture.isDone());
+
+		// cleanup
+		client.shutdown("Test completed");
+		Thread.sleep(10);
+		server.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
 }
