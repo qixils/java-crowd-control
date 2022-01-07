@@ -305,16 +305,20 @@ public final class EffectResponseTests {
 
 		// truly finally, test the #isActive method in regard to global effects & custom names
 		Request noTargetsRequest = effect.getRequest().toBuilder().targets((Request.Target[]) null).build();
-		TimedEffect globalEffect = new TimedEffect(noTargetsRequest, "random_name", 100, timedEffect -> {
-		}, null);
+		TimedEffect.Builder effectBuilder = new TimedEffect.Builder() // for creating identical TimedEffect instances
+				.request(noTargetsRequest)
+				.effectGroup("random_name")
+				.duration(100)
+				.legacyStartCallback($ -> {
+				});
+		TimedEffect globalEffect = effectBuilder.build();
 		globalEffect.queue();
 		Assertions.assertTrue(globalEffect.hasStarted());
 		Assertions.assertTrue(TimedEffect.isActive("random_name"));
 		Assertions.assertTrue(TimedEffect.isActive("random_name", target));
 		Assertions.assertTrue(TimedEffect.isActive("random_name", noTargetsRequest));
 		Assertions.assertFalse(TimedEffect.isActive(noTargetsRequest));
-		TimedEffect cannotStart = new TimedEffect(noTargetsRequest, "random_name", 100, timedEffect -> {
-		}, null);
+		TimedEffect cannotStart = effectBuilder.build();
 		cannotStart.queue();
 		Assertions.assertFalse(cannotStart.hasStarted());
 

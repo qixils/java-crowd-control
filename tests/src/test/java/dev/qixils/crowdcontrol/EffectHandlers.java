@@ -40,8 +40,11 @@ public final class EffectHandlers {
 
 	@Subscribe(effect = "timed")
 	public void timed(Request request) {
-		new TimedEffect(request, 200, timedEffectCallback, $ -> {
-		}).queue();
+		new TimedEffect.Builder()
+				.request(request)
+				.duration(200)
+				.legacyStartCallback(timedEffectCallback)
+				.build().queue();
 	}
 
 	@Subscribe(effect = "nothing")
