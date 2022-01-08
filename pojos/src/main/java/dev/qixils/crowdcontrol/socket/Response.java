@@ -697,7 +697,8 @@ public final class Response implements JsonObject {
 	 */
 	@ApiStatus.AvailableSince("2.0.0")
 	public static class Builder implements Cloneable {
-		// todo make fields non-final
+		// id & originatingSocket fields are final because the only way to construct this is via
+		// a Request (i.e. third parties don't have access to the originating socket)
 		private final int id;
 		private final Socket originatingSocket;
 		private ResultType type;
