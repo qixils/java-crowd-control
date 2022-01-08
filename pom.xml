@@ -15,7 +15,7 @@
         <module>receiver</module>
         <module>pojos</module>
         <module>tests</module>
-        <module>crowd-control-twitch-bridge</module>
+        <module>twitch</module>
     </modules>
 
     <name>Java Crowd Control Parent</name>
