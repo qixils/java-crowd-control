@@ -6,25 +6,28 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A boolean value that may be unknown.
+ *
  * @since 3.3.0
  */
-// TODO: unit tests
 @ApiStatus.AvailableSince("3.3.0")
 public enum TriState {
 	/**
 	 * The value is {@code true}.
+	 *
 	 * @since 3.3.0
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
 	TRUE(true),
 	/**
 	 * The value is {@code false}.
+	 *
 	 * @since 3.3.0
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
 	FALSE(false),
 	/**
 	 * The value is unknown.
+	 *
 	 * @since 3.3.0
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
