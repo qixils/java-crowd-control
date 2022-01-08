@@ -17,6 +17,7 @@ public interface AutomatableService<R> extends StartableService<R> {
 	 * (until it is {@link #shutdown() stopped}).
 	 *
 	 * @since 3.3.0
+	 * @throws IllegalStateException if the service is already running or has been shut down
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
 	@NonBlocking

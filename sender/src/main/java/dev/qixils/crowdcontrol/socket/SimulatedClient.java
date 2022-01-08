@@ -7,6 +7,7 @@ import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
+import org.jetbrains.annotations.NonBlockingExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -17,6 +18,10 @@ import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A client that connects to a video game hosting a Crowd Control server using the
@@ -27,11 +32,14 @@ import java.time.Duration;
 @ApiStatus.AvailableSince("3.3.0")
 public final class SimulatedClient implements AutomatableService<Response>, ServiceManager {
 	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Client");
+	private final @NonBlockingExecutor ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 	private final String ip;
 	private final int port;
 	private final String password;
 	private @Nullable RequestHandler handler = null;
 	private boolean running = true;
+	private int reconnectionAttempts = 0;
+	private ScheduledFuture<?> reconnectHandle = null;
 
 	/**
 	 * Creates a new {@code SimulatedClient} that connects to the given host using the
@@ -85,33 +93,34 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 	@Override
 	@NonBlocking
 	@ApiStatus.AvailableSince("3.3.0")
+	// TODO: unit test this
 	public void autoStart() {
-		new Thread(this::autoReconnect).start();
+		if (!running)
+			throw new IllegalStateException("Client has already shut down");
+		if (reconnectHandle != null)
+			throw new IllegalStateException("Client is already running");
+		executor.execute(this::loop);
 	}
 
 	@Blocking
-	private void autoReconnect() {
-		int reconnectionAttempts = 0;
-		while (running) {
-			try {
-				start();
-				reconnectionAttempts = 0;
-				try {
-					// TODO: avoid busy-waiting
-					Thread.sleep(2000); // wait for service to start up
-					while (handler != null && handler.isRunning()) {
-						Thread.sleep(1000); // wait for service to shut down
-					}
-				} catch (InterruptedException ignored) {
-				}
-			} catch (IOException e) {
-				logger.warn("Failed to connect to server", e);
-				// exponential backoff
-				try {
-					Thread.sleep(1000 * (long) Math.pow(2, reconnectionAttempts++));
-				} catch (InterruptedException ignored) {
-				}
-			}
+	private void loop() {
+		if (!running)
+			return;
+
+		// TODO: return value of start(); should be a Mono<Void> that completes on shut down
+		if (handler != null && !handler.isRunning()) {
+			reconnectionAttempts = 0;
+			reconnectHandle = executor.schedule(this::loop, 1L, TimeUnit.SECONDS);
+			return;
+		}
+
+		try {
+			start();
+			reconnectionAttempts = 0;
+			reconnectHandle = executor.schedule(this::loop, 2L, TimeUnit.SECONDS);
+		} catch (IOException e) {
+			logger.warn("Failed to connect to server", e);
+			reconnectHandle = executor.schedule(this::loop, (long) Math.pow(2, reconnectionAttempts++), TimeUnit.SECONDS);
 		}
 	}
 

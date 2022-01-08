@@ -85,7 +85,6 @@ public final class ClientSocketManager implements SocketManager {
 				Throwable exc = connected ? e : null;
 				logger.warn(error + ". Reconnecting in " + sleep + "s", exc);
 				try {
-					//noinspection BusyWait
 					Thread.sleep(sleep * 1000L);
 				} catch (InterruptedException ignored) {
 					if (!running) return;
