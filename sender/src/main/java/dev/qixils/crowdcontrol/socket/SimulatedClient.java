@@ -108,6 +108,8 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 			return;
 
 		// TODO: return value of start(); should be a Mono<Void> that completes on shut down
+		// or, for 3.4.0 or 4.0.0, a Flux of software states (i.e. CONNECTED, LISTENING, SHUTTING_DOWN)
+		// these would help avoid this terrible if block:
 		if (handler != null && !handler.isRunning()) {
 			reconnectionAttempts = 0;
 			reconnectHandle = executor.schedule(this::loop, 1L, TimeUnit.SECONDS);
