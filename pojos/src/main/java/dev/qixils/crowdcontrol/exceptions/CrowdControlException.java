@@ -1,10 +1,14 @@
 package dev.qixils.crowdcontrol.exceptions;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A generic exception raised by a Crowd Control library or a package that using one.
+ *
+ * @since 3.0.0
  */
+@ApiStatus.AvailableSince("3.0.0")
 public class CrowdControlException extends RuntimeException {
 
 	/**

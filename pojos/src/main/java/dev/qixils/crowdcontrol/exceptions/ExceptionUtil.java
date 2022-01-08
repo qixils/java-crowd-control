@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.exceptions;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,8 +9,10 @@ import java.util.function.Supplier;
 
 /**
  * Utility class containing common methods relating to exceptions.
+ *
+ * @since 3.3.0
  */
-@SuppressWarnings("Contract")
+@ApiStatus.AvailableSince("3.3.0")
 public class ExceptionUtil {
 	private ExceptionUtil() {
 		throw new IllegalStateException("Utility class");
@@ -21,7 +24,9 @@ public class ExceptionUtil {
 	 * @param potentialCause class to search for in stacktrace
 	 * @param exception      exception to be searched
 	 * @return true if the exception class is found
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public static boolean isCause(@NotNull Class<? extends Throwable> potentialCause, @Nullable Throwable exception) {
 		validateNotNull(potentialCause, "potentialCause");
 		if (exception == null) return false;
@@ -36,8 +41,11 @@ public class ExceptionUtil {
 	 * @param <T>    type of object to accept and return
 	 * @return the object if not null
 	 * @throws IllegalArgumentException if the object is null
+	 * @since 3.3.0
 	 */
 	@Contract("null -> fail; !null -> !null")
+	@NotNull
+	@ApiStatus.AvailableSince("3.3.0")
 	public static <T> T validateNotNull(@Nullable T object) throws IllegalArgumentException {
 		return validateNotNull(object, null);
 	}
@@ -50,8 +58,11 @@ public class ExceptionUtil {
 	 * @param <T>          type of object to accept and return
 	 * @return the object if not null
 	 * @throws IllegalArgumentException if the object is null
+	 * @since 3.3.0
 	 */
 	@Contract("null, _ -> fail; !null, _ -> !null")
+	@NotNull
+	@ApiStatus.AvailableSince("3.3.0")
 	public static <T> T validateNotNull(@Nullable T object, @Nullable String variableName) throws IllegalArgumentException {
 		if (object == null)
 			throw new IllegalArgumentException(validateNotNullElse(variableName, "Object") + " cannot be null");
@@ -66,8 +77,11 @@ public class ExceptionUtil {
 	 * @param <T>     type of object to accept and return
 	 * @return the first object if not null, else the second
 	 * @throws IllegalArgumentException if the second parameter is null
+	 * @since 3.3.1
 	 */
-	@Contract("null, null -> fail; !null, _ -> param1; null, !null -> param2")
+	@Contract("!null, _ -> param1; null, _ -> param2")
+	@NotNull
+	@ApiStatus.AvailableSince("3.3.1")
 	public static <T> T validateNotNullElse(@Nullable T object1, @NotNull T object2) {
 		if (object1 != null) {
 			return object1;
@@ -84,8 +98,11 @@ public class ExceptionUtil {
 	 * @param <T>      type of object to accept and return
 	 * @return the first object if not null, else the object provided by the supplier
 	 * @throws IllegalArgumentException if the object provided by the second parameter is null
+	 * @since 3.3.1
 	 */
-	@Contract("null, null -> fail; !null, _ -> param1; null, !null -> param2")
+	@Contract("!null, _ -> param1")
+	@NotNull
+	@ApiStatus.AvailableSince("3.3.1")
 	public static <T> T validateNotNullElseGet(@Nullable T object, @NotNull Supplier<@NotNull T> provider) {
 		if (object != null) {
 			return object;

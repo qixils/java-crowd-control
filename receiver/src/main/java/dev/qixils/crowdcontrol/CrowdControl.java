@@ -5,6 +5,7 @@ import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import dev.qixils.crowdcontrol.socket.SocketManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -71,7 +72,10 @@ import java.util.function.Supplier;
  * You can register checks using {@link #registerCheck(Supplier)}
  * or {@link #registerCheck(Function)}.
  * </p>
+ *
+ * @since 1.0.0
  */
+@ApiStatus.AvailableSince("1.0.0")
 public final class CrowdControl implements SocketManager, RequestManager {
 
 	private static final Logger logger = LoggerFactory.getLogger("CC-Core");
@@ -129,7 +133,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * It will connect to a singular Crowd Control server instance.
 	 *
 	 * @return a new client builder
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public static CrowdControlClientBuilder client() {
 		return new CrowdControlClientBuilder();
 	}
@@ -139,7 +145,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * It will allow numerous Crowd Control clients to connect.
 	 *
 	 * @return a new server builder
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public static CrowdControlServerBuilder server() {
 		return new CrowdControlServerBuilder();
 	}
@@ -159,7 +167,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * If running in server mode, this will be null.
 	 *
 	 * @return IP if available
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@Nullable
 	@CheckReturnValue
 	public String getIP() {
@@ -170,7 +180,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * Returns the port that the {@link SocketManager} will listen on.
 	 *
 	 * @return IP port
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@CheckReturnValue
 	public int getPort() {
 		return port;
@@ -181,7 +193,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * hexadecimal string. If running in client mode, this will be null.
 	 *
 	 * @return password required to connect
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@Nullable
 	@CheckReturnValue
 	public String getPassword() {
@@ -202,7 +216,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * </ul>
 	 *
 	 * @param object class instance to register
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	public void registerHandlers(@NotNull Object object) {
 		Class<?> clazz = object.getClass();
 		for (Method method : clazz.getMethods()) {
@@ -270,7 +286,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @param effect  name of the effect to handle
 	 * @param handler function to handle the effect
 	 * @see #registerHandler(String, Consumer)
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	public void registerHandler(@NotNull String effect, @NotNull Function<Request, Response> handler) {
 		effect = effect.toLowerCase(Locale.ENGLISH);
 		if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
@@ -286,7 +304,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @param effect  name of the effect to handle
 	 * @param handler function to handle the effect
 	 * @see #registerHandler(String, Function)
+	 * @since 2.0.0
 	 */
+	@ApiStatus.AvailableSince("2.0.0")
 	public void registerHandler(@NotNull String effect, @NotNull Consumer<Request> handler) {
 		effect = effect.toLowerCase(Locale.ENGLISH);
 		if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
@@ -303,7 +323,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * if, for example, the game has not fully initialized or no players are connected.
 	 *
 	 * @param check global check to register
+	 * @since 3.2.1
 	 */
+	@ApiStatus.AvailableSince("3.2.1")
 	public void registerCheck(@NotNull Function<Request, CheckResult> check) {
 		globalChecks.add(check);
 	}
@@ -316,7 +338,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * if, for example, the game has not fully initialized or no players are connected.
 	 *
 	 * @param check global check to register
+	 * @since 3.2.1
 	 */
+	@ApiStatus.AvailableSince("3.2.1")
 	public void registerCheck(@NotNull Supplier<CheckResult> check) {
 		globalChecks.add($ -> check.get());
 	}
@@ -326,7 +350,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 *
 	 * @param effect effect to check
 	 * @return true if the effect has a registered handler
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public boolean hasHandler(@NotNull String effect) {
 		effect = effect.toLowerCase(Locale.ENGLISH);
 		return effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect);
@@ -336,7 +362,10 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * Handles an incoming {@link Request} by executing the relevant handler.
 	 *
 	 * @param request an incoming request
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
+	@ApiStatus.Internal
 	public void handle(@NotNull Request request) {
 		for (Function<Request, CheckResult> check : globalChecks) {
 			if (check.apply(request) == CheckResult.DISALLOW) {
@@ -369,7 +398,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @see #shutdown(String)
 	 * @see #shutdown(Request, String)
 	 * @deprecated providing error messages via {@link #shutdown(String)} is recommended
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@SuppressWarnings({"deprecation", "DeprecatedIsStillUsed"})
 	// yes, I know that I am overriding a deprecated method, deal with it
 	@Deprecated
@@ -386,7 +417,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * sends a corresponding error message to the streamer(s).
 	 *
 	 * @param reason the reason for shutting down
+	 * @since 3.1.0
 	 */
+	@ApiStatus.AvailableSince("3.1.0")
 	public void shutdown(@Nullable String reason) {
 		try {
 			socketManager.shutdown(null, reason);
@@ -401,7 +434,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 *
 	 * @param cause  cause for shutting down
 	 * @param reason the reason for shutting down
+	 * @since 3.1.0
 	 */
+	@ApiStatus.AvailableSince("3.1.0")
 	public void shutdown(@Nullable Request cause, @Nullable String reason) {
 		try {
 			socketManager.shutdown(cause, reason);

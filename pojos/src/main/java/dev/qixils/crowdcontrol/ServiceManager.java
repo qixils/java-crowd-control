@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.socket.SocketManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.CheckReturnValue;
@@ -14,7 +15,9 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Manager for Crowd Control-related clients or servers.
  * It holds variables that may be used for a {@link SocketManager}.
+ * @since 3.3.0
  */
+@ApiStatus.AvailableSince("3.3.0")
 public interface ServiceManager {
 	/**
 	 * Encrypts a password using the specified algorithm.
@@ -23,7 +26,10 @@ public interface ServiceManager {
 	 * @param algorithm algorithm to use
 	 * @return encrypted password
 	 * @throws NoSuchAlgorithmException if the specified algorithm is not found
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
+	@ApiStatus.Internal
 	@NotNull
 	@CheckReturnValue
 	static String encryptPassword(@NotNull String password, @NotNull String algorithm) throws NoSuchAlgorithmException {
@@ -40,7 +46,10 @@ public interface ServiceManager {
 	 *
 	 * @param password password to encrypt
 	 * @return hexadecimal representation of the encrypted password
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
+	@ApiStatus.Internal
 	@NotNull
 	@CheckReturnValue
 	static String encryptPassword(@NotNull String password) {
@@ -58,7 +67,9 @@ public interface ServiceManager {
 	 * If running in server mode, this will be null.
 	 *
 	 * @return IP if available
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@Nullable
 	@CheckReturnValue
 	String getIP();
@@ -67,7 +78,9 @@ public interface ServiceManager {
 	 * Returns the port that the {@link SocketManager} will listen on.
 	 *
 	 * @return IP port
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@CheckReturnValue
 	int getPort();
 
@@ -76,7 +89,9 @@ public interface ServiceManager {
 	 * Base64-encoded string. If running in client mode, this will be null.
 	 *
 	 * @return password required to connect
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@Nullable
 	@CheckReturnValue
 	String getPassword();

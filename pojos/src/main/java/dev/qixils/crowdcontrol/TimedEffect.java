@@ -33,7 +33,10 @@ import java.util.function.Function;
  * or {@link #complete() stopped}.
  * </p>
  * This class can be constructed via {@link Builder}.
+ *
+ * @since 2.1.0
  */
+@ApiStatus.AvailableSince("2.1.0")
 @SuppressWarnings("DeprecatedIsStillUsed") // used in unit tests
 public final class TimedEffect {
 
@@ -67,7 +70,9 @@ public final class TimedEffect {
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
 	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
 	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
@@ -94,7 +99,9 @@ public final class TimedEffect {
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
 	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
 	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
@@ -123,7 +130,9 @@ public final class TimedEffect {
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
 	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
 	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
@@ -150,7 +159,9 @@ public final class TimedEffect {
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
 	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
 	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
@@ -198,7 +209,10 @@ public final class TimedEffect {
 	 * @param effectGroup effect group
 	 * @param targets     targeted streamers
 	 * @return whether the effect is active
+	 * @since 2.1.3
 	 */
+	@ApiStatus.AvailableSince("2.1.3")
+	@CheckReturnValue
 	public static boolean isActive(@NotNull String effectGroup, Request.Target @Nullable ... targets) {
 		ExceptionUtil.validateNotNull(effectGroup, "effectGroup");
 		if (targets != null) {
@@ -222,7 +236,10 @@ public final class TimedEffect {
 	 * @param effectGroup effect group
 	 * @param request     request to query for targeted streamers
 	 * @return whether the effect is active
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
+	@CheckReturnValue
 	public static boolean isActive(@NotNull String effectGroup, @NotNull Request request) {
 		return isActive(effectGroup, ExceptionUtil.validateNotNull(request, "request").getTargets());
 	}
@@ -232,7 +249,10 @@ public final class TimedEffect {
 	 *
 	 * @param request requested effect
 	 * @return whether the effect is active
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
+	@CheckReturnValue
 	public static boolean isActive(@NotNull Request request) {
 		ExceptionUtil.validateNotNull(request, "request");
 		return isActive(request.getEffect(), request.getTargets());
@@ -244,7 +264,9 @@ public final class TimedEffect {
 	 * If the effect has not started, this will return the original duration set upon construction.
 	 *
 	 * @return time left in milliseconds
+	 * @since 2.1.0
 	 */
+	@ApiStatus.AvailableSince("2.1.0")
 	@CheckReturnValue
 	public long getCurrentDuration() {
 		if (duration == -1)
@@ -259,7 +281,9 @@ public final class TimedEffect {
 	 * and {@link Request#getTargets() target} will run one at a time.
 	 *
 	 * @throws IllegalStateException the effect has already {@link #hasStarted() started} or was already queued
+	 * @since 2.1.0
 	 */
+	@ApiStatus.AvailableSince("2.1.0")
 	public void queue() throws IllegalStateException {
 		if (queued)
 			throw new IllegalStateException("Effect was already queued");
@@ -320,7 +344,9 @@ public final class TimedEffect {
 	 * Indicates that the effect has paused execution.
 	 *
 	 * @throws IllegalStateException the effect is already paused, has not {@link #hasStarted() started}, or has {@link #isComplete() completed}
+	 * @since 2.1.0
 	 */
+	@ApiStatus.AvailableSince("2.1.0")
 	public void pause() throws IllegalStateException {
 		if (paused)
 			throw new IllegalStateException("Effect is already paused");
@@ -344,7 +370,9 @@ public final class TimedEffect {
 	 * Indicates that the effect has resumed execution.
 	 *
 	 * @throws IllegalStateException the effect is not paused, has not {@link #hasStarted() started}, or has {@link #isComplete() completed}
+	 * @since 2.1.0
 	 */
+	@ApiStatus.AvailableSince("2.1.0")
 	public void resume() throws IllegalStateException {
 		if (!paused)
 			throw new IllegalStateException("Effect was not paused");
@@ -365,7 +393,9 @@ public final class TimedEffect {
 	 * @return Whether the effect was marked as complete as a result of this method call.
 	 * If this effect was already complete, {@code false} is returned.
 	 * @throws IllegalStateException the effect has not {@link #hasStarted() started}
+	 * @since 2.1.0
 	 */
+	@ApiStatus.AvailableSince("2.1.0")
 	public boolean complete() throws IllegalStateException {
 		if (startedAt == -1)
 			throw new IllegalStateException("Effect has not started");
@@ -397,7 +427,9 @@ public final class TimedEffect {
 	 * Determines if this effect has completed.
 	 *
 	 * @return completion status
+	 * @since 2.1.0
 	 */
+	@ApiStatus.AvailableSince("2.1.0")
 	@CheckReturnValue
 	public boolean isComplete() {
 		return getCurrentDuration() == 0;
@@ -407,7 +439,9 @@ public final class TimedEffect {
 	 * Determines if this effect has started.
 	 *
 	 * @return start status
+	 * @since 2.1.0
 	 */
+	@ApiStatus.AvailableSince("2.1.0")
 	@CheckReturnValue
 	public boolean hasStarted() {
 		return startedAt != -1;
@@ -417,7 +451,9 @@ public final class TimedEffect {
 	 * Gets the request that this timed effect corresponds to.
 	 *
 	 * @return request ID
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@NotNull
 	@CheckReturnValue
 	public Request getRequest() {
@@ -428,7 +464,9 @@ public final class TimedEffect {
 	 * Gets the effect group which this effect will be queued in.
 	 *
 	 * @return effect group
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@NotNull
 	@CheckReturnValue
 	public String getEffectGroup() {
@@ -439,7 +477,9 @@ public final class TimedEffect {
 	 * Gets the duration of this effect that was set on construction.
 	 *
 	 * @return duration in milliseconds
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@CheckReturnValue
 	public long getOriginalDuration() {
 		return originalDuration;
@@ -449,7 +489,10 @@ public final class TimedEffect {
 	 * Determines if the effect is paused.
 	 *
 	 * @return paused status
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
+	@CheckReturnValue
 	public boolean isPaused() {
 		return paused;
 	}
@@ -458,7 +501,9 @@ public final class TimedEffect {
 	 * Creates a mutable {@link Builder} with a copy of the data in this {@link TimedEffect}.
 	 *
 	 * @return a new {@link Builder}
+	 * @since 3.3.2
 	 */
+	@ApiStatus.AvailableSince("3.3.2")
 	@NotNull
 	@CheckReturnValue
 	@Contract(" -> new")
@@ -501,6 +546,7 @@ public final class TimedEffect {
 	 * @see TimedEffect
 	 * @since 3.3.2
 	 */
+	@ApiStatus.AvailableSince("3.3.2")
 	@SuppressWarnings("UnusedReturnValue") // used in method chaining
 	@ParametersAreNullableByDefault
 	public static final class Builder implements Cloneable {
@@ -512,7 +558,9 @@ public final class TimedEffect {
 
 		/**
 		 * Creates a new {@link TimedEffect.Builder}.
+		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		public Builder() {
 		}
 
@@ -521,7 +569,9 @@ public final class TimedEffect {
 		 *
 		 * @param builder the builder to copy
 		 * @throws IllegalArgumentException if the given builder is {@code null}
+		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		private Builder(@NotNull Builder builder) {
 			ExceptionUtil.validateNotNull(builder, "builder");
 			this.request = builder.request;
@@ -536,7 +586,9 @@ public final class TimedEffect {
 		 *
 		 * @param effect the timed effect to copy
 		 * @throws IllegalArgumentException if the given effect is {@code null}
+		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		private Builder(@NotNull TimedEffect effect) {
 			ExceptionUtil.validateNotNull(effect, "effect");
 			this.request = effect.request;
@@ -553,6 +605,7 @@ public final class TimedEffect {
 		 * @return this builder
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder request(@Nullable Request request) {
@@ -567,6 +620,7 @@ public final class TimedEffect {
 		 * @return this builder
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder effectGroup(@Nullable String effectGroup) {
@@ -584,6 +638,7 @@ public final class TimedEffect {
 		 * @see #legacyStartCallback(Consumer)
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder startCallback(@Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> callback) {
@@ -600,6 +655,7 @@ public final class TimedEffect {
 		 * @see #startCallback(Function)
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder legacyStartCallback(@Nullable Consumer<@NotNull TimedEffect> callback) {
@@ -618,6 +674,7 @@ public final class TimedEffect {
 		 * @return this builder
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder completionCallback(@Nullable Consumer<@NotNull TimedEffect> completionCallback) {
@@ -634,6 +691,7 @@ public final class TimedEffect {
 		 * @see #duration(TimeUnit, long)
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder duration(long duration) {
@@ -650,6 +708,7 @@ public final class TimedEffect {
 		 * @see #duration(TimeUnit, long)
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder duration(@Nullable Duration duration) {
@@ -669,6 +728,7 @@ public final class TimedEffect {
 		 * @see #duration(Duration)
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_, _ -> this")
 		public Builder duration(@NotNull TimeUnit unit, long duration) throws IllegalArgumentException {
@@ -685,6 +745,7 @@ public final class TimedEffect {
 		 * @return originating request
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@Nullable
 		@Contract(pure = true)
 		@CheckReturnValue
@@ -701,6 +762,7 @@ public final class TimedEffect {
 		 * @return effect group
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@Nullable
 		@Contract(pure = true)
 		@CheckReturnValue
@@ -715,6 +777,7 @@ public final class TimedEffect {
 		 * @return callback to execute
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@Nullable
 		@Contract(pure = true)
 		@CheckReturnValue
@@ -729,6 +792,7 @@ public final class TimedEffect {
 		 * @return callback to execute upon completion
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@Nullable
 		@Contract(pure = true)
 		@CheckReturnValue
@@ -743,6 +807,7 @@ public final class TimedEffect {
 		 * @return duration in milliseconds
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@Contract(pure = true)
 		@CheckReturnValue
 		public long duration() {
@@ -763,6 +828,7 @@ public final class TimedEffect {
 		 *                               </ul>
 		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract(pure = true)
 		@CheckReturnValue
@@ -770,6 +836,13 @@ public final class TimedEffect {
 			return new TimedEffect(this);
 		}
 
+		/**
+		 * Creates a cloned copy of this builder.
+		 *
+		 * @return new builder
+		 * @since 3.3.2
+		 */
+		@ApiStatus.AvailableSince("3.3.2")
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		@Contract(" -> new")

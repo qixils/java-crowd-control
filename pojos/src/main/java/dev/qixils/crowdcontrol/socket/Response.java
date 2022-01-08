@@ -29,7 +29,9 @@ import java.util.concurrent.TimeUnit;
  * a {@link Request requested} effect.
  *
  * @see Request
+ * @since 1.0.0
  */
+@ApiStatus.AvailableSince("1.0.0")
 public final class Response implements JsonObject {
 	private static final Logger logger = LoggerFactory.getLogger("CC-Response");
 	@SerializedName("type")
@@ -46,8 +48,7 @@ public final class Response implements JsonObject {
 	 * <p>
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
-	@SuppressWarnings("unused")
-	// used by GSON
+	@SuppressWarnings("unused") // used by GSON
 	Response() {
 	}
 
@@ -217,7 +218,9 @@ public final class Response implements JsonObject {
 	 *                                      <li>if the {@code type} is null</li>
 	 *                                      <li>if the {@code timeRemaining} is negative</li>
 	 *                                  </ul>
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	public Response(@NotNull Request request,
 					@NotNull ResultType type,
@@ -244,7 +247,9 @@ public final class Response implements JsonObject {
 	 * @param json input json data from the Crowd Control game
 	 * @return a new Response object
 	 * @throws JsonSyntaxException the JSON failed to be parsed
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@NotNull
 	@CheckReturnValue
 	public static Response fromJSON(@NotNull String json) throws JsonSyntaxException {
@@ -260,7 +265,9 @@ public final class Response implements JsonObject {
 	 * @param message           message describing the reason for termination
 	 * @return a new Response object
 	 * @throws IllegalArgumentException if the socket is null
+	 * @since 3.3.2
 	 */
+	@ApiStatus.AvailableSince("3.3.2")
 	@CheckReturnValue
 	@NotNull
 	static Response ofDisconnectMessage(int id, @NotNull Socket originatingSocket, @Nullable String message) {
@@ -274,7 +281,9 @@ public final class Response implements JsonObject {
 	 * @param message           message describing the reason for termination
 	 * @return a new Response object
 	 * @throws IllegalArgumentException if the socket is null
+	 * @since 3.3.2
 	 */
+	@ApiStatus.AvailableSince("3.3.2")
 	@CheckReturnValue
 	@NotNull
 	static Response ofDisconnectMessage(@NotNull Socket originatingSocket, @Nullable String message) {
@@ -288,7 +297,9 @@ public final class Response implements JsonObject {
 	 * @param message message describing the reason for termination
 	 * @return a new Response object
 	 * @throws IllegalArgumentException if the request is null
+	 * @since 3.3.2
 	 */
+	@ApiStatus.AvailableSince("3.3.2")
 	@CheckReturnValue
 	@NotNull
 	static Response ofDisconnectMessage(@NotNull Request request, @Nullable String message) {
@@ -299,7 +310,9 @@ public final class Response implements JsonObject {
 	 * Gets the ID of the outgoing packet. Corresponds to a unique transaction.
 	 *
 	 * @return packet ID
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@CheckReturnValue
 	public int getId() {
 		return id;
@@ -309,10 +322,11 @@ public final class Response implements JsonObject {
 	 * Gets the result of executing an effect.
 	 *
 	 * @return effect result
+	 * @since 1.0.0
 	 */
-	@NotNull
+	@ApiStatus.AvailableSince("1.0.0")
 	@CheckReturnValue
-	public Response.ResultType getResultType() {
+	public @NotNull ResultType getResultType() {
 		return type;
 	}
 
@@ -322,7 +336,10 @@ public final class Response implements JsonObject {
 	 * Note: unless directly working with library internals, this will always be {@link PacketType#EFFECT_RESULT}.
 	 *
 	 * @return packet type
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
+	@ApiStatus.Internal
 	@NotNull
 	@CheckReturnValue
 	public PacketType getPacketType() {
@@ -333,7 +350,9 @@ public final class Response implements JsonObject {
 	 * Gets the message that will be delivered along with the result.
 	 *
 	 * @return result message
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@NotNull
 	@CheckReturnValue
 	public String getMessage() {
@@ -344,7 +363,9 @@ public final class Response implements JsonObject {
 	 * Gets the milliseconds left until the referenced effect ends.
 	 *
 	 * @return effect duration in milliseconds
+	 * @since 2.0.0
 	 */
+	@ApiStatus.AvailableSince("2.0.0")
 	@CheckReturnValue
 	public long getTimeRemaining() {
 		return timeRemaining;
@@ -354,7 +375,9 @@ public final class Response implements JsonObject {
 	 * Outputs this object as a JSON string for use in the server connection.
 	 *
 	 * @return JSON string
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@NotNull
 	@CheckReturnValue
 	public String toJSON() {
@@ -365,7 +388,9 @@ public final class Response implements JsonObject {
 	 * Creates a mutable {@link Builder} with a copy of the data in this {@link Response}.
 	 *
 	 * @return a new {@link Builder}
+	 * @since 2.0.0
 	 */
+	@ApiStatus.AvailableSince("2.0.0")
 	@NotNull
 	@CheckReturnValue
 	public Builder toBuilder() {
@@ -377,7 +402,9 @@ public final class Response implements JsonObject {
 	 * {@link Request}.
 	 *
 	 * @return true if this response marks the end of a series of responses
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public boolean isTerminating() throws IllegalStateException {
 		if (packetType != PacketType.EFFECT_RESULT)
 			throw new IllegalStateException("This response is not an effect result");
@@ -406,7 +433,9 @@ public final class Response implements JsonObject {
 	 * If not, {@link #send()} will throw an {@link IllegalStateException}.
 	 *
 	 * @return true if the request is known
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public boolean isOriginKnown() {
 		return originatingSocket != null;
 	}
@@ -416,7 +445,9 @@ public final class Response implements JsonObject {
 	 *
 	 * @throws IllegalStateException if {@link #isOriginKnown()} returns false
 	 *                               (i.e. the response was created without a {@link Request})
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public void send() throws IllegalStateException {
 		if (!isOriginKnown()) {
 			throw new IllegalStateException("Response was constructed without a Request and thus cannot find where to be sent");
@@ -442,30 +473,42 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Determines the type of packet being sent.
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public enum PacketType implements ByteObject {
 		/**
 		 * The packet is the result of executing an effect.
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		EFFECT_RESULT(true),
 		/**
 		 * <b>Internal value</b> used to prompt a connecting client for a password.
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
 		LOGIN(false, (byte) 0xF0),
 		/**
 		 * <b>Internal value</b> used to indicate a successful login.
+		 * @since 3.1.0
 		 */
+		@ApiStatus.AvailableSince("3.1.0")
 		@ApiStatus.Internal
 		LOGIN_SUCCESS(false, (byte) 0xF1),
 		/**
 		 * <b>Internal value</b> used to indicate that the socket is being disconnected.
+		 * @since 3.1.0
 		 */
+		@ApiStatus.AvailableSince("3.1.0")
 		@ApiStatus.Internal
 		DISCONNECT(true, (byte) 0xFE),
 		/**
 		 * <b>Internal value</b> used to reply to a keep alive packet.
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
 		KEEP_ALIVE(false, (byte) 0xFF);
 
@@ -496,11 +539,18 @@ public final class Response implements JsonObject {
 		 *
 		 * @param encodedByte byte used in JSON encoding
 		 * @return corresponding Type if applicable
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
+		@ApiStatus.Internal
+		@CheckReturnValue
 		public static @Nullable PacketType from(byte encodedByte) {
 			return BY_BYTE.get(encodedByte);
 		}
 
+		@ApiStatus.AvailableSince("3.0.0")
+		@ApiStatus.Internal
+		@CheckReturnValue
 		public byte getEncodedByte() {
 			return encodedByte;
 		}
@@ -509,7 +559,10 @@ public final class Response implements JsonObject {
 		 * Determines if this packet type requires an accompanying message to be sent.
 		 *
 		 * @return true if a message is required
+		 * @since 3.3.2
 		 */
+		@ApiStatus.AvailableSince("3.3.2")
+		@CheckReturnValue
 		public boolean isMessageRequired() {
 			return isMessageRequired;
 		}
@@ -517,41 +570,57 @@ public final class Response implements JsonObject {
 
 	/**
 	 * The result of processing an incoming packet.
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	public enum ResultType implements ByteObject {
 		/**
 		 * The effect was applied successfully.
+		 * @since 1.0.0
 		 */
+		@ApiStatus.AvailableSince("1.0.0")
 		SUCCESS(false),
 		/**
 		 * The effect failed to be applied. Will refund the purchaser.
+		 * @since 1.0.0
 		 */
+		@ApiStatus.AvailableSince("1.0.0")
 		FAILURE(true),
 		/**
 		 * The requested effect is unusable and should not be requested again.
+		 * @since 1.0.0
 		 */
+		@ApiStatus.AvailableSince("1.0.0")
 		UNAVAILABLE(true),
 		/**
 		 * The effect is momentarily unavailable but may be retried in a few seconds.
+		 * @since 1.0.0
 		 */
+		@ApiStatus.AvailableSince("1.0.0")
 		RETRY(false),
 		/**
 		 * The timed effect has been paused and is now waiting.
 		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		PAUSED(false, (byte) 0x06),
 		/**
 		 * The timed effect has been resumed and is counting down again.
 		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		RESUMED(false, (byte) 0x07),
 		/**
 		 * The timed effect has finished.
 		 *
 		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		FINISHED(true, (byte) 0x08),
 		/**
 		 * Indicates that this Crowd Control server is not yet accepting requests.
@@ -559,7 +628,9 @@ public final class Response implements JsonObject {
 		 * This is an internal field used to indicate that the login process with a client has
 		 * not yet completed. You should instead use {@link #FAILURE} to indicate a
 		 * temporary failure or {@link #UNAVAILABLE} to indicate a permanent failure.
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
 		NOT_READY(true, (byte) 0xFF);
 
@@ -590,11 +661,18 @@ public final class Response implements JsonObject {
 		 *
 		 * @param encodedByte byte used in JSON encoding
 		 * @return corresponding Type if applicable
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
+		@ApiStatus.Internal
+		@CheckReturnValue
 		public static @Nullable ResultType from(byte encodedByte) {
 			return BY_BYTE.get(encodedByte);
 		}
 
+		@ApiStatus.AvailableSince("3.0.0")
+		@ApiStatus.Internal
+		@CheckReturnValue
 		public byte getEncodedByte() {
 			return encodedByte;
 		}
@@ -604,7 +682,10 @@ public final class Response implements JsonObject {
 		 * {@link Request}.
 		 *
 		 * @return true if this result type always marks the end of a series of {@link Response}s
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
+		@CheckReturnValue
 		public boolean isTerminating() {
 			return terminating;
 		}
@@ -612,8 +693,11 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Mutable builder for the immutable {@link Response} class.
+	 * @since 2.0.0
 	 */
+	@ApiStatus.AvailableSince("2.0.0")
 	public static class Builder implements Cloneable {
+		// todo make fields non-final
 		private final int id;
 		private final Socket originatingSocket;
 		private ResultType type;
@@ -629,7 +713,9 @@ public final class Response implements JsonObject {
 		 * Creates a new builder using the data from a {@link Response}.
 		 *
 		 * @param source source for a new builder
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@CheckReturnValue
 		private Builder(@NotNull Response source) {
 			this.id = source.getId();
@@ -644,7 +730,9 @@ public final class Response implements JsonObject {
 		 * Creates a new builder representing the {@link Response} to a {@link Request}.
 		 *
 		 * @param request request to respond to
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@CheckReturnValue
 		public Builder(@NotNull Request request) {
 			this.id = request.getId();
@@ -655,7 +743,9 @@ public final class Response implements JsonObject {
 		 * Creates a copy of the provided builder.
 		 *
 		 * @param builder builder to copy
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
 		private Builder(@NotNull Builder builder) {
 			this.id = builder.id;
@@ -672,7 +762,9 @@ public final class Response implements JsonObject {
 		 *
 		 * @param id                id of the response
 		 * @param originatingSocket socket that originated the request
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
 		Builder(int id, @Nullable Socket originatingSocket) {
 			this.id = id;
@@ -684,7 +776,9 @@ public final class Response implements JsonObject {
 		 *
 		 * @param type result type
 		 * @return this builder
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder type(@Nullable ResultType type) {
@@ -700,7 +794,9 @@ public final class Response implements JsonObject {
 		 *
 		 * @param message response message
 		 * @return this builder
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder message(@Nullable String message) {
@@ -717,7 +813,9 @@ public final class Response implements JsonObject {
 		 * @throws IllegalArgumentException if timeRemaining is negative
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 * @see #timeRemaining(long, TimeUnit)
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder timeRemaining(long timeRemaining) throws IllegalArgumentException {
@@ -735,7 +833,9 @@ public final class Response implements JsonObject {
 		 * @return this builder
 		 * @throws IllegalArgumentException if timeRemaining is negative
 		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_, _ -> this")
 		public Builder timeRemaining(long timeRemaining, @NotNull TimeUnit timeUnit) throws IllegalArgumentException {
@@ -749,7 +849,9 @@ public final class Response implements JsonObject {
 		 * @return this builder
 		 * @throws IllegalArgumentException if timeRemaining is negative
 		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder timeRemaining(@Nullable Duration timeRemaining) throws IllegalArgumentException {
@@ -767,7 +869,9 @@ public final class Response implements JsonObject {
 		 * @return this builder
 		 * @throws IllegalArgumentException if endEffectAt is in the past
 		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder timeRemaining(@Nullable Temporal endEffectAt) throws IllegalArgumentException {
@@ -785,11 +889,13 @@ public final class Response implements JsonObject {
 		 *
 		 * @param packetType type of packet
 		 * @return this builder
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@NotNull
 		@Contract("_ -> this")
 		@ApiStatus.Internal
-		Builder packetType(@Nullable PacketType packetType) {
+		public Builder packetType(@Nullable PacketType packetType) {
 			this.packetType = packetType;
 			return this;
 		}
@@ -800,7 +906,9 @@ public final class Response implements JsonObject {
 		 * Gets the ID of the {@link Request} that prompted this {@link Response}.
 		 *
 		 * @return request ID
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		public int id() {
 			return id;
 		}
@@ -809,7 +917,10 @@ public final class Response implements JsonObject {
 		 * Gets the {@link Socket} of the {@link Request} that prompted this {@link Response}.
 		 *
 		 * @return originating socket
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
+		@ApiStatus.Internal
 		@Nullable
 		Socket originatingSocket() {
 			return originatingSocket;
@@ -819,7 +930,9 @@ public final class Response implements JsonObject {
 		 * Gets the type of result being returned.
 		 *
 		 * @return result type
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		public ResultType type() {
 			return type;
@@ -829,7 +942,9 @@ public final class Response implements JsonObject {
 		 * Gets the message describing or explaining the response.
 		 *
 		 * @return response message
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		public String message() {
 			return message;
@@ -839,7 +954,9 @@ public final class Response implements JsonObject {
 		 * Gets the time left on the referenced effect in milliseconds.
 		 *
 		 * @return time in milliseconds
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		public long timeRemaining() {
 			return timeRemaining;
 		}
@@ -850,10 +967,12 @@ public final class Response implements JsonObject {
 		 * Note: this is intended only for internal library use.
 		 *
 		 * @return packet type
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@ApiStatus.Internal
-		PacketType packetType() {
+		public PacketType packetType() {
 			return packetType;
 		}
 
@@ -863,7 +982,9 @@ public final class Response implements JsonObject {
 		 * Builds a new {@link Response} object.
 		 *
 		 * @return new Response
+		 * @since 2.0.0
 		 */
+		@ApiStatus.AvailableSince("2.0.0")
 		@NotNull
 		@CheckReturnValue
 		public Response build() {
@@ -874,7 +995,9 @@ public final class Response implements JsonObject {
 		 * Builds this {@link Response} and then sends it to the client or server that delivered the related {@link Request}.
 		 *
 		 * @throws IllegalStateException if the response was created without a {@link Request}
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		public void send() throws IllegalStateException {
 			build().send();
 		}
@@ -883,7 +1006,9 @@ public final class Response implements JsonObject {
 		 * Creates a new {@link Builder} object with the same parameters.
 		 *
 		 * @return cloned builder
+		 * @since 2.1.0
 		 */
+		@ApiStatus.AvailableSince("2.1.0")
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Builder clone() {

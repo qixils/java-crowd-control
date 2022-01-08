@@ -20,7 +20,9 @@ import java.util.Objects;
  * An incoming packet from the Crowd Control TCP server which represents an effect to be played.
  *
  * @see Response
+ * @since 1.0.0
  */
+@ApiStatus.AvailableSince("1.0.0")
 public final class Request implements JsonObject {
 	transient Socket originatingSocket;
 	private int id;
@@ -37,8 +39,7 @@ public final class Request implements JsonObject {
 	 * <p>
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
-	@SuppressWarnings("unused")
-	// used by GSON
+	@SuppressWarnings("unused") // used by GSON
 	Request() {
 	}
 
@@ -60,7 +61,9 @@ public final class Request implements JsonObject {
 	 *                                      <li>if the given packet type is not an {@link Type#isEffectType()} effect type} and the effect, viewer, cost, or targets is non-null</li>
 	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public Request(int id,
 				   @NotNull Type type,
 				   @Nullable String effect,
@@ -123,7 +126,9 @@ public final class Request implements JsonObject {
 	 *                                      <li>if the given packet type is an {@link Type#isEffectType() effect type}</li>
 	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public Request(int id, @NotNull Type type, @Nullable String message) throws IllegalArgumentException {
 		if (id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
@@ -141,7 +146,9 @@ public final class Request implements JsonObject {
 	 * Instantiates a {@link Request} object from a {@link Builder}.
 	 *
 	 * @param builder the {@link Builder} to use
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	private Request(Request.@NotNull Builder builder) {
 		this(ExceptionUtil.validateNotNull(builder, "builder").id,
 				builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.targets);
@@ -154,9 +161,12 @@ public final class Request implements JsonObject {
 	 * @param json input json data from the Crowd Control TCP server
 	 * @return a new Request object
 	 * @throws JsonSyntaxException the JSON failed to be parsed
+	 * @since 1.0.0
 	 */
 	@NotNull
 	@CheckReturnValue
+	@ApiStatus.Internal
+	@ApiStatus.AvailableSince("1.0.0")
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
 		ExceptionUtil.validateNotNull(json, "json");
 		return ByteAdapter.GSON.fromJson(json, Request.class);
@@ -166,7 +176,9 @@ public final class Request implements JsonObject {
 	 * Gets the ID of the incoming packet. Corresponds to a unique transaction.
 	 *
 	 * @return packet ID
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@CheckReturnValue
 	public int getId() {
 		return id;
@@ -176,7 +188,9 @@ public final class Request implements JsonObject {
 	 * Gets the message from the incoming packet.
 	 *
 	 * @return message
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@Nullable
 	@CheckReturnValue
 	public String getMessage() {
@@ -187,7 +201,9 @@ public final class Request implements JsonObject {
 	 * Gets the name of the effect to play.
 	 *
 	 * @return effect name
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@NotNull
 	@CheckReturnValue
 	public String getEffect() {
@@ -198,7 +214,9 @@ public final class Request implements JsonObject {
 	 * Gets the name of the viewer who triggered the effect.
 	 *
 	 * @return viewer name
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@NotNull
 	@CheckReturnValue
 	public String getViewer() {
@@ -209,7 +227,9 @@ public final class Request implements JsonObject {
 	 * Gets the cost of the effect specified in this Request.
 	 *
 	 * @return effect cost
+	 * @since 2.0.0
 	 */
+	@ApiStatus.AvailableSince("2.0.0")
 	@Nullable
 	@CheckReturnValue
 	public Integer getCost() {
@@ -220,7 +240,9 @@ public final class Request implements JsonObject {
 	 * Gets the {@link Type Type} of the request.
 	 *
 	 * @return request type
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@NotNull
 	@CheckReturnValue
 	public Type getType() {
@@ -232,7 +254,9 @@ public final class Request implements JsonObject {
 	 * An empty array suggests that all players may be targeted.
 	 *
 	 * @return possibly empty array of {@link Target}
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	public Target @NotNull [] getTargets() {
 		if (targets == null)
@@ -244,7 +268,9 @@ public final class Request implements JsonObject {
 	 * Determines if this Request is triggering an effect for all users.
 	 *
 	 * @return if the triggered effect is global
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	public boolean isGlobal() {
 		return targets == null || targets.length == 0;
@@ -254,7 +280,10 @@ public final class Request implements JsonObject {
 	 * Outputs this object as a JSON string.
 	 *
 	 * @return JSON string
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
+	@ApiStatus.Internal
 	@NotNull
 	@CheckReturnValue
 	public String toJSON() {
@@ -265,7 +294,9 @@ public final class Request implements JsonObject {
 	 * Creates a mutable {@link Builder} with a copy of the data in this {@link Request}.
 	 *
 	 * @return a new {@link Builder}
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@NotNull
 	@CheckReturnValue
 	public Builder toBuilder() {
@@ -277,7 +308,9 @@ public final class Request implements JsonObject {
 	 * a {@link Response} to this request.
 	 *
 	 * @return new response builder
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	public Response.Builder buildResponse() {
 		return new Response.Builder(this);
@@ -306,27 +339,37 @@ public final class Request implements JsonObject {
 
 	/**
 	 * The type of incoming packet.
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	public enum Type implements ByteObject {
 		/**
 		 * Indicates that you should simulate the starting of an effect (i.e. test if it's available)
 		 * but should not actually start the effect.
+		 * @since 1.0.0
 		 */
+		@ApiStatus.AvailableSince("1.0.0")
 		TEST(true),
 		/**
 		 * Indicates that you should start an effect, if available.
+		 * @since 1.0.0
 		 */
+		@ApiStatus.AvailableSince("1.0.0")
 		START(true),
 		/**
 		 * Indicates that you should stop an effect.
+		 * @since 1.0.0
 		 */
+		@ApiStatus.AvailableSince("1.0.0")
 		STOP(true),
 		/**
 		 * Indicates that a streamer is attempting to log in to the Crowd Control server.
 		 * <p>
 		 * This value is only used internally by the library. You will not encounter this value
 		 * and should assume it does not exist.
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
 		LOGIN(false, (byte) 0xF0),
 		/**
@@ -335,7 +378,9 @@ public final class Request implements JsonObject {
 		 * <p>
 		 * This value is only used internally by the library. You will not encounter this value
 		 * and should assume it does not exist.
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
 		KEEP_ALIVE(false, (byte) 0xFF);
 
@@ -366,12 +411,17 @@ public final class Request implements JsonObject {
 		 *
 		 * @param encodedByte byte used in JSON encoding
 		 * @return corresponding Type if applicable
+		 * @since 3.0.0
 		 */
+		@ApiStatus.Internal
+		@ApiStatus.AvailableSince("3.0.0")
 		@CheckReturnValue
 		public static @Nullable Type from(byte encodedByte) {
 			return BY_BYTE.get(encodedByte);
 		}
 
+		@ApiStatus.Internal
+		@ApiStatus.AvailableSince("3.0.0")
 		@CheckReturnValue
 		public byte getEncodedByte() {
 			return encodedByte;
@@ -381,7 +431,9 @@ public final class Request implements JsonObject {
 		 * Determines if this packet represents a standard effect request.
 		 *
 		 * @return if this packet represents a standard effect request
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		public boolean isEffectType() {
 			return isStandard;
 		}
@@ -391,7 +443,9 @@ public final class Request implements JsonObject {
 	 * A recipient of an effect.
 	 * <p>
 	 * This corresponds to a Twitch streamer connected to the Crowd Control server.
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public static final class Target {
 		private int id;
 		private String name;
@@ -402,8 +456,7 @@ public final class Request implements JsonObject {
 		 * <p>
 		 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 		 */
-		@SuppressWarnings("unused")
-		// used by GSON
+		@SuppressWarnings("unused") // used by GSON
 		Target() {
 		}
 
@@ -414,7 +467,9 @@ public final class Request implements JsonObject {
 		 * @param name   streamer name
 		 * @param avatar streamer avatar
 		 * @throws IllegalArgumentException if the ID is not positive or one of the other parameters is null
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		public Target(int id, @NotNull String name, @NotNull String avatar) throws IllegalArgumentException {
 			if (id <= 0)
 				throw new IllegalArgumentException("ID must be positive");
@@ -427,7 +482,9 @@ public final class Request implements JsonObject {
 		 * The recipient's Twitch ID.
 		 *
 		 * @return Twitch ID
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@CheckReturnValue
 		public int getId() {
 			return id;
@@ -437,7 +494,9 @@ public final class Request implements JsonObject {
 		 * The recipient's name on Twitch.
 		 *
 		 * @return Twitch username
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@NotNull
 		@CheckReturnValue
 		public String getName() {
@@ -448,7 +507,9 @@ public final class Request implements JsonObject {
 		 * Gets the URL of the recipient's avatar on Twitch.
 		 *
 		 * @return Twitch avatar URL
+		 * @since 3.0.0
 		 */
+		@ApiStatus.AvailableSince("3.0.0")
 		@NotNull
 		@CheckReturnValue
 		public String getAvatar() {
@@ -473,9 +534,10 @@ public final class Request implements JsonObject {
 
 	/**
 	 * Mutable builder for the immutable {@link Request} class.
+	 * @since 3.3.0
 	 */
-	@SuppressWarnings("DuplicatedCode")
-	// not really fixable unless I added a getter annotation (which is silly do to for this one constructor)
+	@ApiStatus.AvailableSince("3.3.0")
+	@SuppressWarnings("DuplicatedCode") // not really fixable unless I added a getter interface (which is silly do to for this one constructor)
 	public static class Builder implements Cloneable {
 		private transient Socket originatingSocket;
 		private int id = -1;
@@ -488,7 +550,9 @@ public final class Request implements JsonObject {
 
 		/**
 		 * Creates a new builder.
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
 		public Builder() {
 		}
@@ -497,7 +561,9 @@ public final class Request implements JsonObject {
 		 * Creates a new builder using the data from a {@link Request}.
 		 *
 		 * @param source source for a new builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
 		private Builder(@NotNull Request source) {
 			this.id = source.id;
@@ -514,7 +580,9 @@ public final class Request implements JsonObject {
 		 * Creates a new builder from another builder.
 		 *
 		 * @param builder source for a new builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
 		private Builder(@NotNull Builder builder) {
 			this.id = builder.id;
@@ -534,7 +602,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param type result type
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder type(@Nullable Type type) {
@@ -547,7 +617,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param message request message
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder message(@Nullable String message) {
@@ -560,7 +632,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param effect requested effect
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder effect(@Nullable String effect) {
@@ -573,7 +647,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param viewer viewer requesting the effect
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder viewer(@Nullable String viewer) {
@@ -586,7 +662,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param cost cost of the effect
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder cost(@Nullable Integer cost) {
@@ -599,7 +677,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param targets targets of the effect
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder targets(Target @Nullable ... targets) {
@@ -612,7 +692,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param id request ID
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder id(int id) {
@@ -625,7 +707,9 @@ public final class Request implements JsonObject {
 		 *
 		 * @param originatingSocket originating socket
 		 * @return this builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
 		Builder originatingSocket(@Nullable Socket originatingSocket) {
@@ -639,7 +723,9 @@ public final class Request implements JsonObject {
 		 * Gets the ID of the request.
 		 *
 		 * @return request ID
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
 		public int id() {
 			return id;
@@ -649,7 +735,9 @@ public final class Request implements JsonObject {
 		 * Gets the effect being requested.
 		 *
 		 * @return requested effect
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@CheckReturnValue
 		public String effect() {
@@ -660,7 +748,9 @@ public final class Request implements JsonObject {
 		 * Gets the message describing or explaining the request.
 		 *
 		 * @return request message
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@CheckReturnValue
 		public String message() {
@@ -671,7 +761,9 @@ public final class Request implements JsonObject {
 		 * Gets the viewer requesting the effect.
 		 *
 		 * @return viewer requesting the effect
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@CheckReturnValue
 		public String viewer() {
@@ -682,7 +774,9 @@ public final class Request implements JsonObject {
 		 * Gets the cost of the effect.
 		 *
 		 * @return cost of the effect
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@CheckReturnValue
 		public Integer cost() {
@@ -693,7 +787,9 @@ public final class Request implements JsonObject {
 		 * Gets the type of result being returned.
 		 *
 		 * @return result type
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@CheckReturnValue
 		public Type type() {
@@ -704,7 +800,9 @@ public final class Request implements JsonObject {
 		 * Gets the targets of the effect.
 		 *
 		 * @return targets of the effect
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
 		public Target @Nullable [] targets() {
 			return targets;
@@ -714,7 +812,9 @@ public final class Request implements JsonObject {
 		 * Gets the originating socket of the request.
 		 *
 		 * @return originating socket
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@CheckReturnValue
 		Socket originatingSocket() {
@@ -727,7 +827,9 @@ public final class Request implements JsonObject {
 		 * Builds a new {@link Request} object.
 		 *
 		 * @return new Request
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@CheckReturnValue
 		public Request build() {
@@ -738,7 +840,9 @@ public final class Request implements JsonObject {
 		 * Creates a new {@link Response.Builder} object with the same parameters.
 		 *
 		 * @return cloned builder
+		 * @since 3.3.0
 		 */
+		@ApiStatus.AvailableSince("3.3.0")
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Builder clone() {

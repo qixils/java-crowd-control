@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol;
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
@@ -19,18 +20,25 @@ import java.time.Duration;
  * {@link dev.qixils.crowdcontrol.socket.Request effect requests} to a connected video game.
  *
  * @param <R> the type of response returned by the {@code #sendRequest} methods
+ * @since 3.3.0
  */
+@ApiStatus.AvailableSince("3.3.0")
 public interface SimulatedService<R> {
 	/**
 	 * The default time until a request {@link java.util.concurrent.TimeoutException times out}.
+	 *
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	Duration TIMEOUT = Duration.ofSeconds(15);
 
 	/**
 	 * Determines if the simulated service is currently running.
 	 *
 	 * @return {@code true} if the simulated service is currently running
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@CheckReturnValue
 	@NonBlocking
 	boolean isRunning();
@@ -39,7 +47,9 @@ public interface SimulatedService<R> {
 	 * Determines if the simulated service is currently accepting requests.
 	 *
 	 * @return {@code true} if the simulated service is currently accepting requests
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@CheckReturnValue
 	@NonBlocking
 	default boolean isAcceptingRequests() {
@@ -50,14 +60,19 @@ public interface SimulatedService<R> {
 	 * Determines if the simulated service was {@link #shutdown() shutdown}.
 	 *
 	 * @return {@code true} if the simulated service was {@link #shutdown() shutdown}
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@CheckReturnValue
 	@NonBlocking
 	boolean isShutdown();
 
 	/**
 	 * Stops the simulated server or client.
+	 *
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@Blocking
 	void shutdown();
 
@@ -74,7 +89,9 @@ public interface SimulatedService<R> {
 	 * {@link #isAcceptingRequests() accepting requests}
 	 * @throws IllegalArgumentException   if {@code request} is {@code null} or invalid
 	 * @throws EffectUnavailableException the provided effect is known to be {@link #isEffectAvailable(String) unavailable}
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@NotNull
 	@NonBlocking
 	default Flux<@NotNull R> sendRequest(@NotNull Request request) throws IllegalArgumentException, EffectUnavailableException {
@@ -92,7 +109,9 @@ public interface SimulatedService<R> {
 	 * {@link #isAcceptingRequests() accepting requests}
 	 * @throws IllegalArgumentException   if {@code builder} is {@code null} or invalid
 	 * @throws EffectUnavailableException the provided effect is known to be {@link #isEffectAvailable(String) unavailable}
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@NotNull
 	@NonBlocking
 	default Flux<@NotNull R> sendRequest(Request.@NotNull Builder builder) throws IllegalArgumentException, EffectUnavailableException {
@@ -114,7 +133,9 @@ public interface SimulatedService<R> {
 	 * {@link #isAcceptingRequests() accepting requests}
 	 * @throws IllegalArgumentException   if {@code request} is {@code null} or invalid
 	 * @throws EffectUnavailableException the provided effect is known to be {@link #isEffectAvailable(String) unavailable}
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@NotNull
 	@NonBlocking
 	default Flux<@NotNull R> sendRequest(@NotNull Request request, @Nullable Duration timeout) throws IllegalArgumentException, EffectUnavailableException {
@@ -134,7 +155,9 @@ public interface SimulatedService<R> {
 	 * {@link #isAcceptingRequests() accepting requests}
 	 * @throws IllegalArgumentException   if {@code builder} is {@code null} or invalid
 	 * @throws EffectUnavailableException the provided effect is known to be {@link #isEffectAvailable(String) unavailable}
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@NotNull
 	@NonBlocking
 	Flux<@NotNull R> sendRequest(Request.@NotNull Builder builder, @Nullable Duration timeout) throws IllegalArgumentException, EffectUnavailableException;
@@ -145,7 +168,9 @@ public interface SimulatedService<R> {
 	 * @param effect the name of the effect
 	 * @return the availability of the effect or {@link TriState#UNKNOWN} if the effect has not been
 	 * tested yet
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	@NotNull
 	@NonBlocking
 	@CheckReturnValue

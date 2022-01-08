@@ -4,6 +4,7 @@ import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.StartableService;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,10 @@ import java.util.List;
 /**
  * A server that can connect to multiple video games running a Crowd Control client using the
  * {@code SimpleTCPConnector} and dispatches {@link Request}s.
+ *
+ * @since 3.3.0
  */
+@ApiStatus.AvailableSince("3.3.0")
 public final class SimulatedServer implements StartableService<@NotNull Flux<@NotNull Response>>, ServiceManager {
 	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Server");
 	private final int port;
@@ -36,24 +40,29 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	 * Creates a new {@link SimulatedServer} that listens on the given port.
 	 *
 	 * @param port port to listen on
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public SimulatedServer(int port) {
 		this.port = port;
 	}
 
 	@Nullable
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public String getIP() {
 		return null;
 	}
 
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public int getPort() {
 		return serverSocket != null ? serverSocket.getLocalPort() : port;
 	}
 
 	@Nullable
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public String getPassword() {
 		return null;
 	}
@@ -64,6 +73,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	}
 
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public void start() throws IOException {
 		serverSocket = new ServerSocket(port);
 		loopThread = new Thread(this::loop);
@@ -94,6 +104,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 
 	@Override
 	@CheckReturnValue
+	@ApiStatus.AvailableSince("3.3.0")
 	public boolean isRunning() {
 		return running
 				&& serverSocket != null
@@ -103,11 +114,13 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	}
 
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public boolean isAcceptingRequests() {
 		return isRunning() && !getHandlers().isEmpty();
 	}
 
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public @NotNull TriState isEffectAvailable(@NotNull String effect) {
 		ExceptionUtil.validateNotNull(effect, "effect");
 		// the values returned by this are kinda weird, but it should be fine
@@ -124,6 +137,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	}
 
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public boolean isShutdown() {
 		return !running;
 	}
@@ -132,13 +146,16 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	 * Gets the number of clients connected to this server.
 	 *
 	 * @return connected clients
+	 * @since 3.3.0
 	 */
+	@ApiStatus.AvailableSince("3.3.0")
 	public int getConnectedClients() {
 		return getHandlers().size();
 	}
 
 	@Override
 	@Blocking
+	@ApiStatus.AvailableSince("3.3.0")
 	public void shutdown() {
 		if (!running) return;
 		running = false;
@@ -155,6 +172,7 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	}
 
 	@Override
+	@ApiStatus.AvailableSince("3.3.0")
 	public @NotNull Flux<@NotNull Flux<@NotNull Response>> sendRequest(Request.@NotNull Builder request, @Nullable Duration timeout) throws IllegalStateException {
 		if (!isAcceptingRequests())
 			throw new IllegalStateException("Server is not accepting requests");

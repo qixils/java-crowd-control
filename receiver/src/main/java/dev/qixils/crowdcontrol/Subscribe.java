@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -11,7 +12,10 @@ import java.lang.annotation.Target;
  * Indicates that the annotated method is an effect handler for the
  * {@link #effect() provided effect}. The containing class must be
  * {@link CrowdControl#registerHandlers(Object) registered}.
+ *
+ * @since 1.0.0
  */
+@ApiStatus.AvailableSince("1.0.0")
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Subscribe {
@@ -19,7 +23,9 @@ public @interface Subscribe {
 	 * The name of the effect to listen to.
 	 *
 	 * @return effect name
+	 * @since 1.0.0
 	 */
+	@ApiStatus.AvailableSince("1.0.0")
 	@NotNull
 	String effect();
 }

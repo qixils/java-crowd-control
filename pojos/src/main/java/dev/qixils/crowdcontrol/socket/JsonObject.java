@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,10 @@ import java.util.function.Function;
 
 /**
  * An object that can be serialized into JSON.
+ *
+ * @since 3.3.0
  */
+@ApiStatus.AvailableSince("3.3.0")
 public interface JsonObject {
 	/**
 	 * Obtains a JSON object from an input stream.
@@ -21,9 +25,12 @@ public interface JsonObject {
 	 * @param <T>        the type of the POJO
 	 * @return the parsed POJO
 	 * @throws IOException if an I/O error occurs in the input stream
+	 * @since 3.3.0
 	 */
 	@Nullable
 	@CheckReturnValue
+	@ApiStatus.Internal
+	@ApiStatus.AvailableSince("3.3.0")
 	static <T> T fromInputStream(@NotNull InputStreamReader input, @NotNull Function<@NotNull String, @Nullable T> jsonMapper) throws IOException {
 		ExceptionUtil.validateNotNull(input, "input");
 		ExceptionUtil.validateNotNull(jsonMapper, "jsonMapper");
@@ -57,8 +64,10 @@ public interface JsonObject {
 	 * Converts this object to its JSON representation.
 	 *
 	 * @return JSON string
+	 * @since 3.3.0
 	 */
 	@NotNull
 	@CheckReturnValue
+	@ApiStatus.AvailableSince("3.3.0")
 	String toJSON();
 }

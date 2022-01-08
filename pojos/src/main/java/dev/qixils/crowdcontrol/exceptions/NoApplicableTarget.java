@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.exceptions;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -9,14 +10,19 @@ import org.jetbrains.annotations.Nullable;
  * effect and that the library should
  * {@link dev.qixils.crowdcontrol.socket.Response.ResultType#RETRY retry} the effect after a short
  * time.
+ *
+ * @since 3.0.0
  */
-public class NoApplicableTarget extends CrowdControlException {
+@ApiStatus.AvailableSince("3.0.0")
+public final class NoApplicableTarget extends CrowdControlException {
 
 	/**
 	 * Constructs a new exception with {@code null} as its detail message.
 	 * The cause is not initialized, and may subsequently be initialized by a
 	 * call to {@link #initCause}.
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public NoApplicableTarget() {
 		super();
 	}
@@ -28,7 +34,9 @@ public class NoApplicableTarget extends CrowdControlException {
 	 *
 	 * @param message the detail message. The detail message is saved for
 	 *                later retrieval by the {@link #getMessage()} method.
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public NoApplicableTarget(@Nullable String message) {
 		super(message);
 	}
@@ -45,7 +53,9 @@ public class NoApplicableTarget extends CrowdControlException {
 	 *              {@link #getCause()} method).  (A {@code null} value is
 	 *              permitted, and indicates that the cause is nonexistent or
 	 *              unknown.)
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public NoApplicableTarget(@Nullable Throwable cause) {
 		super(cause);
 	}
@@ -62,7 +72,9 @@ public class NoApplicableTarget extends CrowdControlException {
 	 *                {@link #getCause()} method).  (A {@code null} value is
 	 *                permitted, and indicates that the cause is nonexistent or
 	 *                unknown.)
+	 * @since 3.0.0
 	 */
+	@ApiStatus.AvailableSince("3.0.0")
 	public NoApplicableTarget(@Nullable String message, @Nullable Throwable cause) {
 		super(message, cause);
 	}

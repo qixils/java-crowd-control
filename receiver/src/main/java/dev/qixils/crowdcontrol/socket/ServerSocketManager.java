@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol.socket;
 
 import dev.qixils.crowdcontrol.RequestManager;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -18,7 +19,10 @@ import java.util.concurrent.Executors;
 
 /**
  * Manages the connection to Crowd Control clients.
+ *
+ * @since 3.0.0
  */
+@ApiStatus.AvailableSince("3.0.0")
 public final class ServerSocketManager implements SocketManager {
 	private static final Logger logger = LoggerFactory.getLogger("CC-ServerSocket");
 	final RequestManager crowdControl;
@@ -31,8 +35,11 @@ public final class ServerSocketManager implements SocketManager {
 	 * Creates a new server-side socket manager. This is intended only for use by the library.
 	 *
 	 * @param crowdControl Crowd Control instance
+	 * @since 3.0.0
 	 */
 	@CheckReturnValue
+	@ApiStatus.Internal
+	@ApiStatus.AvailableSince("3.0.0")
 	public ServerSocketManager(@NotNull RequestManager crowdControl) {
 		this.crowdControl = ExceptionUtil.validateNotNull(crowdControl, "crowdControl");
 		new Thread(this::loop, "crowd-control-socket-loop").start();
@@ -68,6 +75,7 @@ public final class ServerSocketManager implements SocketManager {
 	}
 
 	@Override
+	@ApiStatus.AvailableSince("3.1.0")
 	public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
 		if (!running) return;
 		running = false;
