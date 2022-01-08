@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 public class ResponseTests {
 	@Test
 	public void constructorTest() {
+		Request request = new Request.Builder().effect("test").viewer("sdk").id(1).build();
+
 		// Constructor 1
 
 		// negative ID throws IllegalArgumentException
@@ -34,8 +36,15 @@ public class ResponseTests {
 				Response.PacketType.EFFECT_RESULT,
 				"Effect applied successfully"
 		));
-		// null message throws IllegalArgumentException
+		// null message throws IllegalArgumentException when PacketType#isMessageRequired() is true
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				1,
+				null,
+				Response.PacketType.DISCONNECT,
+				null
+		));
+		// null message doesn't throw when PacketType#isMessageRequired() is false
+		Assertions.assertDoesNotThrow(() -> new Response(
 				1,
 				null,
 				Response.PacketType.LOGIN,
@@ -79,19 +88,25 @@ public class ResponseTests {
 		));
 		// null packet type throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				new Request.Builder().id(1).build(),
+				request,
 				null,
 				"Effect applied successfully"
 		));
 		// effect type packet throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				new Request.Builder().id(1).build(),
+				request,
 				Response.PacketType.EFFECT_RESULT,
 				"Effect applied successfully"
 		));
-		// null message throws IllegalArgumentException
+		// null message throws IllegalArgumentException when PacketType#isMessageRequired() is true
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				new Request.Builder().id(1).build(),
+				request,
+				Response.PacketType.DISCONNECT,
+				null
+		));
+		// null message doesn't throw when PacketType#isMessageRequired() is false
+		Assertions.assertDoesNotThrow(() -> new Response(
+				request,
 				Response.PacketType.LOGIN,
 				null
 		));
@@ -107,14 +122,14 @@ public class ResponseTests {
 		));
 		// null result type throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				new Request.Builder().id(1).build(),
+				request,
 				null,
 				"Effect applied successfully",
 				1000
 		));
 		// negative timeRemaining throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				new Request.Builder().id(1).build(),
+				request,
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				-1

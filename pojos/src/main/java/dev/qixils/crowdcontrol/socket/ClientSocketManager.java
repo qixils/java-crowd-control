@@ -54,13 +54,13 @@ public final class ClientSocketManager implements SocketManager {
 				}
 
 				logger.info("Crowd Control socket shutting down");
-				DummyResponse.from(null, "Server is shutting down").write(socket);
+				Response.ofDisconnectMessage(socket, "Server is shutting down").send();
 			} catch (IOException e) {
 				if ("Connection reset".equals(e.getMessage())) {
 					logger.info("Server terminated connection");
 				} else if (socket != null && !socket.isClosed()) {
 					// send error message
-					DummyResponse.from(null, running ? "Server encountered an error" : "Server is shutting down").write(socket);
+					Response.ofDisconnectMessage(socket, running ? "Server encountered an error" : "Server is shutting down").send();
 
 					// ensure socket is closed
 					try {
@@ -93,7 +93,7 @@ public final class ClientSocketManager implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (socket != null && !socket.isClosed()) {
-			DummyResponse.from(cause, reason).write(socket);
+			Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).send();
 			socket.close();
 		}
 	}

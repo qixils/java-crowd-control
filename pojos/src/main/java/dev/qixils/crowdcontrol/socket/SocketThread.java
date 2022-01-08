@@ -22,11 +22,11 @@ final class SocketThread extends Thread implements SocketManager {
 	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-SocketThread");
 
 	static {
-		DummyResponse resp = new DummyResponse();
-		resp.type = Response.PacketType.LOGIN;
+		Response resp = new Response(0, null, Response.PacketType.LOGIN, null);
 		RAW_PASSWORD_REQUEST = resp.toJSON();
 		byte[] json = RAW_PASSWORD_REQUEST.getBytes(StandardCharsets.UTF_8);
 		// array copy adds an extra 0x00 byte to the end, indicating the end of the packet
+		// (I am very smart)
 		PASSWORD_REQUEST = Arrays.copyOf(json, json.length + 1);
 	}
 
@@ -56,7 +56,7 @@ final class SocketThread extends Thread implements SocketManager {
 			}
 
 			logger.info("Disconnecting from client socket (" + displayName + ")");
-			DummyResponse.from(null, "Server is shutting down").write(socket);
+			Response.ofDisconnectMessage(socket, "Server is shutting down").send();
 		} catch (IOException exc) {
 			if ("Connection reset".equals(exc.getMessage())) {
 				logger.info("Client disconnected from server (" + displayName + ")");
@@ -90,7 +90,7 @@ final class SocketThread extends Thread implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (!socket.isClosed()) {
-			DummyResponse.from(cause, reason).write(socket);
+			Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).send();
 			socket.close();
 		}
 	}

@@ -66,8 +66,13 @@ public final class Response implements JsonObject {
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
 	 *                                      <li>if the {@code timeRemaining} is negative</li>
-	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT} and {@code type} is null</li>
-	 *                                      <li>if the {@code packetType} is not {@link PacketType#EFFECT_RESULT} and {@code type} is non-null</li>
+	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}
+	 *                                      and {@code type} is null</li>
+	 *                                      <li>if the {@code packetType} is not {@link PacketType#EFFECT_RESULT}
+	 *                                      and {@code type} is non-null</li>
+	 *                                      <li>if the {@code message} is null,
+	 *                                      {@code packetType} is not {@link PacketType#EFFECT_RESULT},
+	 *                                      and {@link PacketType#isMessageRequired() packetType.isMessageRequired()} is true</li>
 	 *                                  </ul>
 	 */
 	private Response(int id,
@@ -98,6 +103,9 @@ public final class Response implements JsonObject {
 		this.message = type == null
 				? message
 				: ExceptionUtil.validateNotNullElseGet(message, type::name);
+
+		if (this.message == null && this.packetType.isMessageRequired())
+			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
 	}
 
 	/**
@@ -113,13 +121,14 @@ public final class Response implements JsonObject {
 	 *                                      <li>if the {@code id} is negative</li>
 	 *                                      <li>if the {@code packetType} is null</li>
 	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}</li>
-	 *                                      <li>if the {@code message} is null</li>
+	 *                                      <li>if the {@code message} is null
+	 *                                      and {@link PacketType#isMessageRequired() packetType.isMessageRequired()} is true</li>
 	 *                                  </ul>
 	 */
 	Response(int id,
 			 @Nullable Socket originatingSocket,
 			 @NotNull PacketType packetType,
-			 @NotNull String message) throws IllegalArgumentException {
+			 @Nullable String message) throws IllegalArgumentException {
 		if (packetType == PacketType.EFFECT_RESULT)
 			throw new IllegalArgumentException("packetType cannot be EFFECT_RESULT in this constructor");
 		this.id = id;
@@ -127,7 +136,9 @@ public final class Response implements JsonObject {
 			throw new IllegalArgumentException("ID cannot be negative");
 		this.originatingSocket = originatingSocket;
 		this.packetType = ExceptionUtil.validateNotNull(packetType, "packetType");
-		this.message = ExceptionUtil.validateNotNull(message, "message");
+		if (packetType.isMessageRequired() && message == null)
+			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
+		this.message = message;
 		this.type = null;
 		this.timeRemaining = 0;
 	}
@@ -170,12 +181,14 @@ public final class Response implements JsonObject {
 	 *                                      <li>if the {@code packetType} is null</li>
 	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}</li>
 	 *                                      <li>if the {@code message} is null</li>
+	 *                                      <li>if the {@code message} is null
+	 *                                      and {@link PacketType#isMessageRequired() packetType.isMessageRequired()} is true</li>
 	 *                                  </ul>
 	 */
 	@CheckReturnValue
 	Response(@NotNull Request request,
 			 @NotNull PacketType packetType,
-			 @NotNull String message) throws IllegalArgumentException {
+			 @Nullable String message) throws IllegalArgumentException {
 		if (packetType == PacketType.EFFECT_RESULT)
 			throw new IllegalArgumentException("packetType cannot be EFFECT_RESULT in this constructor");
 		ExceptionUtil.validateNotNull(request, "request");
@@ -183,7 +196,9 @@ public final class Response implements JsonObject {
 		this.originatingSocket = request.originatingSocket;
 		this.packetType = ExceptionUtil.validateNotNull(packetType, "packetType");
 		this.type = null;
-		this.message = ExceptionUtil.validateNotNull(message, "message");
+		if (message == null && packetType.isMessageRequired())
+			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
+		this.message = message;
 		this.timeRemaining = 0;
 	}
 
@@ -235,6 +250,49 @@ public final class Response implements JsonObject {
 	public static Response fromJSON(@NotNull String json) throws JsonSyntaxException {
 		ExceptionUtil.validateNotNull(json, "json");
 		return ByteAdapter.GSON.fromJson(json, Response.class);
+	}
+
+	/**
+	 * Creates a {@link Response} indicating that the socket connection is being terminated.
+	 *
+	 * @param id                ID of the request which caused this response
+	 * @param originatingSocket socket being terminated
+	 * @param message           message describing the reason for termination
+	 * @return a new Response object
+	 * @throws IllegalArgumentException if the socket is null
+	 */
+	@CheckReturnValue
+	@NotNull
+	static Response ofDisconnectMessage(int id, @NotNull Socket originatingSocket, @Nullable String message) {
+		return new Response(id, originatingSocket, PacketType.DISCONNECT, ExceptionUtil.validateNotNullElse(message, "Disconnected"));
+	}
+
+	/**
+	 * Creates a {@link Response} indicating that the socket connection is being terminated.
+	 *
+	 * @param originatingSocket socket being terminated
+	 * @param message           message describing the reason for termination
+	 * @return a new Response object
+	 * @throws IllegalArgumentException if the socket is null
+	 */
+	@CheckReturnValue
+	@NotNull
+	static Response ofDisconnectMessage(@NotNull Socket originatingSocket, @Nullable String message) {
+		return ofDisconnectMessage(0, originatingSocket, message);
+	}
+
+	/**
+	 * Creates a {@link Response} indicating that the socket connection is being terminated.
+	 *
+	 * @param request request which caused this response
+	 * @param message message describing the reason for termination
+	 * @return a new Response object
+	 * @throws IllegalArgumentException if the request is null
+	 */
+	@CheckReturnValue
+	@NotNull
+	static Response ofDisconnectMessage(@NotNull Request request, @Nullable String message) {
+		return ofDisconnectMessage(request.getId(), request.originatingSocket, message);
 	}
 
 	/**
@@ -389,27 +447,27 @@ public final class Response implements JsonObject {
 		/**
 		 * The packet is the result of executing an effect.
 		 */
-		EFFECT_RESULT,
+		EFFECT_RESULT(true),
 		/**
 		 * <b>Internal value</b> used to prompt a connecting client for a password.
 		 */
 		@ApiStatus.Internal
-		LOGIN((byte) 0xF0),
+		LOGIN(false, (byte) 0xF0),
 		/**
 		 * <b>Internal value</b> used to indicate a successful login.
 		 */
 		@ApiStatus.Internal
-		LOGIN_SUCCESS((byte) 0xF1),
+		LOGIN_SUCCESS(false, (byte) 0xF1),
 		/**
 		 * <b>Internal value</b> used to indicate that the socket is being disconnected.
 		 */
 		@ApiStatus.Internal
-		DISCONNECT((byte) 0xFE),
+		DISCONNECT(true, (byte) 0xFE),
 		/**
 		 * <b>Internal value</b> used to reply to a keep alive packet.
 		 */
 		@ApiStatus.Internal
-		KEEP_ALIVE((byte) 0xFF);
+		KEEP_ALIVE(false, (byte) 0xFF);
 
 		private static final Map<Byte, PacketType> BY_BYTE;
 
@@ -421,12 +479,15 @@ public final class Response implements JsonObject {
 		}
 
 		private final byte encodedByte;
+		private final boolean isMessageRequired;
 
-		PacketType(byte encodedByte) {
+		PacketType(boolean isMessageRequired, byte encodedByte) {
+			this.isMessageRequired = isMessageRequired;
 			this.encodedByte = encodedByte;
 		}
 
-		PacketType() {
+		PacketType(boolean isMessageRequired) {
+			this.isMessageRequired = isMessageRequired;
 			this.encodedByte = (byte) ordinal();
 		}
 
@@ -442,6 +503,15 @@ public final class Response implements JsonObject {
 
 		public byte getEncodedByte() {
 			return encodedByte;
+		}
+
+		/**
+		 * Determines if this packet type requires an accompanying message to be sent.
+		 *
+		 * @return true if a message is required
+		 */
+		public boolean isMessageRequired() {
+			return isMessageRequired;
 		}
 	}
 
