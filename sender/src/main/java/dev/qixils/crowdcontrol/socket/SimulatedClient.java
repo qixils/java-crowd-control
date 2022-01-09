@@ -18,10 +18,8 @@ import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A client that connects to a video game hosting a Crowd Control server using the
@@ -29,17 +27,16 @@ import java.util.concurrent.TimeUnit;
  *
  * @since 3.3.0
  */
+@SuppressWarnings("deprecation") // deprecated APIs still need to be implemented
 @ApiStatus.AvailableSince("3.3.0")
 public final class SimulatedClient implements AutomatableService<Response>, ServiceManager {
 	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Client");
-	private final @NonBlockingExecutor ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	private final @NonBlockingExecutor Executor executor = Executors.newSingleThreadExecutor();
 	private final String ip;
 	private final int port;
 	private final String password;
 	private @Nullable RequestHandler handler = null;
 	private boolean running = true;
-	private int reconnectionAttempts = 0;
-	private ScheduledFuture<?> reconnectHandle = null;
 
 	/**
 	 * Creates a new {@code SimulatedClient} that connects to the given host using the
@@ -90,40 +87,20 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 		handler.start();
 	}
 
+	@SuppressWarnings("BlockingMethodInNonBlockingContext")
 	@Override
 	@NonBlocking
 	@ApiStatus.AvailableSince("3.3.0")
-	// TODO: unit test this
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+	@Deprecated
 	public void autoStart() {
-		if (!running)
-			throw new IllegalStateException("Client has already shut down");
-		if (reconnectHandle != null)
-			throw new IllegalStateException("Client is already running");
-		executor.execute(this::loop);
-	}
-
-	@Blocking
-	private void loop() {
-		if (!running)
-			return;
-
-		// TODO: return value of start(); should be a Mono<Void> that completes on shut down
-		// or, for 3.4.0 or 4.0.0, a Flux of software states (i.e. CONNECTED, LISTENING, SHUTTING_DOWN)
-		// these would help avoid this terrible if block:
-		if (handler != null && !handler.isRunning()) {
-			reconnectionAttempts = 0;
-			reconnectHandle = executor.schedule(this::loop, 1L, TimeUnit.SECONDS);
-			return;
-		}
-
-		try {
-			start();
-			reconnectionAttempts = 0;
-			reconnectHandle = executor.schedule(this::loop, 2L, TimeUnit.SECONDS);
-		} catch (IOException e) {
-			logger.warn("Failed to connect to server", e);
-			reconnectHandle = executor.schedule(this::loop, (long) Math.pow(2, reconnectionAttempts++), TimeUnit.SECONDS);
-		}
+		executor.execute(() -> {
+			try {
+				start();
+			} catch (IOException e) {
+				logger.warn("Could not start client", e);
+			}
+		});
 	}
 
 	@Override
