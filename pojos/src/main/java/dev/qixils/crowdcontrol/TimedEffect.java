@@ -334,7 +334,7 @@ public final class TimedEffect {
 
 		if (response.type() == Response.ResultType.SUCCESS) {
 			response.timeRemaining(duration);
-			future = EXECUTOR.schedule(this::complete, duration, TimeUnit.MILLISECONDS);
+			future = EXECUTOR.schedule(() -> complete(), duration, TimeUnit.MILLISECONDS);
 		}
 
 		response.send();
@@ -384,11 +384,12 @@ public final class TimedEffect {
 		paused = false;
 		startedAt = System.currentTimeMillis();
 		request.buildResponse().type(Response.ResultType.RESUMED).timeRemaining(duration).send();
-		future = EXECUTOR.schedule(this::complete, duration, TimeUnit.MILLISECONDS);
+		future = EXECUTOR.schedule(() -> complete(), duration, TimeUnit.MILLISECONDS);
 	}
 
 	/**
-	 * Marks the effect as completed.
+	 * Marks the effect as completed and executes the
+	 * {@link Builder#completionCallback() completion callback}.
 	 *
 	 * @return Whether the effect was marked as complete as a result of this method call.
 	 * If this effect was already complete, {@code false} is returned.
@@ -397,6 +398,22 @@ public final class TimedEffect {
 	 */
 	@ApiStatus.AvailableSince("2.1.0")
 	public boolean complete() throws IllegalStateException {
+		return complete(true);
+	}
+
+	/**
+	 * Marks the effect as completed and optionally executes the
+	 * {@link Builder#completionCallback() completion callback}.
+	 *
+	 * @param executeCompletionCallback whether to execute the
+	 *                                  {@link Builder#completionCallback() completion callback}
+	 * @return Whether the effect was marked as complete as a result of this method call.
+	 * If this effect was already complete, {@code false} is returned.
+	 * @throws IllegalStateException the effect has not {@link #hasStarted() started}
+	 * @since 3.3.3
+	 */
+	@ApiStatus.AvailableSince("3.3.3")
+	public boolean complete(boolean executeCompletionCallback) throws IllegalStateException {
 		if (startedAt == -1)
 			throw new IllegalStateException("Effect has not started");
 		if (duration == -1)
@@ -411,7 +428,7 @@ public final class TimedEffect {
 		}
 
 		request.buildResponse().type(Response.ResultType.FINISHED).send();
-		if (completionCallback != null) {
+		if (executeCompletionCallback && completionCallback != null) {
 			try {
 				completionCallback.accept(this);
 			} catch (Exception exception) {
