@@ -12,12 +12,16 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 @SuppressWarnings("BusyWait")
 public final class EffectResponseTests {
+	private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
 	private void basicTest(String effectName,
@@ -396,6 +400,162 @@ public final class EffectResponseTests {
 		Assertions.assertEquals(Response.ResultType.RETRY, response.getResultType());
 		Assertions.assertEquals(0, response.getTimeRemaining());
 		Thread.sleep(50); // wait for completion callback (not that it should execute)
+		Assertions.assertFalse(completionFuture.isDone());
+
+		// cleanup
+		client.shutdown("Test completed");
+		Thread.sleep(10);
+		server.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
+
+	@Test
+	public void abruptCompletionTest1() throws InterruptedException, TimeoutException, ExecutionException {
+		SimulatedServer server = new SimulatedServer(0);
+		Assertions.assertDoesNotThrow(server::start);
+
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
+		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+		client.registerHandlers(new EffectHandlers(
+				effect -> EXECUTOR.schedule(() -> effect.complete(), 10, TimeUnit.MILLISECONDS),
+				$ -> completionFuture.complete(null)
+		));
+
+		// give client time to connect
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		Request.Builder builder = new Request.Builder()
+				.effect("timedEffectCompletionCallback")
+				.viewer("test")
+				.targets(new Request.Target(1, "qixils", "google.com"));
+		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
+		Assertions.assertNotNull(responseFlux);
+		// test first response
+		CompletableFuture<Response> firstResponse = new CompletableFuture<>();
+		CompletableFuture<Response> secondResponse = new CompletableFuture<>();
+		responseFlux.subscribe(response -> {
+			if (!firstResponse.complete(response))
+				secondResponse.complete(response);
+		});
+		Response response = firstResponse.get(1, TimeUnit.SECONDS);
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		// test second response
+		response = secondResponse.get(1, TimeUnit.SECONDS);
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
+		Thread.sleep(100); // wait for completion callback
+		Assertions.assertTrue(completionFuture.isDone());
+
+		// cleanup
+		client.shutdown("Test completed");
+		Thread.sleep(10);
+		server.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
+
+	@Test
+	public void abruptCompletionTest2() throws InterruptedException, TimeoutException, ExecutionException {
+		SimulatedServer server = new SimulatedServer(0);
+		Assertions.assertDoesNotThrow(server::start);
+
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
+		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+		client.registerHandlers(new EffectHandlers(
+				effect -> EXECUTOR.schedule(() -> effect.complete(true), 10, TimeUnit.MILLISECONDS),
+				$ -> completionFuture.complete(null)
+		));
+
+		// give client time to connect
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		Request.Builder builder = new Request.Builder()
+				.effect("timedEffectCompletionCallback")
+				.viewer("test")
+				.targets(new Request.Target(1, "qixils", "google.com"));
+		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
+		Assertions.assertNotNull(responseFlux);
+		// test first response
+		CompletableFuture<Response> firstResponse = new CompletableFuture<>();
+		CompletableFuture<Response> secondResponse = new CompletableFuture<>();
+		responseFlux.subscribe(response -> {
+			if (!firstResponse.complete(response))
+				secondResponse.complete(response);
+		});
+		Response response = firstResponse.get(1, TimeUnit.SECONDS);
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		// test second response
+		response = secondResponse.get(1, TimeUnit.SECONDS);
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
+		Thread.sleep(100); // wait for completion callback
+		Assertions.assertTrue(completionFuture.isDone());
+
+		// cleanup
+		client.shutdown("Test completed");
+		Thread.sleep(10);
+		server.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
+
+	@Test
+	public void abruptCompletionTest3() throws InterruptedException, TimeoutException, ExecutionException {
+		SimulatedServer server = new SimulatedServer(0);
+		Assertions.assertDoesNotThrow(server::start);
+
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
+		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+		client.registerHandlers(new EffectHandlers(
+				effect -> EXECUTOR.schedule(() -> effect.complete(false), 10, TimeUnit.MILLISECONDS),
+				$ -> completionFuture.complete(null)
+		));
+
+		// give client time to connect
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		Request.Builder builder = new Request.Builder()
+				.effect("timedEffectCompletionCallback")
+				.viewer("test")
+				.targets(new Request.Target(1, "qixils", "google.com"));
+		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
+		Assertions.assertNotNull(responseFlux);
+		// test first response
+		CompletableFuture<Response> firstResponse = new CompletableFuture<>();
+		CompletableFuture<Response> secondResponse = new CompletableFuture<>();
+		responseFlux.subscribe(response -> {
+			if (!firstResponse.complete(response))
+				secondResponse.complete(response);
+		});
+		Response response = firstResponse.get(1, TimeUnit.SECONDS);
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		// test second response
+		response = secondResponse.get(1, TimeUnit.SECONDS);
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
+		Thread.sleep(100); // wait for completion callback
 		Assertions.assertFalse(completionFuture.isDone());
 
 		// cleanup

@@ -110,10 +110,24 @@ public final class TimedEffect {
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
 					   @Nullable Consumer<@NotNull TimedEffect> completionCallback) throws IllegalArgumentException {
-		this(request, effectGroup, duration, effect -> {
+		this.request = ExceptionUtil.validateNotNull(request, "request");
+		this.effectGroup = ExceptionUtil.validateNotNullElseGet(effectGroup, request::getEffect);
+		this.globalKey = new MapKey(this.effectGroup);
+		if (duration < 0)
+			throw new IllegalArgumentException("duration must not be negative");
+		this.originalDuration = duration;
+		ExceptionUtil.validateNotNull(callback, "callback");
+		this.callback = effect -> {
 			callback.accept(effect);
 			return null;
-		}, completionCallback);
+		};
+		this.completionCallback = completionCallback;
+
+		Request.Target[] targets = request.getTargets();
+		mapKeys = new MapKey[targets.length];
+		for (int i = 0; i < targets.length; i++) {
+			mapKeys[i] = new MapKey(this.effectGroup, targets[i]);
+		}
 	}
 
 	/**
@@ -324,6 +338,14 @@ public final class TimedEffect {
 		} catch (Throwable exception) {
 			logger.error("Exception occurred during starting callback", exception);
 			request.buildResponse().type(Response.ResultType.FAILURE).message("Requested effect failed to execute").send();
+
+			duration = -1;
+			if (mapKeys.length == 0)
+				ACTIVE_EFFECTS.remove(globalKey, this);
+			else {
+				for (MapKey mapKey : mapKeys)
+					ACTIVE_EFFECTS.remove(mapKey, this);
+			}
 			return;
 		}
 
