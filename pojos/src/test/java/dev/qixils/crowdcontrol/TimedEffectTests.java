@@ -12,7 +12,7 @@ import java.util.function.Function;
 /**
  * Miscellaneous tests for the TimedEffect class that can be run in isolation.
  */
-@SuppressWarnings("ConstantConditions")
+@SuppressWarnings({"ConstantConditions", "BusyWait"})
 public class TimedEffectTests {
 	private static final Request request = new Request(1,
 			Request.Type.START,
@@ -158,12 +158,14 @@ public class TimedEffectTests {
 		// void methods
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::resume); // throws because effect has not been paused
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::pause); // throws because effect has not started
+		Assertions.assertThrows(IllegalStateException.class, timedEffect::complete); // will throw because effect has not started
+		Assertions.assertThrows(IllegalStateException.class, () -> timedEffect.complete(true)); // will throw because effect has not started
+		Assertions.assertThrows(IllegalStateException.class, () -> timedEffect.complete(false)); // will throw because effect has not started
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::queue); // will throw because request is invalid
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::queue); // will throw because effect is already queued
-		Assertions.assertThrows(IllegalStateException.class, timedEffect::complete); // will throw because effect has not started
 
-		timedEffect = timedEffect.toBuilder().effectGroup("blah").build();
-		Assertions.assertEquals("blah", timedEffect.getEffectGroup());
+		TimedEffect newEffect = timedEffect.toBuilder().effectGroup("blah").build();
+		Assertions.assertEquals("blah", newEffect.getEffectGroup());
 	}
 
 	@Test
@@ -220,8 +222,16 @@ public class TimedEffectTests {
 		Assertions.assertEquals("test", timedEffect.getEffectGroup());
 	}
 
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	@Test
-	public void staticMethodTests() {
+	public void staticMethodTests() throws InterruptedException {
+		// because of Race Conditions(tm) this test will sometimes fail
+		// this busy loop ensures that it will not fail
+		int delay = 1;
+		while (TimedEffect.isActive(request) && delay <= 14) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
 		Assertions.assertFalse(TimedEffect.isActive(request));
 		Assertions.assertFalse(TimedEffect.isActive("blah"));
 		Assertions.assertFalse(TimedEffect.isActive("blah", request));
