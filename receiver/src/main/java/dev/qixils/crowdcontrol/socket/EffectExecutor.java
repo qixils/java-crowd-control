@@ -55,10 +55,14 @@ final class EffectExecutor {
 		}
 
 		if (request == null) {
-			if (socketThread != null)
-				socketThread.shutdown("Received a blank packet; assuming client has disconnected");
-			else
-				socket.close();
+			logger.debug("Received a blank packet; assuming client has disconnected");
+			try {
+				if (socketThread != null)
+					socketThread.shutdown("Received a blank packet; assuming client has disconnected");
+				else
+					socket.close();
+			} catch (IOException ignored) {
+			}
 			return;
 		}
 
