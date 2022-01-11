@@ -61,7 +61,8 @@ final class EffectExecutor {
 					socketThread.shutdown("Received a blank packet; assuming client has disconnected");
 				else
 					socket.close();
-			} catch (IOException ignored) {
+			} catch (IOException e) {
+				logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");
 			}
 			return;
 		}
