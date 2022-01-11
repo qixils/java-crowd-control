@@ -90,7 +90,7 @@ final class SocketThread extends Thread implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (!socket.isClosed()) {
-			Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).send();
+			Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).rawSend();
 			socket.close();
 		}
 	}

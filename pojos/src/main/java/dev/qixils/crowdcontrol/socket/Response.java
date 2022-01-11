@@ -449,6 +449,14 @@ public final class Response implements JsonObject {
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	public void send() throws IllegalStateException {
+		try {
+			rawSend();
+		} catch (IOException exc) {
+			logger.warn("Failed to write response to socket", exc);
+		}
+	}
+
+	void rawSend() throws IllegalStateException, IOException {
 		if (!isOriginKnown()) {
 			throw new IllegalStateException("Response was constructed without a Request and thus cannot find where to be sent");
 		}
@@ -460,19 +468,16 @@ public final class Response implements JsonObject {
 		//object is never updated after assignment, so we can ignore this error:
 		//noinspection SynchronizeOnNonFinalField
 		synchronized (originatingSocket) {
-			try {
-				OutputStream output = originatingSocket.getOutputStream();
-				output.write(toJSON().getBytes(StandardCharsets.UTF_8));
-				output.write(0x00);
-				output.flush();
-			} catch (IOException exc) {
-				logger.warn("Failed to write response to socket", exc);
-			}
+			OutputStream output = originatingSocket.getOutputStream();
+			output.write(toJSON().getBytes(StandardCharsets.UTF_8));
+			output.write(0x00);
+			output.flush();
 		}
 	}
 
 	/**
 	 * Determines the type of packet being sent.
+	 *
 	 * @since 3.0.0
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
