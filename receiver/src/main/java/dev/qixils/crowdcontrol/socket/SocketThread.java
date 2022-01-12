@@ -56,7 +56,11 @@ final class SocketThread extends Thread implements SocketManager {
 			}
 
 			logger.info("Disconnecting from client socket (" + displayName + ")");
-			Response.ofDisconnectMessage(socket, "Server is shutting down").send();
+			try {
+				Response.ofDisconnectMessage(socket, "Server is shutting down").rawSend();
+			} catch (IOException exc) {
+				logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");
+			}
 		} catch (IOException exc) {
 			if ("Connection reset".equals(exc.getMessage())) {
 				logger.info("Client disconnected from server (" + displayName + ")");
