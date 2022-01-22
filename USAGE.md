@@ -154,7 +154,10 @@ Crowd Control app. Example:
 ```cs
 using System;
 using System.Collections.Generic;
+using ConnectorLib;
 using CrowdControl.Common;
+using CrowdControl.Games.Packs;
+using ConnectorType = CrowdControl.Common.ConnectorType;
 
 namespace CrowdControl.Games.Packs
 {
