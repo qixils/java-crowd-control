@@ -1,6 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -12,14 +13,28 @@ import java.io.IOException;
  */
 @ApiStatus.AvailableSince("3.0.0")
 public interface SocketManager {
+
+	/**
+	 * Creates a {@link Response} {@link Response.Builder builder} which will be dispatched to
+	 * the connected server or clients upon calling {@link Response#send()}.
+	 * <p>
+	 * Unlike the usual methods of creating a {@link Response}, this does not require a
+	 * corresponding {@link Request} to send the packet.
+	 *
+	 * @return a new response builder
+	 * @since 3.3.4
+	 */
+	@ApiStatus.AvailableSince("3.3.4")
+	Response.@NotNull Builder buildResponse(int id); // TODO unit test
+
 	/**
 	 * Shuts down the Crowd Control socket.
 	 *
 	 * @throws IOException an I/O exception occurred while trying to close the socket
 	 * @see #shutdown(String)
 	 * @see #shutdown(Request, String)
-	 * @deprecated providing error messages via {@link #shutdown(String)} is recommended
 	 * @since 3.0.0
+	 * @deprecated providing error messages via {@link #shutdown(String)} is recommended
 	 */
 	@Deprecated
 	@ApiStatus.AvailableSince("3.0.0")

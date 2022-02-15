@@ -162,6 +162,11 @@ public final class CrowdControl implements SocketManager, RequestManager {
 		logger.warn("Method " + method.getName() + " is improperly configured: " + errorDescription);
 	}
 
+	@Override
+	public Response.@NotNull Builder buildResponse(int id) {
+		return socketManager.buildResponse(id);
+	}
+
 	/**
 	 * Returns the IP that the {@link SocketManager} will listen on.
 	 * If running in server mode, this will be null.

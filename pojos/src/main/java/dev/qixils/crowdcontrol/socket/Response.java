@@ -32,8 +32,8 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0.0
  */
 @ApiStatus.AvailableSince("1.0.0")
-public final class Response implements JsonObject {
-	private static final Logger logger = LoggerFactory.getLogger("CC-Response");
+public class Response implements JsonObject {
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-Response");
 	@SerializedName("type")
 	private PacketType packetType;
 	private transient Socket originatingSocket;
@@ -48,7 +48,8 @@ public final class Response implements JsonObject {
 	 * <p>
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
-	@SuppressWarnings("unused") // used by GSON
+	@SuppressWarnings("unused")
+	// used by GSON
 	Response() {
 	}
 
@@ -76,12 +77,12 @@ public final class Response implements JsonObject {
 	 *                                      and {@link PacketType#isMessageRequired() packetType.isMessageRequired()} is true</li>
 	 *                                  </ul>
 	 */
-	private Response(int id,
-					 @Nullable Socket originatingSocket,
-					 @Nullable PacketType packetType,
-					 @Nullable ResultType type,
-					 @Nullable String message,
-					 long timeRemaining) throws IllegalArgumentException {
+	Response(int id,
+			 @Nullable Socket originatingSocket,
+			 @Nullable PacketType packetType,
+			 @Nullable ResultType type,
+			 @Nullable String message,
+			 long timeRemaining) throws IllegalArgumentException {
 		this.id = id;
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
@@ -412,7 +413,7 @@ public final class Response implements JsonObject {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Response response = (Response) o;
@@ -484,12 +485,14 @@ public final class Response implements JsonObject {
 	public enum PacketType implements ByteObject {
 		/**
 		 * The packet is the result of executing an effect.
+		 *
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		EFFECT_RESULT(true),
 		/**
 		 * <b>Internal value</b> used to prompt a connecting client for a password.
+		 *
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
@@ -497,6 +500,7 @@ public final class Response implements JsonObject {
 		LOGIN(false, (byte) 0xF0),
 		/**
 		 * <b>Internal value</b> used to indicate a successful login.
+		 *
 		 * @since 3.1.0
 		 */
 		@ApiStatus.AvailableSince("3.1.0")
@@ -504,6 +508,7 @@ public final class Response implements JsonObject {
 		LOGIN_SUCCESS(false, (byte) 0xF1),
 		/**
 		 * <b>Internal value</b> used to indicate that the socket is being disconnected.
+		 *
 		 * @since 3.1.0
 		 */
 		@ApiStatus.AvailableSince("3.1.0")
@@ -511,6 +516,7 @@ public final class Response implements JsonObject {
 		DISCONNECT(true, (byte) 0xFE),
 		/**
 		 * <b>Internal value</b> used to reply to a keep alive packet.
+		 *
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
@@ -575,30 +581,35 @@ public final class Response implements JsonObject {
 
 	/**
 	 * The result of processing an incoming packet.
+	 *
 	 * @since 1.0.0
 	 */
 	@ApiStatus.AvailableSince("1.0.0")
 	public enum ResultType implements ByteObject {
 		/**
 		 * The effect was applied successfully.
+		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
 		SUCCESS(false),
 		/**
 		 * The effect failed to be applied. Will refund the purchaser.
+		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
 		FAILURE(true),
 		/**
 		 * The requested effect is unusable and should not be requested again.
+		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
 		UNAVAILABLE(true),
 		/**
 		 * The effect is momentarily unavailable but may be retried in a few seconds.
+		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
@@ -633,6 +644,7 @@ public final class Response implements JsonObject {
 		 * This is an internal field used to indicate that the login process with a client has
 		 * not yet completed. You should instead use {@link #FAILURE} to indicate a
 		 * temporary failure or {@link #UNAVAILABLE} to indicate a permanent failure.
+		 *
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
@@ -698,14 +710,15 @@ public final class Response implements JsonObject {
 
 	/**
 	 * Mutable builder for the immutable {@link Response} class.
+	 *
 	 * @since 2.0.0
 	 */
 	@ApiStatus.AvailableSince("2.0.0")
 	public static class Builder implements Cloneable {
 		// id & originatingSocket fields are final because the only way to construct this is via
 		// a Request (i.e. third parties don't have access to the originating socket)
-		private final int id;
-		private final Socket originatingSocket;
+		private int id;
+		private Socket originatingSocket;
 		private ResultType type;
 		private String message;
 		private long timeRemaining;
@@ -716,6 +729,16 @@ public final class Response implements JsonObject {
 		private boolean messageSet = false;
 
 		/**
+		 * Creates a new empty builder.
+		 *
+		 * @since 3.3.4
+		 */
+		@ApiStatus.AvailableSince("3.3.4")
+		@CheckReturnValue
+		public Builder() {
+		}
+
+		/**
 		 * Creates a new builder using the data from a {@link Response}.
 		 *
 		 * @param source source for a new builder
@@ -723,7 +746,7 @@ public final class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
 		@CheckReturnValue
-		private Builder(@NotNull Response source) {
+		protected Builder(@NotNull Response source) {
 			this.id = source.getId();
 			this.originatingSocket = source.originatingSocket;
 			this.message = source.message;
@@ -753,7 +776,7 @@ public final class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
-		private Builder(@NotNull Builder builder) {
+		protected Builder(@NotNull Builder builder) {
 			this.id = builder.id;
 			this.originatingSocket = builder.originatingSocket;
 			this.type = builder.type;
@@ -775,6 +798,36 @@ public final class Response implements JsonObject {
 		Builder(int id, @Nullable Socket originatingSocket) {
 			this.id = id;
 			this.originatingSocket = originatingSocket;
+		}
+
+		/**
+		 * Sets the ID of the {@link Request} that prompted this {@link Response}.
+		 *
+		 * @param id id of the request
+		 * @return this builder
+		 * @since 3.3.4
+		 */
+		@ApiStatus.AvailableSince("3.3.4")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder id(int id) {
+			this.id = id;
+			return this;
+		}
+
+		/**
+		 * Sets the {@link Socket} of the {@link Request} that prompted this {@link Response}.
+		 *
+		 * @param originatingSocket socket that originated the request
+		 * @return this builder
+		 * @since 3.3.4
+		 */
+		@ApiStatus.AvailableSince("3.3.4")
+		@NotNull
+		@Contract("_ -> this")
+		Builder originatingSocket(@Nullable Socket originatingSocket) {
+			this.originatingSocket = originatingSocket;
+			return this;
 		}
 
 		/**
@@ -1017,7 +1070,7 @@ public final class Response implements JsonObject {
 		@ApiStatus.AvailableSince("2.1.0")
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
-		public Builder clone() {
+		public @NotNull Builder clone() {
 			return new Builder(this);
 		}
 	}

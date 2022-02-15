@@ -23,8 +23,8 @@ import java.util.Objects;
  * @since 1.0.0
  */
 @ApiStatus.AvailableSince("1.0.0")
-public final class Request implements JsonObject {
-	transient Socket originatingSocket;
+public class Request implements JsonObject {
+	transient @Nullable Socket originatingSocket;
 	private int id;
 	private Type type;
 	@SerializedName("code")
@@ -312,12 +312,12 @@ public final class Request implements JsonObject {
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
-	public Response.Builder buildResponse() {
+	public Response.@NotNull Builder buildResponse() {
 		return new Response.Builder(this);
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Request request = (Request) o;
@@ -384,7 +384,7 @@ public final class Request implements JsonObject {
 		@ApiStatus.Internal
 		KEEP_ALIVE(false, (byte) 0xFF);
 
-		private static final Map<Byte, Type> BY_BYTE;
+		private static final @NotNull Map<Byte, Type> BY_BYTE;
 
 		static {
 			Map<Byte, Type> map = new HashMap<>(values().length);
@@ -518,7 +518,7 @@ public final class Request implements JsonObject {
 
 		@Override
 		@CheckReturnValue
-		public boolean equals(Object o) {
+		public boolean equals(@Nullable Object o) {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			Target target = (Target) o;
@@ -845,7 +845,7 @@ public final class Request implements JsonObject {
 		@ApiStatus.AvailableSince("3.3.0")
 		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
-		public Builder clone() {
+		public @NotNull Builder clone() {
 			return new Builder(this);
 		}
 	}

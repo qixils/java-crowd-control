@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -43,6 +44,16 @@ public final class ServerSocketManager implements SocketManager {
 	public ServerSocketManager(@NotNull RequestManager crowdControl) {
 		this.crowdControl = ExceptionUtil.validateNotNull(crowdControl, "crowdControl");
 		new Thread(this::loop, "crowd-control-socket-loop").start();
+	}
+
+	@Override
+	public Response.@NotNull Builder buildResponse(int id) {
+		return new ServerResponse.Builder(id, this);
+	}
+
+	@NotNull List<SocketThread> getSocketThreads() {
+		socketThreads.removeIf(SocketThread::isSocketClosed);
+		return Collections.unmodifiableList(new ArrayList<>(socketThreads));
 	}
 
 	private void loop() {

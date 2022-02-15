@@ -40,6 +40,11 @@ final class SocketThread extends Thread implements SocketManager {
 		this.socket = clientSocket;
 	}
 
+	@Override
+	public Response.@NotNull Builder buildResponse(int id) {
+		return new Response.Builder(id, socket);
+	}
+
 	public void run() {
 		logger.info("Successfully connected to a new client (" + displayName + ")");
 

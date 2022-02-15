@@ -43,6 +43,11 @@ public final class ClientSocketManager implements SocketManager {
 		new Thread(this::loop, "crowd-control-socket-loop").start();
 	}
 
+	@Override
+	public Response.@NotNull Builder buildResponse(int id) {
+		return new Response.Builder(id, socket);
+	}
+
 	private void loop() {
 		while (running) {
 			try {
