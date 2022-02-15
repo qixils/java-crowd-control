@@ -313,13 +313,13 @@ public class Request implements JsonObject {
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	public Response.@NotNull Builder buildResponse() {
-		return new Response.Builder(this);
+		return new RequestResponseBuilder(this);
 	}
 
 	@Override
 	public boolean equals(@Nullable Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null || !getClass().isAssignableFrom(o.getClass())) return false;
 		Request request = (Request) o;
 		return id == request.id
 				&& type == request.type

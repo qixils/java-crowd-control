@@ -197,8 +197,14 @@ public class ResponseTests {
 		Assertions.assertNull(builder.originatingSocket());
 
 		// constructor 2 test
+		//noinspection deprecation -- deprecated constructors need to be tested to
 		builder = new Response.Builder(new Request.Builder().id(2).type(Request.Type.KEEP_ALIVE).build());
 		Assertions.assertEquals(2, builder.id());
+		Assertions.assertNull(builder.originatingSocket());
+
+		// constructor 3 test
+		builder = new Request.Builder().id(3).type(Request.Type.KEEP_ALIVE).build().buildResponse();
+		Assertions.assertEquals(3, builder.id());
 		Assertions.assertNull(builder.originatingSocket());
 
 		// packet type test
@@ -229,7 +235,7 @@ public class ResponseTests {
 
 		// build test (clone + toBuilder)
 		Response response = builder.clone().build().toBuilder().build();
-		Assertions.assertEquals(2, response.getId());
+		Assertions.assertEquals(3, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());

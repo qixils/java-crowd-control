@@ -102,9 +102,10 @@ public class Response implements JsonObject {
 		this.type = type;
 
 		// set message
-		this.message = type == null
-				? message
-				: ExceptionUtil.validateNotNullElseGet(message, type::name);
+		if (message != null)
+			this.message = message;
+		else if (type != null)
+			this.message = type.name();
 
 		if (this.message == null && this.packetType.isMessageRequired())
 			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
@@ -304,6 +305,8 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	@NotNull
 	static Response ofDisconnectMessage(@NotNull Request request, @Nullable String message) {
+		if (request.originatingSocket == null)
+			throw new IllegalArgumentException("request has no associated originating socket");
 		return ofDisconnectMessage(request.getId(), request.originatingSocket, message);
 	}
 
@@ -415,7 +418,7 @@ public class Response implements JsonObject {
 	@Override
 	public boolean equals(@Nullable Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null || !getClass().isAssignableFrom(o.getClass())) return false;
 		Response response = (Response) o;
 		return id == response.id
 				&& timeRemaining == response.timeRemaining
@@ -724,10 +727,6 @@ public class Response implements JsonObject {
 		private long timeRemaining;
 		private PacketType packetType;
 
-		// used to determine if a message has been manually set.
-		// false means a message has either not been set or it has only been set by #type
-		private boolean messageSet = false;
-
 		/**
 		 * Creates a new empty builder.
 		 *
@@ -760,9 +759,13 @@ public class Response implements JsonObject {
 		 *
 		 * @param request request to respond to
 		 * @since 2.0.0
+		 * @deprecated for removal in 3.4.0; replaced with {@link Request#buildResponse()}
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
 		@CheckReturnValue
+		@Deprecated
+		@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+		// to be made protected or package-private
 		public Builder(@NotNull Request request) {
 			this.id = request.getId();
 			this.originatingSocket = request.originatingSocket;
@@ -783,7 +786,6 @@ public class Response implements JsonObject {
 			this.message = builder.message;
 			this.timeRemaining = builder.timeRemaining;
 			this.packetType = builder.packetType;
-			this.messageSet = builder.messageSet;
 		}
 
 		/**
@@ -842,8 +844,6 @@ public class Response implements JsonObject {
 		@Contract("_ -> this")
 		public Builder type(@Nullable ResultType type) {
 			this.type = type;
-			if (type != null && !messageSet)
-				message = type.name();
 			return this;
 		}
 
@@ -859,7 +859,6 @@ public class Response implements JsonObject {
 		@NotNull
 		@Contract("_ -> this")
 		public Builder message(@Nullable String message) {
-			messageSet = true;
 			this.message = message;
 			return this;
 		}
