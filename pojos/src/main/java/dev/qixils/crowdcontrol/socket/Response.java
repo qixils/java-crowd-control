@@ -759,12 +759,12 @@ public class Response implements JsonObject {
 		 *
 		 * @param request request to respond to
 		 * @since 2.0.0
-		 * @deprecated for removal in 3.4.0; replaced with {@link Request#buildResponse()}
+		 * @deprecated for removal in 3.5.0; replaced with {@link Request#buildResponse()}
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
 		@CheckReturnValue
 		@Deprecated
-		@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+		@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
 		// to be made protected or package-private
 		public Builder(@NotNull Request request) {
 			this.id = request.getId();

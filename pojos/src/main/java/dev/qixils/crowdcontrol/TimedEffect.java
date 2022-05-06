@@ -69,13 +69,13 @@ public final class TimedEffect {
 	 *                                      <li>if the callback is null</li>
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
-	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.5.0
 	 * @since 3.0.0
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
 	public TimedEffect(@NotNull Request request,
 					   long duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
@@ -98,13 +98,13 @@ public final class TimedEffect {
 	 *                                      <li>if the callback is null</li>
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
-	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.5.0
 	 * @since 3.0.0
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
 	public TimedEffect(@NotNull Request request,
 					   @Nullable String effectGroup,
 					   long duration,
@@ -143,13 +143,13 @@ public final class TimedEffect {
 	 *                                      <li>if the callback is null</li>
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
-	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.5.0
 	 * @since 3.0.0
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
 	public TimedEffect(@NotNull Request request,
 					   @NotNull Duration duration,
 					   @NotNull Consumer<@NotNull TimedEffect> callback,
@@ -172,13 +172,13 @@ public final class TimedEffect {
 	 *                                      <li>if the callback is null</li>
 	 *                                      <li>if the duration is negative</li>
 	 *                                  </ul>
-	 * @deprecated in favor of {@link Builder}; to be removed in v3.4.0
+	 * @deprecated in favor of {@link Builder}; to be removed in v3.5.0
 	 * @since 3.0.0
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
 	public TimedEffect(@NotNull Request request,
 					   @Nullable String effectGroup,
 					   @NotNull Duration duration,

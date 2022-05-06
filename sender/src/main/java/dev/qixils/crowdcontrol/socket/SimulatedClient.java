@@ -91,7 +91,7 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 	@Override
 	@NonBlocking
 	@ApiStatus.AvailableSince("3.3.0")
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.4.0")
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
 	@Deprecated
 	public void autoStart() {
 		executor.execute(() -> {
