@@ -206,7 +206,7 @@ public final class EffectResponseTests {
 
 		// send first effect
 		// note: the timed effect duration, as defined in EffectHandlers, is 0.2 seconds
-		Request.Target target = new Request.Target(1, "qixils", "https://i.qixils.dev/favicon.png");
+		Request.Target target = new Request.Target("1", "qixils", "https://i.qixils.dev/favicon.png");
 		Request.Builder builder = new Request.Builder()
 				.effect("timed")
 				.viewer("test")
@@ -434,7 +434,7 @@ public final class EffectResponseTests {
 		Request.Builder builder = new Request.Builder()
 				.effect("timedEffectCompletionCallback")
 				.viewer("test")
-				.targets(new Request.Target(1, "qixils", "google.com"));
+				.targets(new Request.Target("1", "qixils", "google.com"));
 		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		// test first response
@@ -486,7 +486,7 @@ public final class EffectResponseTests {
 		Request.Builder builder = new Request.Builder()
 				.effect("timedEffectCompletionCallback")
 				.viewer("test")
-				.targets(new Request.Target(1, "qixils", "google.com"));
+				.targets(new Request.Target("1", "qixils", "google.com"));
 		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		// test first response
@@ -538,7 +538,7 @@ public final class EffectResponseTests {
 		Request.Builder builder = new Request.Builder()
 				.effect("timedEffectCompletionCallback")
 				.viewer("test")
-				.targets(new Request.Target(1, "qixils", "google.com"));
+				.targets(new Request.Target("1", "qixils", "google.com"));
 		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		// test first response

@@ -730,9 +730,9 @@ public class Response implements JsonObject {
 		/**
 		 * Creates a new empty builder.
 		 *
-		 * @since 3.3.4
+		 * @since 3.4.0
 		 */
-		@ApiStatus.AvailableSince("3.3.4")
+		@ApiStatus.AvailableSince("3.4.0")
 		@CheckReturnValue
 		public Builder() {
 		}
@@ -807,9 +807,9 @@ public class Response implements JsonObject {
 		 *
 		 * @param id id of the request
 		 * @return this builder
-		 * @since 3.3.4
+		 * @since 3.4.0
 		 */
-		@ApiStatus.AvailableSince("3.3.4")
+		@ApiStatus.AvailableSince("3.4.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder id(int id) {
@@ -822,9 +822,9 @@ public class Response implements JsonObject {
 		 *
 		 * @param originatingSocket socket that originated the request
 		 * @return this builder
-		 * @since 3.3.4
+		 * @since 3.4.0
 		 */
-		@ApiStatus.AvailableSince("3.3.4")
+		@ApiStatus.AvailableSince("3.4.0")
 		@NotNull
 		@Contract("_ -> this")
 		Builder originatingSocket(@Nullable Socket originatingSocket) {

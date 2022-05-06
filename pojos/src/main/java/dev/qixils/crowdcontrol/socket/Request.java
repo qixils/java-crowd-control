@@ -447,7 +447,7 @@ public class Request implements JsonObject {
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	public static final class Target {
-		private int id;
+		private String id;
 		private String name;
 		private String avatar;
 
@@ -470,23 +470,26 @@ public class Request implements JsonObject {
 		 * @since 3.3.0
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
-		public Target(int id, @NotNull String name, @NotNull String avatar) throws IllegalArgumentException {
-			if (id <= 0)
-				throw new IllegalArgumentException("ID must be positive");
-			this.id = id;
+		public Target(@NotNull String id, @NotNull String name, @NotNull String avatar) throws IllegalArgumentException {
+			this.id = ExceptionUtil.validateNotNull(id, "id");
 			this.name = ExceptionUtil.validateNotNull(name, "name");
 			this.avatar = ExceptionUtil.validateNotNull(avatar, "avatar");
 		}
 
 		/**
-		 * The recipient's Twitch ID.
+		 * The recipient's ID.
+		 * <p>
+		 * As of 3.4.0, this method has swapped from returning an integer to returning a string.
+		 * The returned string is typically a number representing a Twitch streamer, although it may
+		 * instead be a string corresponding to a streamer on a different platform.
 		 *
-		 * @return Twitch ID
+		 * @return streamer ID
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
+		@NotNull
 		@CheckReturnValue
-		public int getId() {
+		public String getId() {
 			return id;
 		}
 
@@ -522,7 +525,7 @@ public class Request implements JsonObject {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			Target target = (Target) o;
-			return getId() == target.getId() && getName().equals(target.getName()) && getAvatar().equals(target.getAvatar());
+			return getId().equals(target.getId()) && getName().equals(target.getName()) && getAvatar().equals(target.getAvatar());
 		}
 
 		@Override

@@ -20,7 +20,7 @@ public class TimedEffectTests {
 			"qixils",
 			"Hello World!",
 			10,
-			new Request.Target[]{new Request.Target(12345, "qixils", "https://i.qixils.dev/favicon.png")}
+			new Request.Target[]{new Request.Target("12345", "qixils", "https://i.qixils.dev/favicon.png")}
 	);
 
 	@Test

@@ -22,9 +22,9 @@ public interface SocketManager {
 	 * corresponding {@link Request} to send the packet.
 	 *
 	 * @return a new response builder
-	 * @since 3.3.4
+	 * @since 3.4.0
 	 */
-	@ApiStatus.AvailableSince("3.3.4")
+	@ApiStatus.AvailableSince("3.4.0")
 	Response.@NotNull Builder buildResponse(int id); // TODO unit test
 
 	/**
