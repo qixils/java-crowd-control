@@ -33,6 +33,11 @@ final class ServerResponse extends Response {
 	}
 
 	@Override
+	public boolean isOriginKnown() {
+		return true;
+	}
+
+	@Override
 	void rawSend() throws IllegalStateException, IOException {
 		List<SocketThread> threads = manager.getSocketThreads();
 		List<IOException> exceptions = new ArrayList<>(threads.size());
@@ -72,7 +77,10 @@ final class ServerResponse extends Response {
 
 		@Override
 		public @NotNull Response build() {
-			return new ServerResponse(this);
+			if (originatingSocket() == null)
+				return new ServerResponse(this);
+			else
+				return super.build();
 		}
 	}
 

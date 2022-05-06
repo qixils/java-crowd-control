@@ -25,7 +25,7 @@ public interface SocketManager {
 	 * @since 3.4.0
 	 */
 	@ApiStatus.AvailableSince("3.4.0")
-	Response.@NotNull Builder buildResponse(int id); // TODO unit test
+	Response.@NotNull Builder buildResponse(int id);
 
 	/**
 	 * Shuts down the Crowd Control socket.

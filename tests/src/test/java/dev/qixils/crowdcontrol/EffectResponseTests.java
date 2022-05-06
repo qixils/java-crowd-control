@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol;
 import dev.qixils.crowdcontrol.exceptions.EffectUnavailableException;
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import dev.qixils.crowdcontrol.socket.SimulatedClient;
 import dev.qixils.crowdcontrol.socket.SimulatedServer;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -21,6 +22,8 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("BusyWait")
 public final class EffectResponseTests {
+	private static final int PORT = 53737;
+	private static final String PASSWORD = "password";
 	private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
 	private static final Object EFFECT_HANDLERS = new EffectHandlers();
 
@@ -565,5 +568,89 @@ public final class EffectResponseTests {
 
 		Thread.sleep(40); // give server time to shut down
 		Assertions.assertFalse(server.isRunning());
+	}
+
+	@Test
+	public void successfulClientResponseBuilder() throws InterruptedException {
+		// init server & client
+		SimulatedServer server = new SimulatedServer(0);
+		Assertions.assertDoesNotThrow(server::start);
+
+		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
+		client.registerHandlers(EFFECT_HANDLERS);
+
+		// give client time to connect
+		int delay = 1;
+		while (!server.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(server.isAcceptingRequests());
+
+		// test response builder
+		Response response = client.buildResponse(1).type(Response.ResultType.SUCCESS).build();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		Assertions.assertEquals(1, response.getId());
+		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
+		Assertions.assertEquals("SUCCESS", response.getMessage());
+		Assertions.assertTrue(response.isOriginKnown());
+		Assertions.assertTrue(response::send);
+
+		// cleanup
+		client.shutdown("Test completed");
+		Thread.sleep(10);
+		server.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(server.isRunning());
+	}
+
+	@Test
+	public void unsuccessfulClientResponseBuilder() throws InterruptedException {
+		// TODO (not sure how to force an IOException)
+	}
+
+	@Test
+	public void successfulServerResponseBuilder() throws InterruptedException {
+		// init server & client
+		CrowdControl server = CrowdControl.server().port(PORT).password(PASSWORD).build();
+		server.registerHandlers(EFFECT_HANDLERS);
+
+		Thread.sleep(20); // give server time to start
+
+		SimulatedClient client = new SimulatedClient("localhost", PORT, PASSWORD);
+		Assertions.assertDoesNotThrow(client::start);
+
+		// wait for the server to start & client to connect
+		int delay = 1;
+		while (!client.isAcceptingRequests() && delay <= 12) {
+			Thread.sleep((long) Math.pow(2, delay++));
+		}
+
+		Assertions.assertTrue(client.isAcceptingRequests());
+
+		// test response builder
+		Response response = server.buildResponse(1).type(Response.ResultType.SUCCESS).build();
+		Assertions.assertNotNull(response);
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		Assertions.assertEquals(1, response.getId());
+		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
+		Assertions.assertEquals("SUCCESS", response.getMessage());
+		Assertions.assertTrue(response.isOriginKnown());
+		Assertions.assertTrue(response::send);
+
+		// cleanup
+		server.shutdown("Test completed");
+		Thread.sleep(10);
+		client.shutdown();
+
+		Thread.sleep(40); // give server time to shut down
+		Assertions.assertFalse(client.isRunning());
+	}
+
+	@Test
+	public void unsuccessfulServerResponseBuilder() throws InterruptedException {
+		// TODO (not sure how to force an IOException)
 	}
 }

@@ -450,13 +450,17 @@ public class Response implements JsonObject {
 	 * @throws IllegalStateException if {@link #isOriginKnown()} returns false
 	 *                               (i.e. the response was created without a {@link Request})
 	 * @since 3.0.0
+	 * @return whether the response was successfully sent
+	 *         (false if an IOException occurred, true otherwise)
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
-	public void send() throws IllegalStateException {
+	public boolean send() throws IllegalStateException {
 		try {
 			rawSend();
+			return true;
 		} catch (IOException exc) {
 			logger.warn("Failed to write response to socket", exc);
+			return false;
 		}
 	}
 
