@@ -408,7 +408,7 @@ public class Response implements JsonObject {
 	 * @return true if this response marks the end of a series of responses
 	 * @since 3.3.0
 	 */
-	@ApiStatus.AvailableSince("3.3.0")
+	@ApiStatus.AvailableSince("3.3.0") // TODO unit test this and the PacketType method
 	public boolean isTerminating() throws IllegalStateException {
 		if (packetType != PacketType.EFFECT_RESULT)
 			throw new IllegalStateException("This response is not an effect result");

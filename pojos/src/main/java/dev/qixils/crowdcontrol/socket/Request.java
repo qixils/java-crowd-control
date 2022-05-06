@@ -304,8 +304,7 @@ public class Request implements JsonObject {
 	}
 
 	/**
-	 * Creates a {@link dev.qixils.crowdcontrol.socket.Response.Builder} for
-	 * a {@link Response} to this request.
+	 * Creates a {@link Response.Builder Builder} for a {@link Response} to this request.
 	 *
 	 * @return new response builder
 	 * @since 3.0.0
@@ -479,9 +478,9 @@ public class Request implements JsonObject {
 		/**
 		 * The recipient's ID.
 		 * <p>
-		 * As of 3.4.0, this method has swapped from returning an integer to returning a string.
-		 * The returned string is typically a number representing a Twitch streamer, although it may
-		 * instead be a string corresponding to a streamer on a different platform.
+		 * Prior to 3.4.0, this method returned an integer representing a Twitch streamer ID.
+		 * Now, it may return a string representing the ID of a streamer on Twitch or on a different
+		 * platform.
 		 *
 		 * @return streamer ID
 		 * @since 3.0.0

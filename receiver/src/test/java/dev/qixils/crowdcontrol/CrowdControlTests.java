@@ -16,6 +16,7 @@ public class CrowdControlTests {
 		CrowdControl server = CrowdControl.server().port(PORT).password("password").build();
 		server.shutdown();
 		Assertions.assertEquals(PORT, server.getPort());
+		//noinspection SpellCheckingInspection
 		Assertions.assertEquals(
 				"b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86",
 				server.getPassword()
@@ -44,6 +45,7 @@ public class CrowdControlTests {
 		server.registerHandler("2",
 				(Function<Request, Response>) request -> new Response(request, Response.ResultType.SUCCESS, null, 0)
 		);
+		//noinspection unused
 		server.registerHandlers(new Object() {
 			// true valid handlers
 

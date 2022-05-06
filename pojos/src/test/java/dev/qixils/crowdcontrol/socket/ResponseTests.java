@@ -271,4 +271,39 @@ public class ResponseTests {
 		json = "{\"id\":2,\"type\":241,\"message\":\"Login successful\"}";
 		Assertions.assertEquals(Response.fromJSON(loginResponse.toJSON()), Response.fromJSON(json));
 	}
+
+	@Test
+	public void fromRequestBuilder() {
+		Request request = new Request.Builder()
+				.id(1)
+				.effect("test")
+				.viewer("qixils")
+				.type(Request.Type.START)
+				.build();
+
+		// test available response
+		Response response = request.buildResponse()
+				.type(Response.ResultType.SUCCESS)
+				.message("Effect applied successfully")
+				.timeRemaining(1000)
+				.build();
+		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		Assertions.assertEquals("Effect applied successfully", response.getMessage());
+		Assertions.assertEquals(1000, response.getTimeRemaining());
+		Assertions.assertEquals(1, response.getId());
+		Assertions.assertFalse(response.isOriginKnown());
+
+		// test unavailable response
+		response = request.buildResponse()
+				.type(Response.ResultType.UNAVAILABLE)
+				.message("Effect not usable in this game")
+				.build();
+		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
+		Assertions.assertEquals(Response.ResultType.UNAVAILABLE, response.getResultType());
+		Assertions.assertEquals("Effect not usable in this game [effect: test]", response.getMessage());
+		Assertions.assertEquals(0, response.getTimeRemaining());
+		Assertions.assertEquals(1, response.getId());
+		Assertions.assertFalse(response.isOriginKnown());
+	}
 }
