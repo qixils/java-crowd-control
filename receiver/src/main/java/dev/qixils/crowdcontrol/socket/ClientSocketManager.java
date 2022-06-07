@@ -11,8 +11,11 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * Manages the connection to the Crowd Control server.
@@ -24,6 +27,7 @@ public final class ClientSocketManager implements SocketManager {
 	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-ClientSocket");
 	private final @NotNull RequestManager crowdControl;
 	private final @NotNull Executor effectPool = Executors.newCachedThreadPool();
+	private final @NotNull List<Consumer<SocketManager>> onConnectListeners = new ArrayList<>();
 	private @Nullable Socket socket;
 	private volatile boolean running = true;
 	private int sleep = 1;
@@ -44,6 +48,11 @@ public final class ClientSocketManager implements SocketManager {
 	}
 
 	@Override
+	public void addConnectListener(@NotNull Consumer<SocketManager> consumer) {
+		onConnectListeners.add(ExceptionUtil.validateNotNull(consumer, "consumer"));
+	}
+
+	@Override
 	public Response.@NotNull Builder buildResponse(int id) {
 		return new Response.Builder(id, socket);
 	}
@@ -53,6 +62,13 @@ public final class ClientSocketManager implements SocketManager {
 			try {
 				socket = new Socket(crowdControl.getIP(), crowdControl.getPort());
 				logger.info("Connected to Crowd Control server");
+				for (Consumer<SocketManager> listener : onConnectListeners) {
+					try {
+						listener.accept(this);
+					} catch (Throwable t) {
+						logger.warn("Error while calling connect listener", t);
+					}
+				}
 				sleep = 1;
 				connected = true;
 				EffectExecutor effectExecutor = new EffectExecutor(

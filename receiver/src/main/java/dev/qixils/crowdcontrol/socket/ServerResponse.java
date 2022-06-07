@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 final class ServerResponse extends Response {
-	private final @NotNull ServerSocketManager manager;
+	private final transient @NotNull ServerSocketManager manager;
 
 	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, long timeRemaining) throws IllegalArgumentException {
 		super(id, null, packetType, type, message, timeRemaining);

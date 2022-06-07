@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Handles the connection to a Crowd Control client when operating in server mode.
@@ -41,12 +42,24 @@ final class SocketThread extends Thread implements SocketManager {
 	}
 
 	@Override
+	public void addConnectListener(@NotNull Consumer<SocketManager> consumer) {
+		socketManager.addConnectListener(consumer);
+	}
+
+	@Override
 	public Response.@NotNull Builder buildResponse(int id) {
 		return new Response.Builder(id, socket);
 	}
 
 	public void run() {
 		logger.info("Successfully connected to a new client (" + displayName + ")");
+		for (Consumer<SocketManager> listener : socketManager.onConnectListeners) {
+			try {
+				listener.accept(this);
+			} catch (Throwable t) {
+				logger.warn("Error while calling connect listener", t);
+			}
+		}
 
 		try {
 			EffectExecutor effectExecutor = new EffectExecutor(this);

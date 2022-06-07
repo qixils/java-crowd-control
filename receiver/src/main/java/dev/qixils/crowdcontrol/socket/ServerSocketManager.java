@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * Manages the connection to Crowd Control clients.
@@ -25,10 +26,11 @@ import java.util.concurrent.Executors;
  */
 @ApiStatus.AvailableSince("3.0.0")
 public final class ServerSocketManager implements SocketManager {
-	private static final Logger logger = LoggerFactory.getLogger("CC-ServerSocket");
-	final RequestManager crowdControl;
-	final Executor effectPool = Executors.newCachedThreadPool();
-	private final List<SocketThread> socketThreads = new ArrayList<>();
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-ServerSocket");
+	final @NotNull RequestManager crowdControl;
+	final @NotNull Executor effectPool = Executors.newCachedThreadPool();
+	final @NotNull List<Consumer<SocketManager>> onConnectListeners = new ArrayList<>();
+	private final @NotNull List<SocketThread> socketThreads = new ArrayList<>();
 	volatile boolean running = true;
 	private ServerSocket serverSocket;
 
@@ -44,6 +46,11 @@ public final class ServerSocketManager implements SocketManager {
 	public ServerSocketManager(@NotNull RequestManager crowdControl) {
 		this.crowdControl = ExceptionUtil.validateNotNull(crowdControl, "crowdControl");
 		new Thread(this::loop, "crowd-control-socket-loop").start();
+	}
+
+	@Override
+	public void addConnectListener(@NotNull Consumer<SocketManager> consumer) {
+		onConnectListeners.add(ExceptionUtil.validateNotNull(consumer, "consumer"));
 	}
 
 	@Override

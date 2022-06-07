@@ -208,6 +208,19 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	}
 
 	/**
+	 * Sets a consumer to be called when a new {@link SocketManager Crowd Control instance}
+	 * connects.
+	 *
+	 * @param consumer consumer to be called
+	 * @since 3.4.0
+	 */
+	@ApiStatus.AvailableSince("3.4.0")
+	@Override
+	public void addConnectListener(@NotNull Consumer<@NotNull SocketManager> consumer) {
+		socketManager.addConnectListener(consumer);
+	}
+
+	/**
 	 * Registers method handlers within a class. These methods must:
 	 * <ul>
 	 *     <li>be public</li>

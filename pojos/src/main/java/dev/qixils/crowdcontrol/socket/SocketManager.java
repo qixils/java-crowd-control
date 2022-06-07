@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 /**
  * Manages the connection(s) to a Crowd Control server or clients.
@@ -64,4 +65,14 @@ public interface SocketManager {
 	 */
 	@ApiStatus.AvailableSince("3.1.0")
 	void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException;
+
+	/**
+	 * Sets a consumer to be called when a new {@link SocketManager Crowd Control instance}
+	 * connects.
+	 *
+	 * @param consumer consumer to be called
+	 * @since 3.4.0
+	 */
+	@ApiStatus.AvailableSince("3.4.0")
+	void addConnectListener(@NotNull Consumer<SocketManager> consumer); // TODO: unit tests
 }
