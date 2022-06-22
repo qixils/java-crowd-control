@@ -112,8 +112,10 @@ final class SocketThread extends Thread implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (!socket.isClosed()) {
-			Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).rawSend();
-			socket.close();
+			try {Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).rawSend();}
+			catch (IOException exc) {logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");}
+			try {socket.close();}
+			catch (IOException exc) {logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");}
 		}
 	}
 }
