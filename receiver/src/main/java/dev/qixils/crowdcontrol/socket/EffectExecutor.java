@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 
 /**
@@ -39,7 +40,7 @@ final class EffectExecutor {
 		this.socketThread = null;
 		this.socket = socket;
 		this.effectPool = effectPool;
-		this.input = new InputStreamReader(socket.getInputStream());
+		this.input = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
 		this.crowdControl = crowdControl;
 		this.password = crowdControl.getPassword();
 	}

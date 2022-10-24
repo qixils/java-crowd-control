@@ -49,7 +49,7 @@ final class RequestHandler implements SimulatedService<Response> {
 	RequestHandler(@NotNull Socket socket, @NotNull SimulatedService<?> parent, @Nullable String encryptedPassword) throws IOException {
 		this.socket = ExceptionUtil.validateNotNull(socket, "socket");
 		this.parent = ExceptionUtil.validateNotNull(parent, "parent");
-		this.inputStream = new InputStreamReader(socket.getInputStream());
+		this.inputStream = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
 		this.outputStream = socket.getOutputStream();
 		this.encryptedPassword = encryptedPassword;
 		loggedIn = encryptedPassword == null;

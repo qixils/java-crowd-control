@@ -39,7 +39,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>crowd-control-receiver</artifactId>
-    <version>3.4.0</version>
+    <version>3.4.1</version>
 </dependency>
 ```
 
@@ -413,7 +413,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>crowd-control-sender</artifactId>
-    <version>3.4.0</version>
+    <version>3.4.1</version>
 </dependency>
 ```
 
