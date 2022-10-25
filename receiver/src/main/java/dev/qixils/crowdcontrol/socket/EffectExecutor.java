@@ -9,9 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 
 /**
@@ -22,7 +21,7 @@ final class EffectExecutor {
 	private final @Nullable SocketThread socketThread;
 	private final Socket socket;
 	private final Executor effectPool;
-	private final InputStreamReader input;
+	private final InputStream input;
 	private final RequestManager crowdControl;
 	private final @Nullable String password;
 	private boolean loggedIn = false;
@@ -31,7 +30,7 @@ final class EffectExecutor {
 		this.socketThread = socketThread;
 		this.socket = socketThread.socket;
 		this.effectPool = socketThread.socketManager.effectPool;
-		this.input = new InputStreamReader(socket.getInputStream());
+		this.input = socket.getInputStream();
 		this.crowdControl = socketThread.socketManager.crowdControl;
 		this.password = crowdControl.getPassword();
 	}
@@ -40,7 +39,7 @@ final class EffectExecutor {
 		this.socketThread = null;
 		this.socket = socket;
 		this.effectPool = effectPool;
-		this.input = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
+		this.input = socket.getInputStream();
 		this.crowdControl = crowdControl;
 		this.password = crowdControl.getPassword();
 	}

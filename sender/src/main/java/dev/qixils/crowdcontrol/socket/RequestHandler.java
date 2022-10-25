@@ -15,7 +15,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +38,7 @@ final class RequestHandler implements SimulatedService<Response> {
 	private final Map<String, Boolean> effectAvailabilityMap = new ConcurrentHashMap<>(1);
 	private final Socket socket;
 	private final SimulatedService<?> parent;
-	private final InputStreamReader inputStream;
+	private final InputStream inputStream;
 	private final OutputStream outputStream;
 	private final @Nullable String encryptedPassword;
 	private final Thread loopThread;
@@ -49,7 +49,7 @@ final class RequestHandler implements SimulatedService<Response> {
 	RequestHandler(@NotNull Socket socket, @NotNull SimulatedService<?> parent, @Nullable String encryptedPassword) throws IOException {
 		this.socket = ExceptionUtil.validateNotNull(socket, "socket");
 		this.parent = ExceptionUtil.validateNotNull(parent, "parent");
-		this.inputStream = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
+		this.inputStream = socket.getInputStream();
 		this.outputStream = socket.getOutputStream();
 		this.encryptedPassword = encryptedPassword;
 		loggedIn = encryptedPassword == null;

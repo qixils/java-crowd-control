@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.function.Function;
 
 /**
@@ -31,20 +33,37 @@ public interface JsonObject {
 	@CheckReturnValue
 	@ApiStatus.Internal
 	@ApiStatus.AvailableSince("3.3.0")
-	static <T> T fromInputStream(@NotNull InputStreamReader input, @NotNull Function<@NotNull String, @Nullable T> jsonMapper) throws IOException {
+	static <T> T fromInputStream(@NotNull InputStream input, @NotNull Function<@NotNull String, @Nullable T> jsonMapper) throws IOException {
 		ExceptionUtil.validateNotNull(input, "input");
 		ExceptionUtil.validateNotNull(jsonMapper, "jsonMapper");
 
-		StringBuilder sb = new StringBuilder();
-		char[] results = new char[1];
-		int bytes_read = input.read(results);
-		while (results[0] != 0x00 && bytes_read == 1) {
-			sb.append(results[0]);
-			bytes_read = input.read(results);
+		// create buffer
+		byte[] buffer = new byte[1024];
+		int idx = 0;
+
+		// create byte array for reading one byte at a time
+		final byte[] results = new byte[1];
+
+		while (true) {
+			// read next byte
+			int bytes_read = input.read(results);
+			// if we've reached the end of the stream, truncate the buffer and break
+			if (results[0] == 0x00 || bytes_read == 0) {
+				buffer = Arrays.copyOf(buffer, idx);
+				break;
+			}
+			// if we've reached the end of the buffer, double it
+			if (idx == buffer.length) {
+				buffer = Arrays.copyOf(buffer, buffer.length * 2);
+			}
+			// set next byte in buffer
+			buffer[idx++] = results[0];
 		}
 
-		String inJSON = sb.toString();
-		// isBlank impl for java 8
+		// convert bytes to UTF-8 string
+		String inJSON = new String(buffer, StandardCharsets.UTF_8);
+
+		// ensure string is not blank
 		if (inJSON.isEmpty())
 			return null;
 		boolean eligible = false;
@@ -56,7 +75,8 @@ public interface JsonObject {
 		}
 		if (!eligible)
 			return null;
-		// end impl
+
+		// convert to POJO
 		return jsonMapper.apply(inJSON);
 	}
 
