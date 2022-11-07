@@ -1,15 +1,19 @@
 package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.net.Socket;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
@@ -24,6 +28,7 @@ import java.util.Objects;
  */
 @ApiStatus.AvailableSince("1.0.0")
 public class Request implements JsonObject {
+	private static final Logger logger = LoggerFactory.getLogger(Request.class);
 	transient @Nullable Socket originatingSocket;
 	private int id;
 	private Type type;
@@ -31,8 +36,11 @@ public class Request implements JsonObject {
 	private String effect;
 	private String message;
 	private String viewer;
+	@Nullable
 	private Integer cost;
 	private Target[] targets;
+	@Nullable @JsonAdapter(DurationAdapter.class)
+	private Duration duration;
 
 	/**
 	 * Instantiates an empty {@link Request}.
@@ -62,14 +70,50 @@ public class Request implements JsonObject {
 	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
 	 * @since 3.3.0
+	 * @deprecated Obsoleted by {@link #Request(int, Type, String, String, String, Integer, Duration, Target[])}.
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "4.0.0")
 	public Request(int id,
 				   @NotNull Type type,
 				   @Nullable String effect,
 				   @Nullable String viewer,
 				   @Nullable String message,
 				   @Nullable Integer cost,
+				   Target @Nullable [] targets) throws IllegalArgumentException {
+		this(id, type, effect, viewer, message, cost, null, targets);
+	}
+
+	/**
+	 * Instantiates a {@link Request} with the given parameters.
+	 *
+	 * @param id       the ID of the request
+	 * @param effect   the effect to be played
+	 * @param message  the message to be displayed
+	 * @param viewer   the viewer who requested the effect
+	 * @param cost     the cost of the effect
+	 * @param duration the duration of the effect
+	 * @param type     the packet type to send
+	 * @param targets  the targets of the effect
+	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
+	 *                                  <ul>
+	 *                                      <li>if the given ID is negative</li>
+	 *                                      <li>if the given packet type is null</li>
+	 *                                      <li>if the given packet type is an {@link Type#isEffectType() effect type} and the effect or viewer is null</li>
+	 *                                      <li>if the given packet type is not an {@link Type#isEffectType()} effect type} and the effect, viewer, cost, or targets is non-null</li>
+	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
+	 *                                  </ul>
+	 * @since 3.5.0
+	 */
+	@ApiStatus.AvailableSince("3.5.0")
+	public Request(int id,
+				   @NotNull Type type,
+				   @Nullable String effect,
+				   @Nullable String viewer,
+				   @Nullable String message,
+				   @Nullable Integer cost,
+				   @Nullable Duration duration,
 				   Target @Nullable [] targets) throws IllegalArgumentException {
 		// validate request ID
 		this.id = id;
@@ -102,6 +146,7 @@ public class Request implements JsonObject {
 		this.viewer = viewer == null ? null : viewer.toLowerCase(Locale.ENGLISH);
 		this.message = message;
 		this.cost = cost;
+		this.duration = duration;
 
 		// validate targets are not null
 		if (targets != null) {
@@ -151,7 +196,7 @@ public class Request implements JsonObject {
 	@ApiStatus.AvailableSince("3.3.0")
 	private Request(Request.@NotNull Builder builder) {
 		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.targets);
+				builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.duration, builder.targets);
 		originatingSocket = builder.originatingSocket;
 	}
 
@@ -169,6 +214,7 @@ public class Request implements JsonObject {
 	@ApiStatus.AvailableSince("1.0.0")
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
 		ExceptionUtil.validateNotNull(json, "json");
+		logger.debug("Parsing JSON: {}", json);
 		return ByteAdapter.GSON.fromJson(json, Request.class);
 	}
 
@@ -265,6 +311,20 @@ public class Request implements JsonObject {
 	}
 
 	/**
+	 * Gets the streamer-specified duration of this effect.
+	 * A null value suggests that the effect is not timed.
+	 *
+	 * @return duration if applicable, null otherwise
+	 * @since 3.5.0
+	 */
+	@ApiStatus.AvailableSince("3.5.0")
+	@Nullable
+	@CheckReturnValue
+	public Duration getDuration() {
+		return duration;
+	}
+
+	/**
 	 * Determines if this Request is triggering an effect for all users.
 	 *
 	 * @return if the triggered effect is global
@@ -326,12 +386,13 @@ public class Request implements JsonObject {
 				&& Objects.equals(message, request.message)
 				&& Objects.equals(viewer, request.viewer)
 				&& Objects.equals(cost, request.cost)
-				&& Arrays.equals(getTargets(), request.getTargets());
+				&& Arrays.equals(getTargets(), request.getTargets())
+				&& Objects.equals(duration, request.duration);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hash(id, type, effect, message, viewer, cost);
+		int result = Objects.hash(id, type, effect, message, viewer, cost, duration);
 		result = 31 * result + Arrays.hashCode(getTargets());
 		return result;
 	}
@@ -549,6 +610,7 @@ public class Request implements JsonObject {
 		private @Nullable Integer cost;
 		private Type type = Type.START;
 		private Target @Nullable [] targets;
+		private @Nullable Duration duration;
 
 		/**
 		 * Creates a new builder.
@@ -576,6 +638,7 @@ public class Request implements JsonObject {
 			this.cost = source.cost;
 			this.type = source.type;
 			this.targets = source.targets;
+			this.duration = source.duration;
 		}
 
 		/**
@@ -595,6 +658,7 @@ public class Request implements JsonObject {
 			this.cost = builder.cost;
 			this.type = builder.type;
 			this.targets = builder.targets;
+			this.duration = builder.duration;
 		}
 
 		// setters
@@ -719,6 +783,21 @@ public class Request implements JsonObject {
 			return this;
 		}
 
+		/**
+		 * Sets the duration of the effect.
+		 *
+		 * @param duration duration of the effect
+		 * @return this builder
+		 * @since 3.5.0
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder duration(@Nullable Duration duration) {
+			this.duration = duration;
+			return this;
+		}
+
 		// getters
 
 		/**
@@ -821,6 +900,19 @@ public class Request implements JsonObject {
 		@CheckReturnValue
 		Socket originatingSocket() {
 			return originatingSocket;
+		}
+
+		/**
+		 * Gets the duration of the effect.
+		 *
+		 * @return duration of the effect
+		 * @since 3.5.0
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@Nullable
+		@CheckReturnValue
+		public Duration duration() {
+			return duration;
 		}
 
 		// build
