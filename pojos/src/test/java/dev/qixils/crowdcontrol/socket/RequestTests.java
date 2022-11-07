@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 public class RequestTests {
 	@Test
 	public void constructorTest() {
+		// old constructor tests //
+
 		// negative ID test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request(-1, Request.Type.START, "success", "qixils", null, null, null));
@@ -30,6 +32,28 @@ public class RequestTests {
 		Assertions.assertDoesNotThrow(
 				() -> new Request.Builder().id(1).type(Request.Type.START).effect("success").viewer("qixils").build());
 
+		// new constructor tests //
+
+		// TODO (push code on other computer)
+
+		// non-effect constructor tests //
+
+		// negative ID test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request(-1, Request.Type.KEEP_ALIVE, null));
+		// null type test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request(1, null, null));
+		// null password test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request(1, Request.Type.LOGIN, null));
+		// valid keep-alive test
+		Assertions.assertDoesNotThrow(
+				() -> new Request(1, Request.Type.KEEP_ALIVE, null));
+		// valid login test
+		Assertions.assertDoesNotThrow(
+				() -> new Request(1, Request.Type.LOGIN, "password"));
+
 		// target constructor tests //
 
 		// null ID test
@@ -41,6 +65,9 @@ public class RequestTests {
 		// null avatar test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request.Target("1", "streamer", null));
+		// valid target test
+		Assertions.assertDoesNotThrow(
+				() -> new Request.Target("1", "streamer", "https://i.qixils.dev/favicon.png"));
 	}
 
 	@Test
@@ -124,6 +151,9 @@ public class RequestTests {
 
 	@Test
 	public void serializationTest() {
+		// instead of directly comparing JSON strings which could have key order differences,
+		// we create an example object, serialize it, deserialize it, and then compare it to
+		// another object created from a deserialization of the hopefully equivalent JSON string
 		Request request = new Request.Builder()
 				.id(1)
 				.type(Request.Type.START)
