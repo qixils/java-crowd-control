@@ -70,11 +70,12 @@ public class Request implements JsonObject {
 	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
 	 * @since 3.3.0
-	 * @deprecated Obsoleted by {@link #Request(int, Type, String, String, String, Integer, Duration, Target[])}.
+	 * @deprecated Obsoleted by {@link #Request(int, Type, String, String, String, Integer, Duration, Target[])};
+	 *             to be removed in v3.6.0
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
 	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "4.0.0")
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
 	public Request(int id,
 				   @NotNull Type type,
 				   @Nullable String effect,

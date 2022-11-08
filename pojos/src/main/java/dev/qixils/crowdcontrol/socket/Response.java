@@ -760,17 +760,16 @@ public class Response implements JsonObject {
 
 		/**
 		 * Creates a new builder representing the {@link Response} to a {@link Request}.
+		 * <p>
+		 * For internal use only; use {@link Request#buildResponse()} instead.
 		 *
 		 * @param request request to respond to
 		 * @since 2.0.0
-		 * @deprecated for removal in 3.5.0; replaced with {@link Request#buildResponse()}
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
 		@CheckReturnValue
-		@Deprecated
-		@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
-		// to be made protected or package-private
-		public Builder(@NotNull Request request) {
+		@ApiStatus.Internal
+		protected Builder(@NotNull Request request) {
 			this.id = request.getId();
 			this.originatingSocket = request.originatingSocket;
 		}

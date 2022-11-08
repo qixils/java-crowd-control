@@ -7,7 +7,6 @@ class RequestResponseBuilder extends Response.Builder {
 	private final @NotNull Request request;
 
 	RequestResponseBuilder(@NotNull Request request) {
-		//noinspection deprecation
 		super(request);
 		this.request = request;
 	}

@@ -1,7 +1,7 @@
 package dev.qixils.crowdcontrol.socket;
 
-import dev.qixils.crowdcontrol.AutomatableService;
 import dev.qixils.crowdcontrol.ServiceManager;
+import dev.qixils.crowdcontrol.StartableService;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,9 +27,8 @@ import java.util.concurrent.Executors;
  *
  * @since 3.3.0
  */
-@SuppressWarnings("deprecation") // deprecated APIs still need to be implemented
 @ApiStatus.AvailableSince("3.3.0")
-public final class SimulatedClient implements AutomatableService<Response>, ServiceManager {
+public final class SimulatedClient implements StartableService<Response>, ServiceManager {
 	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Client");
 	private final @NonBlockingExecutor Executor executor = Executors.newSingleThreadExecutor();
 	private final String ip;
@@ -85,22 +84,6 @@ public final class SimulatedClient implements AutomatableService<Response>, Serv
 		logger.info("Connected to " + ip + ":" + port);
 		handler = new RequestHandler(socket, this, password);
 		handler.start();
-	}
-
-	@SuppressWarnings("BlockingMethodInNonBlockingContext")
-	@Override
-	@NonBlocking
-	@ApiStatus.AvailableSince("3.3.0")
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.5.0")
-	@Deprecated
-	public void autoStart() {
-		executor.execute(() -> {
-			try {
-				start();
-			} catch (IOException e) {
-				logger.warn("Could not start client", e);
-			}
-		});
 	}
 
 	@Override
