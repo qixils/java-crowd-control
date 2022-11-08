@@ -20,12 +20,46 @@ public class TimedEffectTests {
 			"qixils",
 			"Hello World!",
 			10,
+			Duration.ofSeconds(15),
 			new Request.Target[]{new Request.Target("12345", "qixils", "https://i.qixils.dev/favicon.png")}
 	);
 
 	@Test
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public void constructorTest() {
-		// TODO
+		TimedEffect.Builder builder = new TimedEffect.Builder()
+				.request(request)
+				.effectGroup("test")
+				.duration(Duration.ofSeconds(10))
+				.startCallback(effect -> null)
+				.completionCallback(effect -> {});
+
+		// valid test
+		Assertions.assertDoesNotThrow(builder::build);
+
+		// valid null duration test
+		Assertions.assertDoesNotThrow(() -> builder.clone().duration(null).build());
+
+		// valid null effect group test
+		Assertions.assertDoesNotThrow(() -> builder.clone().effectGroup(null).build());
+
+		// valid null completion callback test
+		Assertions.assertDoesNotThrow(() -> builder.clone().completionCallback(null).build());
+
+		// valid legacy start callback test
+		Assertions.assertDoesNotThrow(() -> builder.clone().legacyStartCallback(effect -> {}).build());
+
+		// invalid negative duration test
+		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.clone().duration(Duration.ofSeconds(-1)).build());
+
+		// invalid null request test
+		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.clone().request(null).build());
+
+		// invalid null start callback test
+		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.clone().startCallback(null).build());
+
+		// invalid null legacy start callback test
+		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.clone().legacyStartCallback(null).build());
 	}
 
 	@Test
@@ -63,7 +97,7 @@ public class TimedEffectTests {
 	public void builderTests() {
 		TimedEffect.Builder builder = new TimedEffect.Builder();
 
-		Assertions.assertEquals(-1, builder.duration());
+		Assertions.assertEquals(null, builder.duration());
 		builder.duration(1000);
 		Assertions.assertEquals(1000, builder.duration());
 		builder.duration(Duration.ofSeconds(2));
@@ -74,7 +108,7 @@ public class TimedEffectTests {
 		Assertions.assertEquals(3000, builder.duration());
 
 		Assertions.assertNull(builder.request());
-		Request request = new Request.Builder().id(1).effect("test").viewer("test").build();
+		Request request = new Request.Builder().id(1).effect("test").viewer("test").duration(Duration.ofSeconds(4)).build();
 		builder.request(request);
 		Assertions.assertEquals(request, builder.request());
 
@@ -109,8 +143,10 @@ public class TimedEffectTests {
 		Assertions.assertFalse(timedEffect.hasStarted());
 
 		// misc
-		timedEffect = timedEffect.toBuilder().effectGroup(null).build();
+		timedEffect = timedEffect.toBuilder().effectGroup(null).duration(null).build();
 		Assertions.assertEquals("test", timedEffect.getEffectGroup());
+		Assertions.assertEquals(4000, timedEffect.getOriginalDuration());
+		Assertions.assertEquals(4000, timedEffect.getCurrentDuration());
 	}
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")

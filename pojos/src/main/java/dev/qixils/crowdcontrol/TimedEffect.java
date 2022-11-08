@@ -57,15 +57,21 @@ public final class TimedEffect {
 
 	private TimedEffect(@NotNull Request request,
 						@Nullable String effectGroup,
-						long duration,
+						@Nullable Long duration,
 						@NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback,
 						@Nullable Consumer<TimedEffect> completionCallback) throws IllegalArgumentException {
 		this.request = ExceptionUtil.validateNotNull(request, "request");
 		this.effectGroup = ExceptionUtil.validateNotNullElseGet(effectGroup, request::getEffect);
 		this.globalKey = new MapKey(this.effectGroup);
-		if (duration < 0)
+		if (duration != null)
+			this.duration = duration;
+		else if (request.getDuration() != null)
+			this.duration = request.getDuration().toMillis();
+		else
+			throw new IllegalArgumentException("duration must be specified");
+		if (this.duration < 0)
 			throw new IllegalArgumentException("duration must not be negative");
-		this.originalDuration = duration;
+		this.originalDuration = this.duration;
 		this.callback = ExceptionUtil.validateNotNull(callback, "callback");
 		this.completionCallback = completionCallback;
 
@@ -457,7 +463,7 @@ public final class TimedEffect {
 		private String effectGroup;
 		private Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
 		private Consumer<@NotNull TimedEffect> completionCallback;
-		private long duration = -1;
+		private Long duration;
 
 		/**
 		 * Creates a new {@link TimedEffect.Builder}.
@@ -562,12 +568,15 @@ public final class TimedEffect {
 		@NotNull
 		@Contract("_ -> this")
 		public Builder legacyStartCallback(@Nullable Consumer<@NotNull TimedEffect> callback) {
-			return startCallback(callback == null
-					? null
-					: effect -> {
-				callback.accept(effect);
-				return null;
-			});
+			if (callback == null)
+				this.callback = null;
+			else
+				this.callback = effect -> {
+					callback.accept(effect);
+					return null;
+				};
+
+			return this;
 		}
 
 		/**
@@ -617,6 +626,8 @@ public final class TimedEffect {
 		public Builder duration(@Nullable Duration duration) {
 			if (duration != null)
 				this.duration = duration.toMillis();
+			else
+				this.duration = null;
 			return this;
 		}
 
@@ -705,7 +716,7 @@ public final class TimedEffect {
 
 		/**
 		 * Gets the duration of this effect.
-		 * May be {@code -1} if not yet set.
+		 * May be {@code null} if not yet set.
 		 *
 		 * @return duration in milliseconds
 		 * @since 3.3.2
@@ -713,7 +724,8 @@ public final class TimedEffect {
 		@ApiStatus.AvailableSince("3.3.2")
 		@Contract(pure = true)
 		@CheckReturnValue
-		public long duration() {
+		@Nullable
+		public Long duration() {
 			return duration;
 		}
 

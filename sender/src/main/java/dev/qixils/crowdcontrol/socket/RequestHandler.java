@@ -152,6 +152,7 @@ final class RequestHandler implements SimulatedService<Response> {
 						data.sink.next(response); // send response to subscriber
 
 						// set availability of effect
+						// TODO: this is silently erroring in unit tests
 						String effectName = data.request.getEffect();
 						if (!effectAvailabilityMap.containsKey(effectName))
 							effectAvailabilityMap.put(effectName, response.getResultType() != Response.ResultType.UNAVAILABLE);

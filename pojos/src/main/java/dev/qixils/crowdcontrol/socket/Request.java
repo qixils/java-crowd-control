@@ -146,7 +146,11 @@ public class Request implements JsonObject {
 		this.effect = effect == null ? null : effect.toLowerCase(Locale.ENGLISH);
 		this.viewer = viewer == null ? null : viewer.toLowerCase(Locale.ENGLISH);
 		this.message = message;
+		if (cost != null && cost < 0)
+			throw new IllegalArgumentException("cost cannot be negative");
 		this.cost = cost;
+		if (duration != null && duration.isNegative())
+			throw new IllegalArgumentException("duration cannot be negative");
 		this.duration = duration;
 
 		// validate targets are not null
