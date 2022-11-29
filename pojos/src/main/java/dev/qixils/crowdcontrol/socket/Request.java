@@ -1,7 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +38,7 @@ public class Request implements JsonObject {
 	@Nullable
 	private Integer cost;
 	private Target[] targets;
-	@Nullable @JsonAdapter(DurationAdapter.class)
+	@Nullable
 	private Duration duration;
 
 	/**

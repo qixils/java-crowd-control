@@ -5,6 +5,7 @@ import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
 import dev.qixils.crowdcontrol.socket.SimulatedClient;
 import dev.qixils.crowdcontrol.socket.SimulatedServer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -23,12 +24,12 @@ import java.util.function.Consumer;
 @SuppressWarnings("BusyWait")
 public final class EffectResponseTests {
 	private static final int PORT = 53737;
-	private static final String PASSWORD = "password";
-	private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
-	private static final Object EFFECT_HANDLERS = new EffectHandlers();
+	private static final @NotNull String PASSWORD = "password";
+	private static final @NotNull ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
+	private static final @NotNull Object EFFECT_HANDLERS = new EffectHandlers();
 
-	private void basicTest(String effectName,
-						   Response.ResultType resultType,
+	private void basicTest(@NotNull String effectName,
+						   Response.@NotNull ResultType resultType,
 						   @Nullable Consumer<CrowdControl> clientModifier) throws InterruptedException {
 		SimulatedServer server = new SimulatedServer(0);
 		Assertions.assertDoesNotThrow(server::start);
@@ -76,7 +77,7 @@ public final class EffectResponseTests {
 		Assertions.assertFalse(server.isRunning());
 	}
 
-	private void basicTest(Response.ResultType resultType) throws InterruptedException {
+	private void basicTest(Response.@NotNull ResultType resultType) throws InterruptedException {
 		basicTest(resultType.name().toLowerCase(Locale.ENGLISH), resultType, null);
 	}
 
@@ -219,7 +220,7 @@ public final class EffectResponseTests {
 		Response response = responseFlux.blockFirst();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
-		Assertions.assertEquals(200, response.getTimeRemaining());
+		Assertions.assertEquals(Duration.ofMillis(200), response.getTimeRemaining());
 
 		// second request should initially "fail" (return RETRY)...
 		Flux<Response> newFlux = server.sendRequest(builder).blockFirst();
@@ -227,13 +228,13 @@ public final class EffectResponseTests {
 		response = newFlux.blockFirst();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.RETRY, response.getResultType());
-		Assertions.assertEquals(0, response.getTimeRemaining());
+		Assertions.assertNull(response.getTimeRemaining());
 
 		// (because the first effect is still running, which we should ensure is eventually going to finish)
 		response = responseFlux.blockLast(Duration.ofSeconds(2));
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
-		Assertions.assertEquals(0, response.getTimeRemaining());
+		Assertions.assertNull(response.getTimeRemaining());
 
 		// ...but should eventually succeed, so let's set up some listeners
 		CompletableFuture<Response> successDetector = new CompletableFuture<>();
@@ -255,7 +256,7 @@ public final class EffectResponseTests {
 		response = successDetector.join();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
-		Assertions.assertEquals(200, response.getTimeRemaining());
+		Assertions.assertEquals(Duration.ofMillis(200), response.getTimeRemaining());
 		Thread.sleep(30); // wait for future to complete
 		Assertions.assertTrue(secondFuture.isDone());
 
@@ -264,18 +265,18 @@ public final class EffectResponseTests {
 		Assertions.assertNotNull(effect);
 		Assertions.assertTrue(effect.hasStarted());
 		Assertions.assertFalse(effect.isPaused());
-		Assertions.assertTrue(effect.getCurrentDuration() > 0);
+		Assertions.assertFalse(effect.getCurrentDuration().isNegative() || effect.getCurrentDuration().isZero());
 		Assertions.assertFalse(effect.isComplete());
 		effect.pause();
 		Assertions.assertTrue(effect.isPaused());
 		response = pauseDetector.join();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.PAUSED, response.getResultType());
-		long timeRemaining = response.getTimeRemaining();
-		Assertions.assertTrue(timeRemaining > 0);
+		Duration timeRemaining = response.getTimeRemaining();
+		Assertions.assertFalse(timeRemaining == null || timeRemaining.isNegative());
 
 		// while it's paused, let's test some miscellaneous methods
-		Assertions.assertEquals(200, effect.getOriginalDuration());
+		Assertions.assertEquals(Duration.ofMillis(200), effect.getOriginalDuration());
 		Assertions.assertThrows(IllegalStateException.class, effect::pause);
 		Assertions.assertThrows(IllegalStateException.class, effect::queue);
 		Request request = builder.build();
@@ -299,7 +300,7 @@ public final class EffectResponseTests {
 		response = Assertions.assertDoesNotThrow(() -> finishDetector.get(30, TimeUnit.MILLISECONDS));
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.FINISHED, response.getResultType());
-		Assertions.assertEquals(0, response.getTimeRemaining());
+		Assertions.assertNull(response.getTimeRemaining());
 
 		// and validate some more methods
 		Thread.sleep(10); // give the effect a chance to (get marked as) finish(ed)
@@ -308,7 +309,7 @@ public final class EffectResponseTests {
 		Assertions.assertThrows(IllegalStateException.class, effect::resume);
 		Assertions.assertFalse(effect.complete());
 		Assertions.assertTrue(effect.isComplete());
-		Assertions.assertEquals(0, effect.getCurrentDuration());
+		Assertions.assertEquals(Duration.ZERO, effect.getCurrentDuration());
 
 		// truly finally, test the #isActive method in regard to global effects & custom names
 		Request noTargetsRequest = effect.getRequest().toBuilder().targets((Request.Target[]) null).build();
@@ -363,7 +364,7 @@ public final class EffectResponseTests {
 		Response response = responseFlux.blockFirst();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.FAILURE, response.getResultType());
-		Assertions.assertEquals(0, response.getTimeRemaining());
+		Assertions.assertNull(response.getTimeRemaining());
 		Thread.sleep(50); // wait for completion callback (not that it should execute)
 		Assertions.assertFalse(completionFuture.isDone());
 
@@ -401,7 +402,7 @@ public final class EffectResponseTests {
 		Response response = responseFlux.blockFirst();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.RETRY, response.getResultType());
-		Assertions.assertEquals(0, response.getTimeRemaining());
+		Assertions.assertNull(response.getTimeRemaining());
 		Thread.sleep(50); // wait for completion callback (not that it should execute)
 		Assertions.assertFalse(completionFuture.isDone());
 

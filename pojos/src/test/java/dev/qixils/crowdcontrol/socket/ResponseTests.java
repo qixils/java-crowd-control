@@ -4,11 +4,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("ConstantConditions")
 public class ResponseTests {
+	@SuppressWarnings("deprecation") // old constructors still need to be tested! :)
 	@Test
 	public void constructorTest() {
 		Request request = new Request.Builder().effect("test").viewer("sdk").id(1).build();
@@ -19,17 +21,17 @@ public class ResponseTests {
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				-1,
 				null,
-				Response.PacketType.LOGIN,
-				"Effect applied successfully"
+				Response.PacketType.DISCONNECT,
+				"Server is disconnecting"
 		));
 		// null packet type throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				1,
 				null,
 				null,
-				"Effect applied successfully"
+				"Server is disconnecting"
 		));
-		// effect type packet throws IllegalArgumentException
+		// effect result packet throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				1,
 				null,
@@ -49,6 +51,13 @@ public class ResponseTests {
 				null,
 				Response.PacketType.LOGIN,
 				null
+		));
+		// doesn't throw when all parameters are valid
+		Assertions.assertDoesNotThrow(() -> new Response(
+				1,
+				null,
+				Response.PacketType.DISCONNECT,
+				"Server is disconnecting"
 		));
 
 		// Constructor 2
@@ -59,15 +68,15 @@ public class ResponseTests {
 				null,
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
-				1000
+				null
 		));
-		// negative timeRemaining throws IllegalArgumentException
+		// non-positive timeRemaining throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				1,
 				null,
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
-				-1
+				Duration.ZERO
 		));
 		// null result type throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
@@ -75,7 +84,22 @@ public class ResponseTests {
 				null,
 				null,
 				"Effect applied successfully",
-				1000
+				null
+		));
+		// doesn't throw when all parameters are valid
+		Assertions.assertDoesNotThrow(() -> new Response(
+				1,
+				null,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				Duration.ofSeconds(10)
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				1,
+				null,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				null
 		));
 
 		// Constructor 3
@@ -83,14 +107,14 @@ public class ResponseTests {
 		// null request throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				null,
-				Response.PacketType.LOGIN,
-				"Effect applied successfully"
+				Response.PacketType.DISCONNECT,
+				"Server is disconnecting"
 		));
 		// null packet type throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				request,
 				null,
-				"Effect applied successfully"
+				"Server is disconnecting"
 		));
 		// effect type packet throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
@@ -109,6 +133,12 @@ public class ResponseTests {
 				request,
 				Response.PacketType.LOGIN,
 				null
+		));
+		// doesn't throw when all parameters are valid
+		Assertions.assertDoesNotThrow(() -> new Response(
+				request,
+				Response.PacketType.DISCONNECT,
+				"Server is disconnecting"
 		));
 
 		// Constructor 4
@@ -134,8 +164,28 @@ public class ResponseTests {
 				"Effect applied successfully",
 				-1
 		));
+		// doesn't throw when all parameters are valid
+		Assertions.assertDoesNotThrow(() -> new Response(
+				request,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				1000
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				request,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				0
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				request,
+				Response.ResultType.SUCCESS,
+				null,
+				0
+		));
 	}
 
+	@SuppressWarnings("deprecation") // old constructors still need to be tested! :)
 	@Test
 	public void getterTest() {
 		// Constructor 1
@@ -148,7 +198,9 @@ public class ResponseTests {
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.LOGIN, response.getPacketType());
+		Assertions.assertNull(response.getResultType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());
+		Assertions.assertNull(response.getTimeRemaining());
 
 		// Constructor 2
 		response = new Response(
@@ -156,13 +208,14 @@ public class ResponseTests {
 				null,
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
-				1000
+				Duration.ofSeconds(1)
 		);
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
+		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());
-		Assertions.assertEquals(1000, response.getTimeRemaining());
+		Assertions.assertEquals(Duration.ofSeconds(1), response.getTimeRemaining());
 
 		// Constructor 3
 		response = new Response(
@@ -173,7 +226,9 @@ public class ResponseTests {
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.LOGIN, response.getPacketType());
+		Assertions.assertNull(response.getResultType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());
+		Assertions.assertNull(response.getTimeRemaining());
 
 		// Constructor 4
 		response = new Response(
@@ -184,9 +239,24 @@ public class ResponseTests {
 		);
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
+		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());
-		Assertions.assertEquals(1000, response.getTimeRemaining());
+		Assertions.assertEquals(Duration.ofSeconds(1), response.getTimeRemaining());
+
+		// Constructor 5
+		response = new Response(
+				new Request.Builder().id(1).type(Request.Type.KEEP_ALIVE).build(),
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				Duration.ofSeconds(1)
+		);
+		Assertions.assertEquals(1, response.getId());
+		Assertions.assertFalse(response.isOriginKnown());
+		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
+		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
+		Assertions.assertEquals("Effect applied successfully", response.getMessage());
+		Assertions.assertEquals(Duration.ofSeconds(1), response.getTimeRemaining());
 	}
 
 	@Test
@@ -197,8 +267,11 @@ public class ResponseTests {
 		Assertions.assertNull(builder.originatingSocket());
 
 		// constructor 2 test
-		//noinspection deprecation -- deprecated constructors need to be tested to
 		builder = new Response.Builder(new Request.Builder().id(2).type(Request.Type.KEEP_ALIVE).build());
+		Assertions.assertEquals(2, builder.id());
+		Assertions.assertNull(builder.originatingSocket());
+		// other constructor 2 test
+		builder = new Request.Builder().id(2).type(Request.Type.KEEP_ALIVE).build().buildResponse();
 		Assertions.assertEquals(2, builder.id());
 		Assertions.assertNull(builder.originatingSocket());
 
@@ -218,15 +291,17 @@ public class ResponseTests {
 		Assertions.assertEquals("Effect applied successfully", builder.message());
 
 		// time remaining test
-		Assertions.assertEquals(0, builder.timeRemaining());
+		Assertions.assertNull(builder.timeRemaining());
 		builder = builder.timeRemaining(1000);
-		Assertions.assertEquals(1000, builder.timeRemaining());
+		Assertions.assertEquals(Duration.ofSeconds(1), builder.timeRemaining());
 		builder = builder.timeRemaining(2, TimeUnit.SECONDS);
-		Assertions.assertEquals(2000, builder.timeRemaining());
-		builder = builder.timeRemaining(LocalDateTime.now().plusSeconds(3));
-		Assertions.assertTrue(builder.timeRemaining() > 2000); // LocalDateTime-based offsets are inherently not exact
+		Assertions.assertEquals(Duration.ofSeconds(2), builder.timeRemaining());
+		builder = builder.timeRemaining(Instant.now().plusSeconds(3));
+		Assertions.assertFalse(builder.timeRemaining().minusSeconds(2).isNegative());
 		builder = builder.timeRemaining(Duration.ofSeconds(4));
-		Assertions.assertEquals(4000, builder.timeRemaining());
+		Assertions.assertEquals(Duration.ofSeconds(4), builder.timeRemaining());
+		builder = builder.timeRemaining(5, ChronoUnit.SECONDS);
+		Assertions.assertEquals(Duration.ofSeconds(5), builder.timeRemaining());
 
 		// result type test
 		Assertions.assertNull(builder.type());
@@ -239,7 +314,7 @@ public class ResponseTests {
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());
-		Assertions.assertEquals(4000, response.getTimeRemaining());
+		Assertions.assertEquals(Duration.ofSeconds(5), response.getTimeRemaining());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 
 		// misc
@@ -257,7 +332,7 @@ public class ResponseTests {
 				null,
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
-				1000
+				Duration.ofSeconds(1)
 		);
 		String json = "{\"id\":1,\"type\":0,\"message\":\"Effect applied successfully\",\"timeRemaining\":1000,\"status\":0}";
 		Assertions.assertEquals(Response.fromJSON(effectResponse.toJSON()), Response.fromJSON(json));
@@ -290,7 +365,7 @@ public class ResponseTests {
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());
-		Assertions.assertEquals(1000, response.getTimeRemaining());
+		Assertions.assertEquals(Duration.ofSeconds(1), response.getTimeRemaining());
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 
@@ -302,7 +377,7 @@ public class ResponseTests {
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.UNAVAILABLE, response.getResultType());
 		Assertions.assertEquals("Effect not usable in this game [effect: test]", response.getMessage());
-		Assertions.assertEquals(0, response.getTimeRemaining());
+		Assertions.assertNull(response.getTimeRemaining());
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 	}

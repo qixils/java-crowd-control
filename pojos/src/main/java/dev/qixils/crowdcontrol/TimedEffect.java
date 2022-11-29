@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.ParametersAreNullableByDefault;
 import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -57,14 +58,14 @@ public final class TimedEffect {
 
 	private TimedEffect(@NotNull Request request,
 						@Nullable String effectGroup,
-						@Nullable Long duration,
+						@Nullable Duration duration,
 						@NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback,
 						@Nullable Consumer<TimedEffect> completionCallback) throws IllegalArgumentException {
 		this.request = ExceptionUtil.validateNotNull(request, "request");
 		this.effectGroup = ExceptionUtil.validateNotNullElseGet(effectGroup, request::getEffect);
 		this.globalKey = new MapKey(this.effectGroup);
 		if (duration != null)
-			this.duration = duration;
+			this.duration = duration.toMillis();
 		else if (request.getDuration() != null)
 			this.duration = request.getDuration().toMillis();
 		else
@@ -82,6 +83,7 @@ public final class TimedEffect {
 		}
 	}
 
+	@SuppressWarnings("ConstantConditions") // the other constructor will check for null
 	private TimedEffect(@NotNull Builder builder) {
 		this(builder.request, builder.effectGroup, builder.duration, builder.callback, builder.completionCallback);
 	}
@@ -143,21 +145,25 @@ public final class TimedEffect {
 	}
 
 	/**
-	 * Returns the current milliseconds remaining in the effect.
-	 * If the effect has completed, this will return 0.
+	 * Returns the current time remaining in the effect.
+	 * If the effect has completed, this will return {@link Duration#ZERO zero}.
 	 * If the effect has not started, this will return the original duration set upon construction.
 	 *
-	 * @return time left in milliseconds
+	 * @return time left
 	 * @since 2.1.0
 	 */
 	@ApiStatus.AvailableSince("2.1.0")
 	@CheckReturnValue
-	public long getCurrentDuration() {
+	@NotNull
+	public Duration getCurrentDuration() {
+		final long value;
 		if (duration == -1)
-			return 0;
-		if (startedAt == -1)
-			return originalDuration;
-		return Math.max(0, duration - (System.currentTimeMillis() - startedAt));
+			value = 0;
+		else if (startedAt == -1)
+			value = originalDuration;
+		else
+			value = Math.max(0, duration - (System.currentTimeMillis() - startedAt));
+		return Duration.ofMillis(value);
 	}
 
 	/**
@@ -247,7 +253,7 @@ public final class TimedEffect {
 		if (duration == -1)
 			throw new IllegalStateException("Effect has already completed");
 
-		duration = getCurrentDuration();
+		duration = getCurrentDuration().toMillis();
 		if (duration <= 0)
 			throw new IllegalStateException("Effect has already completed");
 
@@ -341,7 +347,7 @@ public final class TimedEffect {
 	@ApiStatus.AvailableSince("2.1.0")
 	@CheckReturnValue
 	public boolean isComplete() {
-		return getCurrentDuration() == 0;
+		return getCurrentDuration().isZero();
 	}
 
 	/**
@@ -383,15 +389,16 @@ public final class TimedEffect {
 	}
 
 	/**
-	 * Gets the duration of this effect that was set on construction.
+	 * Gets the duration of that was set on construction.
 	 *
-	 * @return duration in milliseconds
+	 * @return original duration
 	 * @since 3.3.0
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
 	@CheckReturnValue
-	public long getOriginalDuration() {
-		return originalDuration;
+	@NotNull
+	public Duration getOriginalDuration() {
+		return Duration.ofMillis(originalDuration);
 	}
 
 	/**
@@ -459,14 +466,15 @@ public final class TimedEffect {
 	@SuppressWarnings("UnusedReturnValue") // used in method chaining
 	@ParametersAreNullableByDefault
 	public static final class Builder implements Cloneable {
-		private Request request;
-		private String effectGroup;
-		private Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
-		private Consumer<@NotNull TimedEffect> completionCallback;
-		private Long duration;
+		private @Nullable Request request;
+		private @Nullable String effectGroup;
+		private @Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
+		private @Nullable Consumer<@NotNull TimedEffect> completionCallback;
+		private @Nullable Duration duration;
 
 		/**
 		 * Creates a new {@link TimedEffect.Builder}.
+		 *
 		 * @since 3.3.2
 		 */
 		@ApiStatus.AvailableSince("3.3.2")
@@ -504,7 +512,7 @@ public final class TimedEffect {
 			this.effectGroup = effect.effectGroup;
 			this.callback = effect.callback;
 			this.completionCallback = effect.completionCallback;
-			this.duration = effect.originalDuration;
+			this.duration = effect.getOriginalDuration();
 		}
 
 		/**
@@ -597,17 +605,18 @@ public final class TimedEffect {
 		/**
 		 * Sets the duration of this effect.
 		 *
-		 * @param duration duration in milliseconds
+		 * @param millis duration in milliseconds
 		 * @return this builder
 		 * @see #duration(Duration)
 		 * @see #duration(TimeUnit, long)
+		 * @see #duration(TemporalUnit, long)
 		 * @since 3.3.2
 		 */
 		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
-		public Builder duration(long duration) {
-			this.duration = duration;
+		public Builder duration(long millis) {
+			this.duration = Duration.ofMillis(millis);
 			return this;
 		}
 
@@ -618,16 +627,14 @@ public final class TimedEffect {
 		 * @return this builder
 		 * @see #duration(long)
 		 * @see #duration(TimeUnit, long)
+		 * @see #duration(TemporalUnit, long)
 		 * @since 3.3.2
 		 */
 		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder duration(@Nullable Duration duration) {
-			if (duration != null)
-				this.duration = duration.toMillis();
-			else
-				this.duration = null;
+			this.duration = duration;
 			return this;
 		}
 
@@ -640,15 +647,39 @@ public final class TimedEffect {
 		 * @throws IllegalArgumentException if the unit is null
 		 * @see #duration(long)
 		 * @see #duration(Duration)
+		 * @see #duration(TemporalUnit, long)
 		 * @since 3.3.2
 		 */
 		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_, _ -> this")
 		public Builder duration(@NotNull TimeUnit unit, long duration) throws IllegalArgumentException {
-			this.duration = ExceptionUtil.validateNotNull(unit, "unit").toMillis(duration);
+			ExceptionUtil.validateNotNull(unit, "unit");
+			this.duration = Duration.ofMillis(unit.toMillis(duration));
 			return this;
 		}
+
+		/**
+		 * Sets the duration of this effect.
+		 *
+		 * @param unit     duration unit
+		 * @param duration duration amount
+		 * @return this builder
+		 * @throws IllegalArgumentException if the unit is null
+		 * @see #duration(long)
+		 * @see #duration(Duration)
+		 * @see #duration(TimeUnit, long)
+		 * @since 3.5.0
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@NotNull
+		@Contract("_, _ -> this")
+		public Builder duration(@NotNull TemporalUnit unit, long duration) throws IllegalArgumentException {
+			ExceptionUtil.validateNotNull(unit, "unit");
+			this.duration = Duration.of(duration, unit);
+			return this;
+		}
+
 
 		// getters
 
@@ -725,7 +756,7 @@ public final class TimedEffect {
 		@Contract(pure = true)
 		@CheckReturnValue
 		@Nullable
-		public Long duration() {
+		public Duration duration() {
 			return duration;
 		}
 

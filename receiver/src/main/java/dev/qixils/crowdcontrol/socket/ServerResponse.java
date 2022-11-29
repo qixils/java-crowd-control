@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,7 +12,7 @@ import java.util.stream.Collectors;
 final class ServerResponse extends Response {
 	private final transient @NotNull ServerSocketManager manager;
 
-	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, long timeRemaining) throws IllegalArgumentException {
+	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, @Nullable Duration timeRemaining) throws IllegalArgumentException {
 		super(id, null, packetType, type, message, timeRemaining);
 		this.manager = manager;
 	}

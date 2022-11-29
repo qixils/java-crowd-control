@@ -31,11 +31,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 final class RequestHandler implements SimulatedService<Response> {
-	private static final Logger logger = LoggerFactory.getLogger("CC-RequestHandler");
-	private static final Executor executor = Executors.newCachedThreadPool();
-	private static final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-	private final Map<Integer, EffectData> effectDataMap = new ConcurrentHashMap<>(1);
-	private final Map<String, Boolean> effectAvailabilityMap = new ConcurrentHashMap<>(1);
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-RequestHandler");
+	private static final @NotNull Executor executor = Executors.newCachedThreadPool();
+	private static final @NotNull ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+	private final @NotNull Map<Integer, EffectData> effectDataMap = new ConcurrentHashMap<>(1);
+	private final @NotNull Map<String, Boolean> effectAvailabilityMap = new ConcurrentHashMap<>(1);
 	private final Socket socket;
 	private final SimulatedService<?> parent;
 	private final InputStream inputStream;
@@ -191,12 +191,12 @@ final class RequestHandler implements SimulatedService<Response> {
 												null,
 												Response.ResultType.FINISHED,
 												null,
-												0
+												null
 										));
 										// complete flux stream
 										data.sink.complete();
 									},
-									response.getTimeRemaining(),
+									ExceptionUtil.validateNotNullElse(response.getTimeRemaining(), Duration.ZERO).toMillis(),
 									TimeUnit.MILLISECONDS
 							);
 				}
@@ -269,7 +269,7 @@ final class RequestHandler implements SimulatedService<Response> {
 		private long timeRemaining = 0;
 		private long timeUpdatedAt = 0;
 		private boolean paused = false;
-		private ScheduledFuture<?> scheduledFuture;
+		private @Nullable ScheduledFuture<?> scheduledFuture;
 
 		private EffectData(int id, @NotNull Request request, @NotNull FluxSink<@NotNull Response> sink) {
 			this.id = id;
@@ -282,14 +282,15 @@ final class RequestHandler implements SimulatedService<Response> {
 			return (int) Math.pow(2, 2 + (retryCount++));
 		}
 
-		private void updateTimeRemaining(long timeRemaining) {
-			this.timeRemaining = timeRemaining;
+		private void updateTimeRemaining(@Nullable Duration timeRemaining) {
+			this.timeRemaining = ExceptionUtil.validateNotNullElse(timeRemaining, Duration.ZERO).toMillis();
 			this.timeUpdatedAt = System.currentTimeMillis();
 		}
 
 		// get the elapsed time since the last update
-		private long getCurrentTimeRemaining() {
-			return Math.max(0, timeRemaining - (System.currentTimeMillis() - timeUpdatedAt));
+		@NotNull
+		private Duration getCurrentTimeRemaining() {
+			return Duration.ofMillis(Math.max(0, timeRemaining - (System.currentTimeMillis() - timeUpdatedAt)));
 		}
 
 		private void pause() {
@@ -309,7 +310,7 @@ final class RequestHandler implements SimulatedService<Response> {
 		}
 
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(@Nullable Object o) {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			EffectData that = (EffectData) o;

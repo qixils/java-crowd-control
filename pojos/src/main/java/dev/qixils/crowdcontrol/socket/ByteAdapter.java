@@ -4,19 +4,22 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.function.Function;
 
 class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
-	static final Gson GSON = new GsonBuilder()
+	static final @NotNull Gson GSON = new GsonBuilder()
 			.registerTypeAdapter(Request.Type.class, new ByteAdapter<>(Request.Type::from))
 			.registerTypeAdapter(Response.ResultType.class, new ByteAdapter<>(Response.ResultType::from))
 			.registerTypeAdapter(Response.PacketType.class, new ByteAdapter<>(Response.PacketType::from))
+			.registerTypeAdapter(Duration.class, new DurationAdapter())
 			.create();
 
 	private final @NotNull Function<@NotNull Byte, @Nullable T> fromByte;
@@ -26,7 +29,9 @@ class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
 	}
 
 	@Override
-	public void write(JsonWriter out, T value) throws IOException {
+	public void write(@Nullable JsonWriter out, @Nullable T value) throws IOException {
+		if (out == null) return;
+
 		if (value == null) {
 			out.nullValue();
 		} else {
@@ -35,7 +40,11 @@ class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
 	}
 
 	@Override
-	public T read(JsonReader in) throws IOException {
+	public @Nullable T read(JsonReader in) throws IOException {
+		if (in.peek() == JsonToken.NULL) {
+			in.nextNull();
+			return null;
+		}
 		return fromByte.apply((byte) in.nextInt());
 	}
 }

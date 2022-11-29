@@ -2,10 +2,12 @@ package dev.qixils.crowdcontrol;
 
 import dev.qixils.crowdcontrol.socket.Request;
 import dev.qixils.crowdcontrol.socket.Response;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -14,7 +16,7 @@ import java.util.function.Function;
  */
 @SuppressWarnings({"ConstantConditions", "BusyWait"})
 public class TimedEffectTests {
-	private static final Request request = new Request(1,
+	private static final @NotNull Request request = new Request(1,
 			Request.Type.START,
 			"test",
 			"qixils",
@@ -74,8 +76,8 @@ public class TimedEffectTests {
 		// getters
 		Assertions.assertEquals(request, timedEffect.getRequest());
 		Assertions.assertEquals(request.getEffect(), timedEffect.getEffectGroup());
-		Assertions.assertEquals(1000, timedEffect.getCurrentDuration());
-		Assertions.assertEquals(1000, timedEffect.getOriginalDuration());
+		Assertions.assertEquals(Duration.ofSeconds(1), timedEffect.getCurrentDuration());
+		Assertions.assertEquals(Duration.ofSeconds(1), timedEffect.getOriginalDuration());
 		Assertions.assertFalse(timedEffect.isComplete());
 		Assertions.assertFalse(timedEffect.isPaused());
 		Assertions.assertFalse(timedEffect.hasStarted());
@@ -97,18 +99,22 @@ public class TimedEffectTests {
 	public void builderTests() {
 		TimedEffect.Builder builder = new TimedEffect.Builder();
 
-		Assertions.assertEquals(null, builder.duration());
+		Assertions.assertNull(builder.duration());
 		builder.duration(1000);
-		Assertions.assertEquals(1000, builder.duration());
+		Assertions.assertEquals(Duration.ofSeconds(1), builder.duration());
+		builder.duration(null);
+		Assertions.assertNull(builder.duration());
 		builder.duration(Duration.ofSeconds(2));
-		Assertions.assertEquals(2000, builder.duration());
+		Assertions.assertEquals(Duration.ofSeconds(2), builder.duration());
 		builder.duration(TimeUnit.SECONDS, 3);
-		Assertions.assertEquals(3000, builder.duration());
-		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.duration(null, 4));
-		Assertions.assertEquals(3000, builder.duration());
+		Assertions.assertEquals(Duration.ofSeconds(3), builder.duration());
+		builder.duration(ChronoUnit.SECONDS, 4);
+		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.duration((TimeUnit) null, 5));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.duration((ChronoUnit) null, 5));
+		Assertions.assertEquals(Duration.ofSeconds(4), builder.duration());
 
 		Assertions.assertNull(builder.request());
-		Request request = new Request.Builder().id(1).effect("test").viewer("test").duration(Duration.ofSeconds(4)).build();
+		Request request = new Request.Builder().id(1).effect("test").viewer("test").duration(Duration.ofSeconds(5)).build();
 		builder.request(request);
 		Assertions.assertEquals(request, builder.request());
 
@@ -136,8 +142,8 @@ public class TimedEffectTests {
 		TimedEffect timedEffect = builder.clone().build().toBuilder().build();
 		Assertions.assertEquals(request, timedEffect.getRequest());
 		Assertions.assertEquals("test2", timedEffect.getEffectGroup());
-		Assertions.assertEquals(3000, timedEffect.getOriginalDuration());
-		Assertions.assertEquals(3000, timedEffect.getCurrentDuration());
+		Assertions.assertEquals(Duration.ofSeconds(4), timedEffect.getOriginalDuration());
+		Assertions.assertEquals(Duration.ofSeconds(4), timedEffect.getCurrentDuration());
 		Assertions.assertFalse(timedEffect.isComplete());
 		Assertions.assertFalse(timedEffect.isPaused());
 		Assertions.assertFalse(timedEffect.hasStarted());
@@ -145,8 +151,8 @@ public class TimedEffectTests {
 		// misc
 		timedEffect = timedEffect.toBuilder().effectGroup(null).duration(null).build();
 		Assertions.assertEquals("test", timedEffect.getEffectGroup());
-		Assertions.assertEquals(4000, timedEffect.getOriginalDuration());
-		Assertions.assertEquals(4000, timedEffect.getCurrentDuration());
+		Assertions.assertEquals(Duration.ofSeconds(5), timedEffect.getOriginalDuration());
+		Assertions.assertEquals(Duration.ofSeconds(5), timedEffect.getCurrentDuration());
 	}
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")

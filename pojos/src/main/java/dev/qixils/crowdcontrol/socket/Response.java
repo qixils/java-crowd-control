@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +17,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.Instant;
 import java.time.temporal.Temporal;
+import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +42,8 @@ public class Response implements JsonObject {
 	@SerializedName("status")
 	private ResultType type;
 	private String message;
-	private long timeRemaining; // millis
+	@Nullable
+	private Duration timeRemaining; // millis
 
 	/**
 	 * Instantiates an empty {@link Response}.
@@ -62,12 +64,12 @@ public class Response implements JsonObject {
 	 * @param packetType        type of the packet
 	 * @param type              result of the execution
 	 * @param message           result message
-	 * @param timeRemaining     time remaining in milliseconds until the effect completes
-	 *                          or {@code 0} if the effect is not time-based
+	 * @param timeRemaining     time remaining until the effect completes
+	 *                          or {@code null} if the effect is not time-based
 	 * @throws IllegalArgumentException May be thrown in various circumstances:
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
-	 *                                      <li>if the {@code timeRemaining} is negative</li>
+	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
 	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}
 	 *                                      and {@code type} is null</li>
 	 *                                      <li>if the {@code packetType} is not {@link PacketType#EFFECT_RESULT}
@@ -82,14 +84,14 @@ public class Response implements JsonObject {
 			 @Nullable PacketType packetType,
 			 @Nullable ResultType type,
 			 @Nullable String message,
-			 long timeRemaining) throws IllegalArgumentException {
+			 @Nullable Duration timeRemaining) throws IllegalArgumentException {
 		this.id = id;
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
 
 		this.timeRemaining = timeRemaining;
-		if (this.timeRemaining < 0)
-			throw new IllegalArgumentException("timeRemaining cannot be negative");
+		if (this.timeRemaining != null && (this.timeRemaining.isNegative() || this.timeRemaining.isZero()))
+			throw new IllegalArgumentException("timeRemaining must be positive or null");
 
 		this.originatingSocket = originatingSocket;
 
@@ -143,7 +145,6 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
 		this.message = message;
 		this.type = null;
-		this.timeRemaining = 0;
 	}
 
 	/**
@@ -154,8 +155,8 @@ public class Response implements JsonObject {
 	 * @param originatingSocket the socket that originated the request
 	 * @param type              result of the execution
 	 * @param message           result message
-	 * @param timeRemaining     time remaining in milliseconds until the effect completes
-	 *                          or {@code 0} if the effect is not time-based
+	 * @param timeRemaining     time remaining until the effect completes
+	 *                          or {@code null} if the effect is not time-based
 	 * @throws IllegalArgumentException May be thrown in various circumstances:
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
@@ -167,7 +168,7 @@ public class Response implements JsonObject {
 			 @Nullable Socket originatingSocket,
 			 @NotNull ResultType type,
 			 @Nullable String message,
-			 long timeRemaining) throws IllegalArgumentException {
+			 @Nullable Duration timeRemaining) throws IllegalArgumentException {
 		this(id, originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
 	}
 
@@ -202,7 +203,6 @@ public class Response implements JsonObject {
 		if (message == null && packetType.isMessageRequired())
 			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
 		this.message = message;
-		this.timeRemaining = 0;
 	}
 
 	/**
@@ -221,13 +221,42 @@ public class Response implements JsonObject {
 	 *                                      <li>if the {@code timeRemaining} is negative</li>
 	 *                                  </ul>
 	 * @since 3.0.0
+	 * @deprecated Use {@link #Response(Request, ResultType, String, Duration)} instead
 	 */
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	public Response(@NotNull Request request,
 					@NotNull ResultType type,
 					@Nullable String message,
 					long timeRemaining) throws IllegalArgumentException {
+		this(request, type, message, timeRemaining == 0 ? null : Duration.ofMillis(timeRemaining));
+	}
+
+	/**
+	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
+	 * and information about the result of the execution.
+	 *
+	 * @param request       originating request
+	 * @param type          result of execution
+	 * @param message       result message
+	 * @param timeRemaining time remaining until the effect completes
+	 *                      or {@code null} if the effect is not time-based
+	 * @throws IllegalArgumentException May be thrown in various circumstances:
+	 *                                  <ul>
+	 *                                      <li>if the {@code request} is null</li>
+	 *                                      <li>if the {@code type} is null</li>
+	 *                                      <li>if the {@code timeRemaining} is negative</li>
+	 *                                  </ul>
+	 * @since 3.0.0
+	 */
+	@ApiStatus.AvailableSince("3.5.0")
+	@CheckReturnValue
+	public Response(@NotNull Request request,
+					@NotNull ResultType type,
+					@Nullable String message,
+					@Nullable Duration timeRemaining) throws IllegalArgumentException {
 		this(ExceptionUtil.validateNotNull(request, "request").getId(),
 				request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
 	}
@@ -324,20 +353,28 @@ public class Response implements JsonObject {
 
 	/**
 	 * Gets the result of executing an effect.
+	 * <p>
+	 * This will return {@code null} when the {@link #getPacketType() packet type} is not
+	 * {@link PacketType#EFFECT_RESULT EFFECT_RESULT}.
+	 * However, this generally shouldn't be a concern unless you are directly working with library
+	 * internals.
 	 *
-	 * @return effect result
+	 * @return effect result type or {@code null}
 	 * @since 1.0.0
 	 */
 	@ApiStatus.AvailableSince("1.0.0")
 	@CheckReturnValue
-	public @NotNull ResultType getResultType() {
+	@UnknownNullability("non-null for regular use cases")
+	@SuppressWarnings("NullabilityAnnotations")
+	public ResultType getResultType() {
 		return type;
 	}
 
 	/**
 	 * Gets the type of packet represented by this response.
 	 * <p>
-	 * Note: unless directly working with library internals, this will always be {@link PacketType#EFFECT_RESULT}.
+	 * Note: unless directly working with library internals, this will always be
+	 * {@link PacketType#EFFECT_RESULT EFFECT_RESULT}.
 	 *
 	 * @return packet type
 	 * @since 3.3.0
@@ -364,14 +401,15 @@ public class Response implements JsonObject {
 	}
 
 	/**
-	 * Gets the milliseconds left until the referenced effect ends.
+	 * Gets the time left until the referenced effect ends.
 	 *
-	 * @return effect duration in milliseconds
+	 * @return effect duration
 	 * @since 2.0.0
 	 */
 	@ApiStatus.AvailableSince("2.0.0")
 	@CheckReturnValue
-	public long getTimeRemaining() {
+	@Nullable
+	public Duration getTimeRemaining() {
 		return timeRemaining;
 	}
 
@@ -412,7 +450,7 @@ public class Response implements JsonObject {
 	public boolean isTerminating() throws IllegalStateException {
 		if (packetType != PacketType.EFFECT_RESULT)
 			throw new IllegalStateException("This response is not an effect result");
-		return type.isTerminating() || (type == ResultType.SUCCESS && timeRemaining == 0);
+		return type.isTerminating() || (type == ResultType.SUCCESS && timeRemaining == null);
 	}
 
 	@Override
@@ -421,7 +459,7 @@ public class Response implements JsonObject {
 		if (o == null || !getClass().isAssignableFrom(o.getClass())) return false;
 		Response response = (Response) o;
 		return id == response.id
-				&& timeRemaining == response.timeRemaining
+				&& Objects.equals(timeRemaining, response.timeRemaining)
 				&& packetType == response.packetType
 				&& type == response.type
 				&& Objects.equals(message, response.message);
@@ -728,7 +766,7 @@ public class Response implements JsonObject {
 		private Socket originatingSocket;
 		private ResultType type;
 		private String message;
-		private long timeRemaining;
+		private Duration timeRemaining;
 		private PacketType packetType;
 
 		/**
@@ -873,16 +911,18 @@ public class Response implements JsonObject {
 		 * @return this builder
 		 * @throws IllegalArgumentException if timeRemaining is negative
 		 * @see dev.qixils.crowdcontrol.TimedEffect
-		 * @see #timeRemaining(long, TimeUnit)
 		 * @since 2.0.0
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder timeRemaining(long timeRemaining) throws IllegalArgumentException {
-			if (timeRemaining < 0)
-				throw new IllegalArgumentException("'timeRemaining' must be positive");
-			this.timeRemaining = timeRemaining;
+			if (timeRemaining == 0)
+				this.timeRemaining = null;
+			else if (timeRemaining < 0)
+				throw new IllegalArgumentException("timeRemaining cannot be negative");
+			else
+				this.timeRemaining = Duration.ofMillis(timeRemaining);
 			return this;
 		}
 
@@ -900,7 +940,36 @@ public class Response implements JsonObject {
 		@NotNull
 		@Contract("_, _ -> this")
 		public Builder timeRemaining(long timeRemaining, @NotNull TimeUnit timeUnit) throws IllegalArgumentException {
-			return timeRemaining(timeUnit.toMillis(timeRemaining));
+			if (timeRemaining == 0)
+				this.timeRemaining = null;
+			else if (timeRemaining < 0)
+				throw new IllegalArgumentException("timeRemaining cannot be negative");
+			else
+				this.timeRemaining = Duration.ofMillis(timeUnit.toMillis(timeRemaining));
+			return this;
+		}
+
+		/**
+		 * Sets the time left on the referenced effect.
+		 *
+		 * @param timeRemaining time in the specified temporal unit
+		 * @param temporalUnit  temporal unit
+		 * @return this builder
+		 * @throws IllegalArgumentException if timeRemaining is negative
+		 * @see dev.qixils.crowdcontrol.TimedEffect
+		 * @since 3.5.0
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@NotNull
+		@Contract("_, _ -> this")
+		public Builder timeRemaining(long timeRemaining, @NotNull TemporalUnit temporalUnit) throws IllegalArgumentException {
+			if (timeRemaining == 0)
+				this.timeRemaining = null;
+			else if (timeRemaining < 0)
+				throw new IllegalArgumentException("timeRemaining cannot be negative");
+			else
+				this.timeRemaining = Duration.of(timeRemaining, temporalUnit);
+			return this;
 		}
 
 		/**
@@ -908,7 +977,7 @@ public class Response implements JsonObject {
 		 *
 		 * @param timeRemaining effect duration
 		 * @return this builder
-		 * @throws IllegalArgumentException if timeRemaining is negative
+		 * @throws IllegalArgumentException if timeRemaining is not positive
 		 * @see dev.qixils.crowdcontrol.TimedEffect
 		 * @since 2.0.0
 		 */
@@ -916,11 +985,10 @@ public class Response implements JsonObject {
 		@NotNull
 		@Contract("_ -> this")
 		public Builder timeRemaining(@Nullable Duration timeRemaining) throws IllegalArgumentException {
-			if (timeRemaining == null) {
-				this.timeRemaining = 0;
-				return this;
-			}
-			return timeRemaining(timeRemaining.toMillis());
+			if (timeRemaining != null && (timeRemaining.isNegative() || timeRemaining.isZero()))
+				throw new IllegalArgumentException("timeRemaining must be positive");
+			this.timeRemaining = timeRemaining;
+			return this;
 		}
 
 		/**
@@ -937,10 +1005,10 @@ public class Response implements JsonObject {
 		@Contract("_ -> this")
 		public Builder timeRemaining(@Nullable Temporal endEffectAt) throws IllegalArgumentException {
 			if (endEffectAt == null) {
-				timeRemaining = 0;
+				this.timeRemaining = null;
 				return this;
 			}
-			return timeRemaining(ChronoUnit.MILLIS.between(LocalDateTime.now(), endEffectAt));
+			return timeRemaining(Duration.between(Instant.now(), endEffectAt));
 		}
 
 		/**
@@ -1018,7 +1086,8 @@ public class Response implements JsonObject {
 		 * @since 3.3.0
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
-		public long timeRemaining() {
+		@Nullable
+		public Duration timeRemaining() {
 			return timeRemaining;
 		}
 
