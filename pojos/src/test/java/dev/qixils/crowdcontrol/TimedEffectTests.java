@@ -23,7 +23,8 @@ public class TimedEffectTests {
 			"Hello World!",
 			10,
 			Duration.ofSeconds(15),
-			new Request.Target[]{new Request.Target("12345", "qixils", "https://i.qixils.dev/favicon.png")}
+			new Request.Target[]{new Request.Target("12345", "qixils", "https://i.qixils.dev/favicon.png")},
+			new Object[]{5}
 	);
 
 	@Test

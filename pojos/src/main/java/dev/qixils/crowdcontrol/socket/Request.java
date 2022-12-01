@@ -40,6 +40,7 @@ public class Request implements JsonObject {
 	private Target[] targets;
 	@Nullable
 	private Duration duration;
+	private Object @Nullable [] parameters;
 
 	/**
 	 * Instantiates an empty {@link Request}.
@@ -69,7 +70,7 @@ public class Request implements JsonObject {
 	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
 	 * @since 3.3.0
-	 * @deprecated Obsoleted by {@link #Request(int, Type, String, String, String, Integer, Duration, Target[])};
+	 * @deprecated Obsoleted by {@link #Request(int, Type, String, String, String, Integer, Duration, Target[], Object[])};
 	 *             to be removed in v3.6.0
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
@@ -82,20 +83,21 @@ public class Request implements JsonObject {
 				   @Nullable String message,
 				   @Nullable Integer cost,
 				   Target @Nullable [] targets) throws IllegalArgumentException {
-		this(id, type, effect, viewer, message, cost, null, targets);
+		this(id, type, effect, viewer, message, cost, null, targets, null);
 	}
 
 	/**
 	 * Instantiates a {@link Request} with the given parameters.
 	 *
-	 * @param id       the ID of the request
-	 * @param effect   the effect to be played
-	 * @param message  the message to be displayed
-	 * @param viewer   the viewer who requested the effect
-	 * @param cost     the cost of the effect
-	 * @param duration the duration of the effect
-	 * @param type     the packet type to send
-	 * @param targets  the targets of the effect
+	 * @param id        the ID of the request
+	 * @param effect    the effect to be played
+	 * @param message   the message to be displayed
+	 * @param viewer    the viewer who requested the effect
+	 * @param cost      the cost of the effect
+	 * @param duration  the duration of the effect
+	 * @param type      the packet type to send
+	 * @param targets   the targets of the effect
+	 * @param parameters the miscellaneous parameters of the effect
 	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
 	 *                                  <ul>
 	 *                                      <li>if the given ID is negative</li>
@@ -114,7 +116,8 @@ public class Request implements JsonObject {
 				   @Nullable String message,
 				   @Nullable Integer cost,
 				   @Nullable Duration duration,
-				   Target @Nullable [] targets) throws IllegalArgumentException {
+				   Target @Nullable [] targets,
+				   Object @Nullable [] parameters) throws IllegalArgumentException {
 		// validate request ID
 		this.id = id;
 		if (this.id < 0)
@@ -151,6 +154,7 @@ public class Request implements JsonObject {
 		if (duration != null && duration.isNegative())
 			throw new IllegalArgumentException("duration cannot be negative");
 		this.duration = duration;
+		this.parameters = parameters;
 
 		// validate targets are not null
 		if (targets != null) {
@@ -200,7 +204,7 @@ public class Request implements JsonObject {
 	@ApiStatus.AvailableSince("3.3.0")
 	private Request(Request.@NotNull Builder builder) {
 		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.duration, builder.targets);
+				builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.duration, builder.targets, builder.parameters);
 		originatingSocket = builder.originatingSocket;
 	}
 
@@ -329,6 +333,19 @@ public class Request implements JsonObject {
 	}
 
 	/**
+	 * Gets the miscellaneous parameters for this effect.
+	 * This may be used by, for example, sliders defined in your CS file.
+	 *
+	 * @return array of objects if applicable, null otherwise
+	 * @since 3.5.0
+	 */
+	@ApiStatus.AvailableSince("3.5.0")
+	@CheckReturnValue
+	public Object @Nullable [] getParameters() {
+		return parameters;
+	}
+
+	/**
 	 * Determines if this Request is triggering an effect for all users.
 	 *
 	 * @return if the triggered effect is global
@@ -391,6 +408,7 @@ public class Request implements JsonObject {
 				&& Objects.equals(viewer, request.viewer)
 				&& Objects.equals(cost, request.cost)
 				&& Arrays.equals(getTargets(), request.getTargets())
+				&& Arrays.equals(getParameters(), request.getParameters())
 				&& Objects.equals(duration, request.duration);
 	}
 
@@ -398,6 +416,7 @@ public class Request implements JsonObject {
 	public int hashCode() {
 		int result = Objects.hash(id, type, effect, message, viewer, cost, duration);
 		result = 31 * result + Arrays.hashCode(getTargets());
+		result = 31 * result + Arrays.hashCode(getParameters());
 		return result;
 	}
 
@@ -615,6 +634,7 @@ public class Request implements JsonObject {
 		private Type type = Type.START;
 		private Target @Nullable [] targets;
 		private @Nullable Duration duration;
+		private Object @Nullable [] parameters;
 
 		/**
 		 * Creates a new builder.
@@ -643,6 +663,7 @@ public class Request implements JsonObject {
 			this.type = source.type;
 			this.targets = source.targets;
 			this.duration = source.duration;
+			this.parameters = source.parameters;
 		}
 
 		/**
@@ -663,6 +684,7 @@ public class Request implements JsonObject {
 			this.type = builder.type;
 			this.targets = builder.targets;
 			this.duration = builder.duration;
+			this.parameters = builder.parameters;
 		}
 
 		// setters
@@ -802,6 +824,21 @@ public class Request implements JsonObject {
 			return this;
 		}
 
+		/**
+		 * Sets the parameters of the effect.
+		 *
+		 * @param parameters parameters of the effect
+		 * @return this builder
+		 * @since 3.5.0
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder parameters(Object @Nullable ... parameters) {
+			this.parameters = parameters;
+			return this;
+		}
+
 		// getters
 
 		/**
@@ -917,6 +954,18 @@ public class Request implements JsonObject {
 		@CheckReturnValue
 		public Duration duration() {
 			return duration;
+		}
+
+		/**
+		 * Gets the parameters of the effect.
+		 *
+		 * @return parameters of the effect
+		 * @since 3.5.0
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@CheckReturnValue
+		public Object @Nullable [] parameters() {
+			return parameters;
 		}
 
 		// build
