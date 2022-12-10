@@ -22,6 +22,7 @@ public interface SocketManager {
 	 * Unlike the usual methods of creating a {@link Response}, this does not require a
 	 * corresponding {@link Request} to send the packet.
 	 *
+	 * @param id the ID of the packet
 	 * @return a new response builder
 	 * @since 3.4.0
 	 */
