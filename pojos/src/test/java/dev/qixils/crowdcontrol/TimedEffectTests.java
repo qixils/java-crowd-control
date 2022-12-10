@@ -35,7 +35,9 @@ public class TimedEffectTests {
 				.effectGroup("test")
 				.duration(Duration.ofSeconds(10))
 				.startCallback(effect -> null)
-				.completionCallback(effect -> {});
+				.completionCallback(effect -> {})
+				.blocks(false)
+				.waits(false);
 
 		// valid test
 		Assertions.assertDoesNotThrow(builder::build);
@@ -82,6 +84,8 @@ public class TimedEffectTests {
 		Assertions.assertFalse(timedEffect.isComplete());
 		Assertions.assertFalse(timedEffect.isPaused());
 		Assertions.assertFalse(timedEffect.hasStarted());
+		Assertions.assertTrue(timedEffect.blocks());
+		Assertions.assertTrue(timedEffect.waits());
 
 		// void methods
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::resume); // throws because effect has not been paused
@@ -139,6 +143,14 @@ public class TimedEffectTests {
 		});
 		Assertions.assertNotNull(builder.completionCallback());
 
+		Assertions.assertTrue(builder.blocks());
+		builder.blocks(false);
+		Assertions.assertFalse(builder.blocks());
+
+		Assertions.assertTrue(builder.waits());
+		builder.waits(false);
+		Assertions.assertFalse(builder.waits());
+
 		// build & test getters
 		TimedEffect timedEffect = builder.clone().build().toBuilder().build();
 		Assertions.assertEquals(request, timedEffect.getRequest());
@@ -148,6 +160,8 @@ public class TimedEffectTests {
 		Assertions.assertFalse(timedEffect.isComplete());
 		Assertions.assertFalse(timedEffect.isPaused());
 		Assertions.assertFalse(timedEffect.hasStarted());
+		Assertions.assertFalse(timedEffect.blocks());
+		Assertions.assertFalse(timedEffect.waits());
 
 		// misc
 		timedEffect = timedEffect.toBuilder().effectGroup(null).duration(null).build();

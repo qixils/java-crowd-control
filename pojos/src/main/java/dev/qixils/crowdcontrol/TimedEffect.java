@@ -50,6 +50,8 @@ public final class TimedEffect {
 	private final @NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
 	private final @Nullable Consumer<@NotNull TimedEffect> completionCallback;
 	private final long originalDuration;
+	private final boolean waitsForOthers;
+	private final boolean blocksOthers;
 	private long startedAt = -1;
 	private long duration;
 	private boolean paused = false;
@@ -60,7 +62,9 @@ public final class TimedEffect {
 						@Nullable String effectGroup,
 						@Nullable Duration duration,
 						@NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback,
-						@Nullable Consumer<TimedEffect> completionCallback) throws IllegalArgumentException {
+						@Nullable Consumer<TimedEffect> completionCallback,
+						boolean waitsForOthers,
+						boolean blocksOthers) throws IllegalArgumentException {
 		this.request = ExceptionUtil.validateNotNull(request, "request");
 		this.effectGroup = ExceptionUtil.validateNotNullElseGet(effectGroup, request::getEffect);
 		this.globalKey = new MapKey(this.effectGroup);
@@ -75,6 +79,8 @@ public final class TimedEffect {
 		this.originalDuration = this.duration;
 		this.callback = ExceptionUtil.validateNotNull(callback, "callback");
 		this.completionCallback = completionCallback;
+		this.waitsForOthers = waitsForOthers;
+		this.blocksOthers = blocksOthers;
 
 		Request.Target[] targets = request.getTargets();
 		mapKeys = new MapKey[targets.length];
@@ -85,11 +91,11 @@ public final class TimedEffect {
 
 	@SuppressWarnings("ConstantConditions") // the other constructor will check for null
 	private TimedEffect(@NotNull Builder builder) {
-		this(builder.request, builder.effectGroup, builder.duration, builder.callback, builder.completionCallback);
+		this(builder.request, builder.effectGroup, builder.duration, builder.callback, builder.completionCallback, builder.waitsForOthers, builder.blocksOthers);
 	}
 
 	/**
-	 * Determines if an effect with the provided name is currently active for any of the
+	 * Determines if a blocking effect with the provided name is currently active for any of the
 	 * provided streamers. An empty array will be interpreted as a global effect.
 	 *
 	 * @param effectGroup effect group
@@ -116,7 +122,7 @@ public final class TimedEffect {
 	}
 
 	/**
-	 * Determines if an effect with the provided name is currently active for any streamer
+	 * Determines if a blocking effect with the provided name is currently active for any streamer
 	 * targeted by the provided {@link Request}.
 	 *
 	 * @param effectGroup effect group
@@ -179,6 +185,12 @@ public final class TimedEffect {
 			throw new IllegalStateException("Effect was already queued");
 		queued = true;
 
+		// force start if it doesn't wait for others
+		if (!waitsForOthers) {
+			start();
+			return;
+		}
+
 		// check if a global effect is running
 		TimedEffect globalActiveEffect = ACTIVE_EFFECTS.get(globalKey);
 		if (globalActiveEffect != null && !globalActiveEffect.isComplete()) {
@@ -200,12 +212,16 @@ public final class TimedEffect {
 	}
 
 	private void start() {
-		if (mapKeys.length == 0)
-			ACTIVE_EFFECTS.put(globalKey, this);
-		else {
-			for (MapKey mapKey : mapKeys)
-				ACTIVE_EFFECTS.put(mapKey, this);
+		// add to active effects if it blocks others
+		if (blocksOthers) {
+			if (mapKeys.length == 0)
+				ACTIVE_EFFECTS.put(globalKey, this);
+			else {
+				for (MapKey mapKey : mapKeys)
+					ACTIVE_EFFECTS.put(mapKey, this);
+			}
 		}
+		// update vars and run callback
 		startedAt = System.currentTimeMillis();
 		duration = originalDuration;
 		Response.Builder response;
@@ -216,11 +232,13 @@ public final class TimedEffect {
 			request.buildResponse().type(Response.ResultType.FAILURE).message("Requested effect failed to execute").send();
 
 			duration = -1;
-			if (mapKeys.length == 0)
-				ACTIVE_EFFECTS.remove(globalKey, this);
-			else {
-				for (MapKey mapKey : mapKeys)
-					ACTIVE_EFFECTS.remove(mapKey, this);
+			if (blocksOthers) {
+				if (mapKeys.length == 0)
+					ACTIVE_EFFECTS.remove(globalKey, this);
+				else {
+					for (MapKey mapKey : mapKeys)
+						ACTIVE_EFFECTS.remove(mapKey, this);
+				}
 			}
 			return;
 		}
@@ -318,11 +336,13 @@ public final class TimedEffect {
 			return false;
 		duration = -1;
 
-		if (mapKeys.length == 0)
-			ACTIVE_EFFECTS.remove(globalKey, this);
-		else {
-			for (MapKey mapKey : mapKeys)
-				ACTIVE_EFFECTS.remove(mapKey, this);
+		if (blocksOthers) {
+			if (mapKeys.length == 0)
+				ACTIVE_EFFECTS.remove(globalKey, this);
+			else {
+				for (MapKey mapKey : mapKeys)
+					ACTIVE_EFFECTS.remove(mapKey, this);
+			}
 		}
 
 		request.buildResponse().type(Response.ResultType.FINISHED).send();
@@ -414,6 +434,32 @@ public final class TimedEffect {
 	}
 
 	/**
+	 * Whether this effect blocks other effects from being executed
+	 * (provided those other effects are in the same effect group and {@link #waits() waits for others}).
+	 *
+	 * @return whether this effect blocks others
+	 * @since 3.5.0
+	 */
+	@ApiStatus.AvailableSince("3.5.0")
+	@CheckReturnValue
+	public boolean blocks() {
+		return blocksOthers;
+	}
+
+	/**
+	 * Whether this effect waits for other effects in the same effect group to complete.
+	 *
+	 * @return whether this effect waits for others
+	 * @see #blocks()
+	 * @since 3.5.0
+	 */
+	@ApiStatus.AvailableSince("3.5.0")
+	@CheckReturnValue
+	public boolean waits() {
+		return waitsForOthers;
+	}
+
+	/**
 	 * Creates a mutable {@link Builder} with a copy of the data in this {@link TimedEffect}.
 	 *
 	 * @return a new {@link Builder}
@@ -471,6 +517,8 @@ public final class TimedEffect {
 		private @Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
 		private @Nullable Consumer<@NotNull TimedEffect> completionCallback;
 		private @Nullable Duration duration;
+		private boolean blocksOthers = true;
+		private boolean waitsForOthers = true;
 
 		/**
 		 * Creates a new {@link TimedEffect.Builder}.
@@ -496,6 +544,8 @@ public final class TimedEffect {
 			this.callback = builder.callback;
 			this.completionCallback = builder.completionCallback;
 			this.duration = builder.duration;
+			this.blocksOthers = builder.blocksOthers;
+			this.waitsForOthers = builder.waitsForOthers;
 		}
 
 		/**
@@ -513,6 +563,8 @@ public final class TimedEffect {
 			this.callback = effect.callback;
 			this.completionCallback = effect.completionCallback;
 			this.duration = effect.getOriginalDuration();
+			this.blocksOthers = effect.blocksOthers;
+			this.waitsForOthers = effect.waitsForOthers;
 		}
 
 		/**
@@ -680,6 +732,39 @@ public final class TimedEffect {
 			return this;
 		}
 
+		/**
+		 * Sets this effect blocks other effects from being executed
+		 * (provided those other effects are in the same effect group and {@link #waits() waits for others}).
+		 *
+		 * @param blocks whether this effect blocks other effects
+		 * @return this builder
+		 * @since 3.5.0
+		 * @see #waits(boolean)
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder blocks(boolean blocks) {
+			this.blocksOthers = blocks;
+			return this;
+		}
+
+		/**
+		 * Sets whether this effect waits for other effects in the same effect group to complete.
+		 *
+		 * @param waits whether this effect waits for others
+		 * @return this builder
+		 * @since 3.5.0
+		 * @see #blocks(boolean)
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder waits(boolean waits) {
+			this.waitsForOthers = waits;
+			return this;
+		}
+
 
 		// getters
 
@@ -759,6 +844,36 @@ public final class TimedEffect {
 		public Duration duration() {
 			return duration;
 		}
+
+		/**
+		 * Gets whether this effect blocks other effects from being executed
+		 * (provided those other effects are in the same effect group and {@link #waits() waits for others}).
+		 *
+		 * @return whether this effect blocks other effects
+		 * @since 3.5.0
+		 * @see #waits()
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@Contract(pure = true)
+		@CheckReturnValue
+		public boolean blocks() {
+			return blocksOthers;
+		}
+
+		/**
+		 * Gets whether this effect waits for other effects in the same effect group to complete.
+		 *
+		 * @return whether this effect waits for others
+		 * @since 3.5.0
+		 * @see #blocks()
+		 */
+		@ApiStatus.AvailableSince("3.5.0")
+		@Contract(pure = true)
+		@CheckReturnValue
+		public boolean waits() {
+			return waitsForOthers;
+		}
+
 
 		// build
 
