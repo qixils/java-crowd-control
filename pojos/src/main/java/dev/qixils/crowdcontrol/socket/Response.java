@@ -237,6 +237,9 @@ public class Response implements JsonObject {
 	/**
 	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
 	 * and information about the result of the execution.
+	 * <p>
+	 * This constructor is marked as {@link ApiStatus.Experimental experimental} because it is frequently deprecated and
+	 * eventually removed in new releases. Please use {@link Request#buildResponse()} where possible instead.
 	 *
 	 * @param request       originating request
 	 * @param type          result of execution
@@ -249,9 +252,10 @@ public class Response implements JsonObject {
 	 *                                      <li>if the {@code type} is null</li>
 	 *                                      <li>if the {@code timeRemaining} is negative</li>
 	 *                                  </ul>
-	 * @since 3.0.0
+	 * @since 3.5.0
 	 */
 	@ApiStatus.AvailableSince("3.5.0")
+	@ApiStatus.Experimental
 	@CheckReturnValue
 	public Response(@NotNull Request request,
 					@NotNull ResultType type,

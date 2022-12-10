@@ -88,6 +88,9 @@ public class Request implements JsonObject {
 
 	/**
 	 * Instantiates a {@link Request} with the given parameters.
+	 * <p>
+	 * This constructor is marked as {@link ApiStatus.Experimental experimental} because it is frequently deprecated and
+	 * eventually removed in new releases. Please use {@link Request.Builder} where possible instead.
 	 *
 	 * @param id        the ID of the request
 	 * @param effect    the effect to be played
@@ -109,6 +112,7 @@ public class Request implements JsonObject {
 	 * @since 3.5.0
 	 */
 	@ApiStatus.AvailableSince("3.5.0")
+	@ApiStatus.Experimental
 	public Request(int id,
 				   @NotNull Type type,
 				   @Nullable String effect,
