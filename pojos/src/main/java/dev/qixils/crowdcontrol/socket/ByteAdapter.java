@@ -35,7 +35,8 @@ class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
 		if (value == null) {
 			out.nullValue();
 		} else {
-			out.value(value.getEncodedByte());
+			long ub = value.getEncodedByte() & 0xFF;
+			out.value(ub);
 		}
 	}
 
