@@ -9,7 +9,7 @@ left of this document._
 
 ## Logging
 
-The libraries maintained in this repository utilize the SLF4J 1.7.32 logging framework. It provides
+The libraries maintained in this repository utilize the SLF4J 2.0.5 logging framework. It provides
 no logging implementation by default, meaning that logs will be silently ignored. To enable logging,
 you must add a logging implementation to your class path which is typically done by adding the
 implementation to your project's dependencies in Maven or Gradle. Popular implementations include
@@ -39,7 +39,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>crowd-control-receiver</artifactId>
-    <version>3.5.0</version>
+    <version>3.5.1</version>
 </dependency>
 ```
 
@@ -51,13 +51,13 @@ Add to the `dependencies` section of your `pom.xml` file:
 Add to the `dependencies` section of your `build.gradle` file:
 
 ```gradle
-compileOnly 'dev.qixils.crowdcontrol:crowd-control-receiver:3.5.0'
+compileOnly 'dev.qixils.crowdcontrol:crowd-control-receiver:3.5.1'
 ```
 
 Or, if using Kotlin (`build.gradle.kts`):
 
 ```kts
-compileOnly("dev.qixils.crowdcontrol:crowd-control-receiver:3.5.0")
+compileOnly("dev.qixils.crowdcontrol:crowd-control-receiver:3.5.1")
 ```
 
 </details>
@@ -413,7 +413,7 @@ Add to the `dependencies` section of your `pom.xml` file:
 <dependency>
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>crowd-control-sender</artifactId>
-    <version>3.5.0</version>
+    <version>3.5.1</version>
 </dependency>
 ```
 
@@ -425,13 +425,13 @@ Add to the `dependencies` section of your `pom.xml` file:
 Add to the `dependencies` section of your `build.gradle` file:
 
 ```gradle
-compileOnly 'dev.qixils.crowdcontrol:crowd-control-sender:3.5.0'
+compileOnly 'dev.qixils.crowdcontrol:crowd-control-sender:3.5.1'
 ```
 
 Or, if using Kotlin (`build.gradle.kts`):
 
 ```kts
-compileOnly("dev.qixils.crowdcontrol:crowd-control-sender:3.5.0")
+compileOnly("dev.qixils.crowdcontrol:crowd-control-sender:3.5.1")
 ```
 
 </details>
