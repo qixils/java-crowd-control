@@ -4,7 +4,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The provided exception is known to be unavailable to the receiver(s).
+ * The provided effect is known to be unavailable to the receiver(s).
  *
  * @since 3.3.0
  */

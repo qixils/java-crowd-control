@@ -1,7 +1,6 @@
 /**
- * Provides most of the basic classes required to implement
- * {@link dev.qixils.crowdcontrol.CrowdControl} into your project. This will allow you to receive
- * purchased Crowd Control effects and act on them.
+ * Provides the primary components for receiving and handling {@link dev.qixils.crowdcontrol.socket.Request Request}s
+ * in your {@link dev.qixils.crowdcontrol.CrowdControl CrowdControl} project.
  *
  * @since 1.0.0
  */
