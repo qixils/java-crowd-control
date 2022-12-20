@@ -1,4 +1,4 @@
-# java-crowd-control [![Build Status](https://img.shields.io/github/actions/workflow/status/qixils/java-crowd-control/maven.yml?event=push&branch=main)](https://github.com/qixils/java-crowd-control/actions/workflows/maven.yml) [![Release](https://img.shields.io/maven-central/v/dev.qixils.crowdcontrol/java-crowd-control?color=success)](https://search.maven.org/artifact/dev.qixils.crowdcontrol/java-crowd-control)
+# java-crowd-control [![Build Status](https://img.shields.io/github/actions/workflow/status/qixils/java-crowd-control/maven.yml?event=push&branch=master)](https://github.com/qixils/java-crowd-control/actions/workflows/maven.yml) [![Release](https://img.shields.io/maven-central/v/dev.qixils.crowdcontrol/java-crowd-control?color=success)](https://search.maven.org/artifact/dev.qixils.crowdcontrol/java-crowd-control)
 
 A set of Java libraries for interacting with or simulating a
 [crowdcontrol.live](https://crowdcontrol.live) service. The project abstracts away the complex logic
