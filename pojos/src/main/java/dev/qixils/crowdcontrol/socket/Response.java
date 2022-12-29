@@ -688,6 +688,46 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("2.0.0")
 		FINISHED(true, (byte) 0x08),
 		/**
+		 * Instructs the client to display this effect in its menu.
+		 * <p>
+		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
+		 * necessary to update the status of an effect in the menu.
+		 *
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		VISIBLE(true, (byte) 0x80),
+		/**
+		 * Instructs the client to hide this effect in its menu.
+		 * <p>
+		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
+		 * necessary to update the status of an effect in the menu.
+		 *
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		NOT_VISIBLE(true, (byte) 0x81),
+		/**
+		 * Instructs the client to make this effect in its menu selectable.
+		 * <p>
+		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
+		 * necessary to update the status of an effect in the menu.
+		 *
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		SELECTABLE(true, (byte) 0x82),
+		/**
+		 * Instructs the client to make this effect in its menu unselectable.
+		 * <p>
+		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
+		 * necessary to update the status of an effect in the menu.
+		 *
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		NOT_SELECTABLE(true, (byte) 0x83),
+		/**
 		 * Indicates that this Crowd Control server is not yet accepting requests.
 		 * <p>
 		 * This is an internal field used to indicate that the login process with a client has

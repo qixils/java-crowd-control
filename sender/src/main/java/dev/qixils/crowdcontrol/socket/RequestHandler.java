@@ -159,6 +159,7 @@ final class RequestHandler implements SimulatedService<Response> {
 
 						boolean toSchedule = false; // whether to schedule a fake FINISHED response
 						// handle the various possible response types/states
+						// TODO: handle menu updates
 						if (response.isTerminating()) {
 							data.sink.complete();
 						} else if (response.getResultType() == Response.ResultType.RETRY) {
