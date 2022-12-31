@@ -75,9 +75,10 @@ public class Response implements JsonObject {
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
 	 *                                      <li>if the {@code id} is non-zero and {@code packetType} is not {@link PacketType#EFFECT_RESULT EFFECT_RESULT}</li>
+	 *                                      <li>if the {@code id} is zero and {@code packetType} is {@link PacketType#EFFECT_RESULT EFFECT_RESULT}</li>
 	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
 	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() requires a result type} and {@code type} is null</li>
-	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType()} does not require a result type} and {@code type} is not null</li>
+	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() does not require a result type} and {@code type} is not null</li>
 	 *                                      <li>if the {@code message} is null and {@code packetType} {@link PacketType#isMessageRequired() requires a message}</li>
 	 *                                      <li>if the {@code effect} is null and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
 	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is not a status} and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
@@ -118,6 +119,8 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("effect cannot be null if packetType is EFFECT_STATUS");
 		if (this.packetType != PacketType.EFFECT_RESULT && this.id != 0)
 			throw new IllegalArgumentException("id must be 0 if packetType is not EFFECT_RESULT");
+		if (this.packetType == PacketType.EFFECT_RESULT && this.id == 0)
+			throw new IllegalArgumentException("id must be non-zero if packetType is EFFECT_RESULT");
 
 		// set message
 		if (message != null)

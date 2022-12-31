@@ -185,7 +185,7 @@ public class TimedEffectTests {
 		Assertions.assertFalse(TimedEffect.isActive("blah", request));
 		Assertions.assertThrows(IllegalArgumentException.class, () -> TimedEffect.isActive(null));
 		Assertions.assertThrows(IllegalArgumentException.class, () -> TimedEffect.isActive(null, (Request) null));
-		Assertions.assertThrows(IllegalArgumentException.class, () -> TimedEffect.isActive(null, (Request.Target) null));
-		Assertions.assertThrows(IllegalArgumentException.class, () -> TimedEffect.isActive(null, (Request.Target[]) null));
+		Assertions.assertDoesNotThrow(() -> TimedEffect.isActive(null, (Request.Target) null));
+		Assertions.assertDoesNotThrow(() -> TimedEffect.isActive(null, (Request.Target[]) null));
 	}
 }

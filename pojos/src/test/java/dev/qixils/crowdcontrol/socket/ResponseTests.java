@@ -173,7 +173,154 @@ public class ResponseTests {
 				0
 		));
 
-		// TODO: am i missing the big mega constructor???
+		// Main constructor
+
+		// negative ID throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				-1,
+				null,
+				Response.PacketType.EFFECT_RESULT,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				null,
+				null
+		));
+		// non-zero ID throws IllegalArgumentException when PacketType is not EFFECT_RESULT
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				1,
+				null,
+				Response.PacketType.DISCONNECT,
+				null,
+				"Server is disconnecting",
+				null,
+				null
+		));
+		// negative timeRemaining throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				1,
+				null,
+				Response.PacketType.EFFECT_RESULT,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				Duration.ofSeconds(-1),
+				null
+		));
+		// zero timeRemaining throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				1,
+				null,
+				Response.PacketType.EFFECT_RESULT,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				Duration.ZERO,
+				null
+		));
+		// when packetType requires a result type and type is null, throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				1,
+				null,
+				Response.PacketType.EFFECT_RESULT,
+				null,
+				"Effect applied successfully",
+				null,
+				null
+		));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.EFFECT_STATUS,
+				null,
+				null,
+				null,
+				null
+		));
+		// when packetType does not require a result type and type is not null, throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.DISCONNECT,
+				Response.ResultType.SUCCESS,
+				"Server is disconnecting",
+				null,
+				null
+		));
+		// when message is null and packetType requires a message, throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.DISCONNECT,
+				null,
+				null,
+				null,
+				null
+		));
+		// when effect is null and packetType is EFFECT_STATUS, throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.EFFECT_STATUS,
+				Response.ResultType.VISIBLE,
+				null,
+				null,
+				null
+		));
+		// when type is not a status and packetType is EFFECT_STATUS
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.EFFECT_STATUS,
+				Response.ResultType.SUCCESS,
+				null,
+				null,
+				null
+		));
+		// when type is a status and packetType is not EFFECT_STATUS
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.DISCONNECT,
+				Response.ResultType.VISIBLE,
+				null,
+				null,
+				null
+		));
+		// valid parameters don't throw
+		Assertions.assertDoesNotThrow(() -> new Response(
+				0,
+				null,
+				Response.PacketType.DISCONNECT,
+				null,
+				"Server is disconnecting",
+				null,
+				null
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				1,
+				null,
+				null,
+				Response.ResultType.SUCCESS,
+				null,
+				null,
+				null
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				1,
+				null,
+				Response.PacketType.EFFECT_RESULT,
+				Response.ResultType.SUCCESS,
+				"Effect applied successfully",
+				Duration.ofSeconds(1),
+				"effect"
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				0,
+				null,
+				Response.PacketType.EFFECT_STATUS,
+				Response.ResultType.VISIBLE,
+				null,
+				null,
+				"effect"
+		));
 	}
 
 	@SuppressWarnings("deprecation") // old constructors still need to be tested! :)
@@ -222,12 +369,12 @@ public class ResponseTests {
 
 		// Constructor 4
 		response = new Response(
-				new Request.Builder().type(Request.Type.KEEP_ALIVE).build(),
+				new Request.Builder().id(1).effect("effect").viewer("sdk").type(Request.Type.START).build(),
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				1000
 		);
-		Assertions.assertEquals(0, response.getId());
+		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
@@ -236,12 +383,12 @@ public class ResponseTests {
 
 		// Constructor 5
 		response = new Response(
-				new Request.Builder().type(Request.Type.KEEP_ALIVE).build(),
+				new Request.Builder().id(1).effect("effect").viewer("sdk").type(Request.Type.START).build(),
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				Duration.ofSeconds(1)
 		);
-		Assertions.assertEquals(0, response.getId());
+		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
