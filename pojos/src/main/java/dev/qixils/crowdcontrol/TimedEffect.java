@@ -105,8 +105,9 @@ public final class TimedEffect {
 	 */
 	@ApiStatus.AvailableSince("2.1.3")
 	@CheckReturnValue
-	public static boolean isActive(@NotNull String effectGroup, Request.Target @Nullable ... targets) {
-		ExceptionUtil.validateNotNull(effectGroup, "effectGroup");
+	public static boolean isActive(@Nullable String effectGroup, Request.Target @Nullable ... targets) {
+		if (effectGroup == null)
+			return false;
 		if (targets != null) {
 			for (Request.Target target : targets) {
 				if (target == null)

@@ -37,21 +37,26 @@ public class Response implements JsonObject {
 	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-Response");
 	@SerializedName("type")
 	private PacketType packetType;
+	@Nullable
 	private transient Socket originatingSocket;
-	private int id;
+	private int id = 0;
 	@SerializedName("status")
+	@Nullable
 	private ResultType type;
+	@Nullable
 	private String message;
 	@Nullable
 	private Duration timeRemaining; // millis
+	@Nullable
+	@SerializedName("code")
+	private String effect;
 
 	/**
 	 * Instantiates an empty {@link Response}.
 	 * <p>
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
-	@SuppressWarnings("unused")
-	// used by GSON
+	@SuppressWarnings("unused") // used by GSON
 	Response() {
 	}
 
@@ -63,20 +68,20 @@ public class Response implements JsonObject {
 	 * @param originatingSocket the socket that originated the request
 	 * @param packetType        type of the packet
 	 * @param type              result of the execution
-	 * @param message           result message
-	 * @param timeRemaining     time remaining until the effect completes
-	 *                          or {@code null} if the effect is not time-based
+	 * @param message           result message; defaults to the {@link ResultType#name() name} of the {@code type} if null
+	 * @param timeRemaining     time remaining until the effect completes or {@code null} if the effect is not time-based
+	 * @param effect            the code of the effect that was executed
 	 * @throws IllegalArgumentException May be thrown in various circumstances:
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
+	 *                                      <li>if the {@code id} is non-zero and {@code packetType} is not {@link PacketType#EFFECT_RESULT EFFECT_RESULT}</li>
 	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
-	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}
-	 *                                      and {@code type} is null</li>
-	 *                                      <li>if the {@code packetType} is not {@link PacketType#EFFECT_RESULT}
-	 *                                      and {@code type} is non-null</li>
-	 *                                      <li>if the {@code message} is null,
-	 *                                      {@code packetType} is not {@link PacketType#EFFECT_RESULT},
-	 *                                      and {@link PacketType#isMessageRequired() packetType.isMessageRequired()} is true</li>
+	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() requires a result type} and {@code type} is null</li>
+	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType()} does not require a result type} and {@code type} is not null</li>
+	 *                                      <li>if the {@code message} is null and {@code packetType} {@link PacketType#isMessageRequired() requires a message}</li>
+	 *                                      <li>if the {@code effect} is null and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
+	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is not a status} and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
+	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is a status} and {@code packetType} is not {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
 	 *                                  </ul>
 	 */
 	Response(int id,
@@ -84,7 +89,8 @@ public class Response implements JsonObject {
 			 @Nullable PacketType packetType,
 			 @Nullable ResultType type,
 			 @Nullable String message,
-			 @Nullable Duration timeRemaining) throws IllegalArgumentException {
+			 @Nullable Duration timeRemaining,
+			 @Nullable String effect) throws IllegalArgumentException {
 		this.id = id;
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
@@ -94,57 +100,49 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("timeRemaining must be positive or null");
 
 		this.originatingSocket = originatingSocket;
+		this.effect = effect;
 
 		// validate packet type and result type
 		this.packetType = ExceptionUtil.validateNotNullElse(packetType, PacketType.EFFECT_RESULT);
-		if (this.packetType == PacketType.EFFECT_RESULT && type == null)
-			throw new IllegalArgumentException("type cannot be null if packetType is EFFECT_RESULT");
-		else if (this.packetType != PacketType.EFFECT_RESULT && type != null)
-			throw new IllegalArgumentException("type cannot be non-null if packetType is not EFFECT_RESULT");
 		this.type = type;
+		if (this.packetType.hasResultType() && this.type == null)
+			throw new IllegalArgumentException("type cannot be null if packetType requires a result type");
+		if (!this.packetType.hasResultType() && this.type != null)
+			throw new IllegalArgumentException("type cannot be non-null if packetType does not require a result type");
+		//noinspection DataFlowIssue - type cannot be null per above
+		if (this.packetType == PacketType.EFFECT_STATUS && !this.type.isStatus())
+			throw new IllegalArgumentException("type must be a status if packetType is EFFECT_STATUS");
+		if (this.packetType != PacketType.EFFECT_STATUS && this.type != null && this.type.isStatus())
+			throw new IllegalArgumentException("type must not be a status if packetType is not EFFECT_STATUS");
+		if (this.packetType == PacketType.EFFECT_STATUS && this.effect == null)
+			throw new IllegalArgumentException("effect cannot be null if packetType is EFFECT_STATUS");
+		if (this.packetType != PacketType.EFFECT_RESULT && this.id != 0)
+			throw new IllegalArgumentException("id must be 0 if packetType is not EFFECT_RESULT");
 
 		// set message
 		if (message != null)
 			this.message = message;
-		else if (type != null)
-			this.message = type.name();
-
 		if (this.message == null && this.packetType.isMessageRequired())
 			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
 	}
 
 	/**
-	 * Instantiates a new non-{@link PacketType#EFFECT_RESULT} {@link Response} to a
-	 * {@link Request} with the given ID and result.
+	 * Instantiates a new {@link Response} with the given {@link PacketType}.
 	 *
-	 * @param id                ID of the {@link Request} that was executed
 	 * @param originatingSocket the socket that originated the request
-	 * @param packetType        type of the packet (must not be {@link PacketType#EFFECT_RESULT})
+	 * @param packetType        type of the packet (must not {@link PacketType#hasResultType() require a result type})
 	 * @param message           result message
 	 * @throws IllegalArgumentException May be thrown in various circumstances:
 	 *                                  <ul>
-	 *                                      <li>if the {@code id} is negative</li>
 	 *                                      <li>if the {@code packetType} is null</li>
-	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}</li>
-	 *                                      <li>if the {@code message} is null
-	 *                                      and {@link PacketType#isMessageRequired() packetType.isMessageRequired()} is true</li>
+	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() requires a result type}</li>
+	 *                                      <li>if the {@code message} is null and {@code packetType} {@link PacketType#isMessageRequired() requires a message}</li>
 	 *                                  </ul>
 	 */
-	Response(int id,
-			 @Nullable Socket originatingSocket,
+	Response(@Nullable Socket originatingSocket,
 			 @NotNull PacketType packetType,
 			 @Nullable String message) throws IllegalArgumentException {
-		if (packetType == PacketType.EFFECT_RESULT)
-			throw new IllegalArgumentException("packetType cannot be EFFECT_RESULT in this constructor");
-		this.id = id;
-		if (this.id < 0)
-			throw new IllegalArgumentException("ID cannot be negative");
-		this.originatingSocket = originatingSocket;
-		this.packetType = ExceptionUtil.validateNotNull(packetType, "packetType");
-		if (packetType.isMessageRequired() && message == null)
-			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
-		this.message = message;
-		this.type = null;
+		this(0, originatingSocket, packetType, null, message, null, null);
 	}
 
 	/**
@@ -160,7 +158,7 @@ public class Response implements JsonObject {
 	 * @throws IllegalArgumentException May be thrown in various circumstances:
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
-	 *                                      <li>if the {@code timeRemaining} is negative</li>
+	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
 	 *                                      <li>if the {@code type} is null</li>
 	 *                                  </ul>
 	 */
@@ -169,11 +167,11 @@ public class Response implements JsonObject {
 			 @NotNull ResultType type,
 			 @Nullable String message,
 			 @Nullable Duration timeRemaining) throws IllegalArgumentException {
-		this(id, originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
+		this(id, originatingSocket, ExceptionUtil.validateNotNull(type, "type").isStatus() ? PacketType.EFFECT_STATUS : PacketType.EFFECT_RESULT, type, message, timeRemaining, null);
 	}
 
 	/**
-	 * Instantiates a new non-{@link PacketType#EFFECT_RESULT} {@link Response} to a given
+	 * Instantiates a new non-{@link PacketType#EFFECT_RESULT EFFECT_RESULT} {@link Response} to a given
 	 * {@link Request}.
 	 *
 	 * @param request    originating request
@@ -183,26 +181,15 @@ public class Response implements JsonObject {
 	 *                                  <ul>
 	 *                                      <li>if the {@code request} is null</li>
 	 *                                      <li>if the {@code packetType} is null</li>
-	 *                                      <li>if the {@code packetType} is {@link PacketType#EFFECT_RESULT}</li>
-	 *                                      <li>if the {@code message} is null</li>
-	 *                                      <li>if the {@code message} is null
-	 *                                      and {@link PacketType#isMessageRequired() packetType.isMessageRequired()} is true</li>
+	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() requires a result type}</li>
+	 *                                      <li>if the {@code message} is null and {@code packetType} {@link PacketType#isMessageRequired() requires a message}</li>
 	 *                                  </ul>
 	 */
-	@CheckReturnValue
 	Response(@NotNull Request request,
 			 @NotNull PacketType packetType,
 			 @Nullable String message) throws IllegalArgumentException {
-		if (packetType == PacketType.EFFECT_RESULT)
-			throw new IllegalArgumentException("packetType cannot be EFFECT_RESULT in this constructor");
-		ExceptionUtil.validateNotNull(request, "request");
-		this.id = request.getId();
-		this.originatingSocket = request.originatingSocket;
-		this.packetType = ExceptionUtil.validateNotNull(packetType, "packetType");
-		this.type = null;
-		if (message == null && packetType.isMessageRequired())
-			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
-		this.message = message;
+		this(ExceptionUtil.validateNotNull(request, "request").originatingSocket, packetType, message);
+		this.effect = request.getEffect();
 	}
 
 	/**
@@ -226,7 +213,6 @@ public class Response implements JsonObject {
 	@Deprecated
 	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
 	@ApiStatus.AvailableSince("3.0.0")
-	@CheckReturnValue
 	public Response(@NotNull Request request,
 					@NotNull ResultType type,
 					@Nullable String message,
@@ -238,8 +224,7 @@ public class Response implements JsonObject {
 	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
 	 * and information about the result of the execution.
 	 * <p>
-	 * This constructor is marked as {@link ApiStatus.Experimental experimental} because it is frequently deprecated and
-	 * eventually removed in new releases. Please use {@link Request#buildResponse()} where possible instead.
+	 * This constructor is being removed in favor of {@link Request#buildResponse()}.
 	 *
 	 * @param request       originating request
 	 * @param type          result of execution
@@ -250,19 +235,22 @@ public class Response implements JsonObject {
 	 *                                  <ul>
 	 *                                      <li>if the {@code request} is null</li>
 	 *                                      <li>if the {@code type} is null</li>
-	 *                                      <li>if the {@code timeRemaining} is negative</li>
+	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
 	 *                                  </ul>
 	 * @since 3.5.0
+	 * @deprecated Use {@link Request#buildResponse()} instead
 	 */
 	@ApiStatus.AvailableSince("3.5.0")
 	@ApiStatus.Experimental
 	@CheckReturnValue
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
 	public Response(@NotNull Request request,
 					@NotNull ResultType type,
 					@Nullable String message,
 					@Nullable Duration timeRemaining) throws IllegalArgumentException {
 		this(ExceptionUtil.validateNotNull(request, "request").getId(),
-				request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining);
+				request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining, request.getEffect());
 	}
 
 	/**
@@ -273,7 +261,7 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	private Response(@NotNull Builder builder) {
 		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining);
+				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect);
 	}
 
 	/**
@@ -295,23 +283,6 @@ public class Response implements JsonObject {
 	/**
 	 * Creates a {@link Response} indicating that the socket connection is being terminated.
 	 *
-	 * @param id                ID of the request which caused this response
-	 * @param originatingSocket socket being terminated
-	 * @param message           message describing the reason for termination
-	 * @return a new Response object
-	 * @throws IllegalArgumentException if the socket is null
-	 * @since 3.3.2
-	 */
-	@ApiStatus.AvailableSince("3.3.2")
-	@CheckReturnValue
-	@NotNull
-	static Response ofDisconnectMessage(int id, @NotNull Socket originatingSocket, @Nullable String message) {
-		return new Response(id, originatingSocket, PacketType.DISCONNECT, ExceptionUtil.validateNotNullElse(message, "Disconnected"));
-	}
-
-	/**
-	 * Creates a {@link Response} indicating that the socket connection is being terminated.
-	 *
 	 * @param originatingSocket socket being terminated
 	 * @param message           message describing the reason for termination
 	 * @return a new Response object
@@ -322,7 +293,7 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	@NotNull
 	static Response ofDisconnectMessage(@NotNull Socket originatingSocket, @Nullable String message) {
-		return ofDisconnectMessage(0, originatingSocket, message);
+		return new Response(originatingSocket, PacketType.DISCONNECT, ExceptionUtil.validateNotNullElse(message, "Disconnected"));
 	}
 
 	/**
@@ -338,9 +309,8 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	@NotNull
 	static Response ofDisconnectMessage(@NotNull Request request, @Nullable String message) {
-		if (request.originatingSocket == null)
-			throw new IllegalArgumentException("request has no associated originating socket");
-		return ofDisconnectMessage(request.getId(), request.originatingSocket, message);
+		//noinspection DataFlowIssue - null check is performed in constructor; checking again would be redundant
+		return ofDisconnectMessage(ExceptionUtil.validateNotNull(request, "request").originatingSocket, message);
 	}
 
 	/**
@@ -393,12 +363,14 @@ public class Response implements JsonObject {
 
 	/**
 	 * Gets the message that will be delivered along with the result.
+	 * May be {@code null} if a {@link PacketType#isMessageRequired() message is not required}
+	 * per {@link #getPacketType()}.
 	 *
 	 * @return result message
 	 * @since 1.0.0
 	 */
 	@ApiStatus.AvailableSince("1.0.0")
-	@NotNull
+	@Nullable
 	@CheckReturnValue
 	public String getMessage() {
 		return message;
@@ -415,6 +387,19 @@ public class Response implements JsonObject {
 	@Nullable
 	public Duration getTimeRemaining() {
 		return timeRemaining;
+	}
+
+	/**
+	 * Gets the effect that was referenced by the request.
+	 *
+	 * @return effect code
+	 * @since 3.5.2
+	 */
+	@ApiStatus.AvailableSince("3.5.2")
+	@CheckReturnValue
+	@Nullable
+	public String getEffect() {
+		return effect;
 	}
 
 	/**
@@ -454,7 +439,7 @@ public class Response implements JsonObject {
 	public boolean isTerminating() throws IllegalStateException {
 		if (packetType != PacketType.EFFECT_RESULT)
 			throw new IllegalStateException("This response is not an effect result");
-		return type.isTerminating() || (type == ResultType.SUCCESS && timeRemaining == null);
+		return (type != null && type.isTerminating()) || (type == ResultType.SUCCESS && timeRemaining == null);
 	}
 
 	@Override
@@ -466,12 +451,13 @@ public class Response implements JsonObject {
 				&& Objects.equals(timeRemaining, response.timeRemaining)
 				&& packetType == response.packetType
 				&& type == response.type
-				&& Objects.equals(message, response.message);
+				&& Objects.equals(message, response.message)
+				&& Objects.equals(effect, response.effect);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(packetType, id, type, message, timeRemaining);
+		return Objects.hash(packetType, id, type, message, timeRemaining, effect);
 	}
 
 	/**
@@ -507,7 +493,7 @@ public class Response implements JsonObject {
 	}
 
 	void rawSend() throws IllegalStateException, IOException {
-		if (!isOriginKnown()) {
+		if (originatingSocket == null) {
 			throw new IllegalStateException("Response was constructed without a Request and thus cannot find where to be sent");
 		}
 
@@ -538,7 +524,15 @@ public class Response implements JsonObject {
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
-		EFFECT_RESULT(true),
+		EFFECT_RESULT(false, true),
+		/**
+		 * The packet is updating the status of an effect.
+		 * This should be used with an {@link #getId() id} of 0.
+		 *
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		EFFECT_STATUS(false, true),
 		/**
 		 * <b>Internal value</b> used to prompt a connecting client for a password.
 		 *
@@ -546,7 +540,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		LOGIN(false, (byte) 0xF0),
+		LOGIN(false, false, (byte) 0xF0),
 		/**
 		 * <b>Internal value</b> used to indicate a successful login.
 		 *
@@ -554,7 +548,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.1.0")
 		@ApiStatus.Internal
-		LOGIN_SUCCESS(false, (byte) 0xF1),
+		LOGIN_SUCCESS(false, false, (byte) 0xF1),
 		/**
 		 * <b>Internal value</b> used to indicate that the socket is being disconnected.
 		 *
@@ -562,7 +556,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.1.0")
 		@ApiStatus.Internal
-		DISCONNECT(true, (byte) 0xFE),
+		DISCONNECT(true, false, (byte) 0xFE),
 		/**
 		 * <b>Internal value</b> used to reply to a keep alive packet.
 		 *
@@ -570,7 +564,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		KEEP_ALIVE(false, (byte) 0xFF);
+		KEEP_ALIVE(false, false, (byte) 0xFF);
 
 		private static final Map<Byte, PacketType> BY_BYTE;
 
@@ -583,14 +577,17 @@ public class Response implements JsonObject {
 
 		private final byte encodedByte;
 		private final boolean isMessageRequired;
+		private final boolean hasResultType;
 
-		PacketType(boolean isMessageRequired, byte encodedByte) {
+		PacketType(boolean isMessageRequired, boolean hasResultType, byte encodedByte) {
 			this.isMessageRequired = isMessageRequired;
+			this.hasResultType = hasResultType;
 			this.encodedByte = encodedByte;
 		}
 
-		PacketType(boolean isMessageRequired) {
+		PacketType(boolean isMessageRequired, boolean hasResultType) {
 			this.isMessageRequired = isMessageRequired;
+			this.hasResultType = hasResultType;
 			this.encodedByte = (byte) ordinal();
 		}
 
@@ -626,6 +623,18 @@ public class Response implements JsonObject {
 		public boolean isMessageRequired() {
 			return isMessageRequired;
 		}
+
+		/**
+		 * Determines if this packet type requires an accompanying {@link ResultType} to be sent.
+		 *
+		 * @return true if a result type is required
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		@CheckReturnValue
+		public boolean hasResultType() {
+			return hasResultType;
+		}
 	}
 
 	/**
@@ -641,28 +650,28 @@ public class Response implements JsonObject {
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		SUCCESS(false),
+		SUCCESS(false, false),
 		/**
 		 * The effect failed to be applied. Will refund the purchaser.
 		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		FAILURE(true),
+		FAILURE(true, false),
 		/**
 		 * The requested effect is unusable and should not be requested again.
 		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		UNAVAILABLE(true),
+		UNAVAILABLE(true, false),
 		/**
 		 * The effect is momentarily unavailable but may be retried in a few seconds.
 		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		RETRY(false),
+		RETRY(false, false),
 		/**
 		 * The timed effect has been paused and is now waiting.
 		 *
@@ -670,7 +679,7 @@ public class Response implements JsonObject {
 		 * @since 2.0.0
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
-		PAUSED(false, (byte) 0x06),
+		PAUSED(false, false, (byte) 0x06),
 		/**
 		 * The timed effect has been resumed and is counting down again.
 		 *
@@ -678,7 +687,7 @@ public class Response implements JsonObject {
 		 * @since 2.0.0
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
-		RESUMED(false, (byte) 0x07),
+		RESUMED(false, false, (byte) 0x07),
 		/**
 		 * The timed effect has finished.
 		 *
@@ -686,47 +695,51 @@ public class Response implements JsonObject {
 		 * @since 2.0.0
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
-		FINISHED(true, (byte) 0x08),
+		FINISHED(true, false, (byte) 0x08),
 		/**
 		 * Instructs the client to display this effect in its menu.
 		 * <p>
 		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
 		 * necessary to update the status of an effect in the menu.
+		 * This must be used in combination with {@link PacketType#EFFECT_STATUS}.
 		 *
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		VISIBLE(true, (byte) 0x80),
+		VISIBLE(true, true, (byte) 0x80),
 		/**
 		 * Instructs the client to hide this effect in its menu.
 		 * <p>
 		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
 		 * necessary to update the status of an effect in the menu.
+		 * This must be used in combination with {@link PacketType#EFFECT_STATUS}.
 		 *
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		NOT_VISIBLE(true, (byte) 0x81),
+		NOT_VISIBLE(true, true, (byte) 0x81),
 		/**
 		 * Instructs the client to make this effect in its menu selectable.
 		 * <p>
 		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
 		 * necessary to update the status of an effect in the menu.
+		 * This must be used in combination with {@link PacketType#EFFECT_STATUS}.
 		 *
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		SELECTABLE(true, (byte) 0x82),
+		SELECTABLE(true, true, (byte) 0x82),
 		/**
 		 * Instructs the client to make this effect in its menu unselectable.
 		 * <p>
 		 * This type is not intended to be used as a response for an actual effect but rather sent to the client as
 		 * necessary to update the status of an effect in the menu.
+		 * This must be used in combination with {@link PacketType#EFFECT_STATUS}.
 		 *
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		NOT_SELECTABLE(true, (byte) 0x83),
+		NOT_SELECTABLE(true, true, (byte) 0x83),
 		/**
 		 * Indicates that this Crowd Control server is not yet accepting requests.
 		 * <p>
@@ -738,7 +751,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		NOT_READY(true, (byte) 0xFF);
+		NOT_READY(true, false, (byte) 0xFF);
 
 		private static final Map<Byte, ResultType> BY_BYTE;
 
@@ -751,14 +764,17 @@ public class Response implements JsonObject {
 
 		private final boolean terminating;
 		private final byte encodedByte;
+		private final boolean isStatus;
 
-		ResultType(boolean terminating, byte encodedByte) {
+		ResultType(boolean terminating, boolean isStatus, byte encodedByte) {
 			this.terminating = terminating;
+			this.isStatus = isStatus;
 			this.encodedByte = encodedByte;
 		}
 
-		ResultType(boolean terminating) {
+		ResultType(boolean terminating, boolean isStatus) {
 			this.terminating = terminating;
+			this.isStatus = isStatus;
 			this.encodedByte = (byte) ordinal();
 		}
 
@@ -795,6 +811,19 @@ public class Response implements JsonObject {
 		public boolean isTerminating() {
 			return terminating;
 		}
+
+		/**
+		 * Determines if this result type must be used in combination with {@link PacketType#EFFECT_STATUS}
+		 * and an effect ID of 0.
+		 *
+		 * @return true if this result type is for an effect status packet
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		@CheckReturnValue
+		public boolean isStatus() {
+			return isStatus;
+		}
 	}
 
 	/**
@@ -812,6 +841,7 @@ public class Response implements JsonObject {
 		private String message;
 		private Duration timeRemaining;
 		private PacketType packetType;
+		private String effect;
 
 		/**
 		 * Creates a new empty builder.
@@ -838,6 +868,7 @@ public class Response implements JsonObject {
 			this.type = source.type;
 			this.timeRemaining = source.timeRemaining;
 			this.packetType = source.packetType;
+			this.effect = source.effect;
 		}
 
 		/**
@@ -854,6 +885,7 @@ public class Response implements JsonObject {
 		protected Builder(@NotNull Request request) {
 			this.id = request.getId();
 			this.originatingSocket = request.originatingSocket;
+			this.effect = request.getEffect();
 		}
 
 		/**
@@ -871,6 +903,7 @@ public class Response implements JsonObject {
 			this.message = builder.message;
 			this.timeRemaining = builder.timeRemaining;
 			this.packetType = builder.packetType;
+			this.effect = builder.effect;
 		}
 
 		/**
@@ -1073,6 +1106,21 @@ public class Response implements JsonObject {
 			return this;
 		}
 
+		/**
+		 * Sets the effect that was referenced by the request.
+		 *
+		 * @param effect effect code
+		 * @return this builder
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder effect(@Nullable String effect) {
+			this.effect = effect;
+			return this;
+		}
+
 		// getters
 
 		/**
@@ -1082,6 +1130,7 @@ public class Response implements JsonObject {
 		 * @since 3.3.0
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
+		@CheckReturnValue
 		public int id() {
 			return id;
 		}
@@ -1095,6 +1144,7 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("3.3.0")
 		@ApiStatus.Internal
 		@Nullable
+		@CheckReturnValue
 		Socket originatingSocket() {
 			return originatingSocket;
 		}
@@ -1107,6 +1157,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
+		@CheckReturnValue
 		public ResultType type() {
 			return type;
 		}
@@ -1119,6 +1170,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
+		@CheckReturnValue
 		public String message() {
 			return message;
 		}
@@ -1131,6 +1183,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
+		@CheckReturnValue
 		public Duration timeRemaining() {
 			return timeRemaining;
 		}
@@ -1146,8 +1199,22 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
 		@ApiStatus.Internal
+		@CheckReturnValue
 		public PacketType packetType() {
 			return packetType;
+		}
+
+		/**
+		 * Gets the effect that was referenced by the request.
+		 *
+		 * @return effect code
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		@Nullable
+		@CheckReturnValue
+		public String effect() {
+			return effect;
 		}
 
 		// miscellaneous

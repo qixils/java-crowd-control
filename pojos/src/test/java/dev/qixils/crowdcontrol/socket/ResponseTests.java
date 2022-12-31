@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol.socket;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -17,45 +18,33 @@ public class ResponseTests {
 
 		// Constructor 1
 
-		// negative ID throws IllegalArgumentException
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				-1,
-				null,
-				Response.PacketType.DISCONNECT,
-				"Server is disconnecting"
-		));
 		// null packet type throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				1,
-				null,
+				(Socket) null,
 				null,
 				"Server is disconnecting"
 		));
 		// effect result packet throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				1,
-				null,
+				(Socket) null,
 				Response.PacketType.EFFECT_RESULT,
 				"Effect applied successfully"
 		));
 		// null message throws IllegalArgumentException when PacketType#isMessageRequired() is true
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				1,
-				null,
+				(Socket) null,
 				Response.PacketType.DISCONNECT,
 				null
 		));
 		// null message doesn't throw when PacketType#isMessageRequired() is false
 		Assertions.assertDoesNotThrow(() -> new Response(
-				1,
-				null,
+				(Socket) null,
 				Response.PacketType.LOGIN,
 				null
 		));
 		// doesn't throw when all parameters are valid
 		Assertions.assertDoesNotThrow(() -> new Response(
-				1,
-				null,
+				(Socket) null,
 				Response.PacketType.DISCONNECT,
 				"Server is disconnecting"
 		));
@@ -106,7 +95,7 @@ public class ResponseTests {
 
 		// null request throws IllegalArgumentException
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				null,
+				(Request) null,
 				Response.PacketType.DISCONNECT,
 				"Server is disconnecting"
 		));
@@ -183,6 +172,8 @@ public class ResponseTests {
 				null,
 				0
 		));
+
+		// TODO: am i missing the big mega constructor???
 	}
 
 	@SuppressWarnings("deprecation") // old constructors still need to be tested! :)
@@ -190,12 +181,11 @@ public class ResponseTests {
 	public void getterTest() {
 		// Constructor 1
 		Response response = new Response(
-				1,
-				null,
+				(Socket) null,
 				Response.PacketType.LOGIN,
 				"Effect applied successfully"
 		);
-		Assertions.assertEquals(1, response.getId());
+		Assertions.assertEquals(0, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.LOGIN, response.getPacketType());
 		Assertions.assertNull(response.getResultType());
@@ -219,11 +209,11 @@ public class ResponseTests {
 
 		// Constructor 3
 		response = new Response(
-				new Request.Builder().id(1).type(Request.Type.KEEP_ALIVE).build(),
+				new Request.Builder().type(Request.Type.KEEP_ALIVE).build(),
 				Response.PacketType.LOGIN,
 				"Effect applied successfully"
 		);
-		Assertions.assertEquals(1, response.getId());
+		Assertions.assertEquals(0, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.LOGIN, response.getPacketType());
 		Assertions.assertNull(response.getResultType());
@@ -232,12 +222,12 @@ public class ResponseTests {
 
 		// Constructor 4
 		response = new Response(
-				new Request.Builder().id(1).type(Request.Type.KEEP_ALIVE).build(),
+				new Request.Builder().type(Request.Type.KEEP_ALIVE).build(),
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				1000
 		);
-		Assertions.assertEquals(1, response.getId());
+		Assertions.assertEquals(0, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
@@ -246,12 +236,12 @@ public class ResponseTests {
 
 		// Constructor 5
 		response = new Response(
-				new Request.Builder().id(1).type(Request.Type.KEEP_ALIVE).build(),
+				new Request.Builder().type(Request.Type.KEEP_ALIVE).build(),
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				Duration.ofSeconds(1)
 		);
-		Assertions.assertEquals(1, response.getId());
+		Assertions.assertEquals(0, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
@@ -319,7 +309,7 @@ public class ResponseTests {
 
 		// misc
 		response = response.toBuilder().message(null).build();
-		Assertions.assertEquals("SUCCESS", response.getMessage());
+		Assertions.assertNull(response.getMessage());
 
 		response = response.toBuilder().packetType(null).build();
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
@@ -338,12 +328,11 @@ public class ResponseTests {
 		Assertions.assertEquals(Response.fromJSON(effectResponse.toJSON()), Response.fromJSON(json));
 
 		Response loginResponse = new Response(
-				2,
-				null,
+				(Socket) null,
 				Response.PacketType.LOGIN_SUCCESS,
 				"Login successful"
 		);
-		json = "{\"id\":2,\"type\":241,\"message\":\"Login successful\"}";
+		json = "{\"id\":0,\"type\":241,\"message\":\"Login successful\"}";
 		Assertions.assertEquals(Response.fromJSON(loginResponse.toJSON()), Response.fromJSON(json));
 	}
 

@@ -594,7 +594,7 @@ public final class EffectResponseTests {
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
-		Assertions.assertEquals("SUCCESS", response.getMessage());
+		Assertions.assertNull(response.getMessage());
 		Assertions.assertTrue(response.isOriginKnown());
 		Assertions.assertTrue(response::send);
 
@@ -637,7 +637,7 @@ public final class EffectResponseTests {
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
-		Assertions.assertEquals("SUCCESS", response.getMessage());
+		Assertions.assertNull(response.getMessage());
 		Assertions.assertTrue(response.isOriginKnown());
 		Assertions.assertTrue(response::send);
 

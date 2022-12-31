@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 final class ServerResponse extends Response {
 	private final transient @NotNull ServerSocketManager manager;
 
-	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, @Nullable Duration timeRemaining) throws IllegalArgumentException {
-		super(id, null, packetType, type, message, timeRemaining);
+	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, @Nullable Duration timeRemaining, @Nullable String effect) throws IllegalArgumentException {
+		super(id, null, packetType, type, message, timeRemaining, effect);
 		this.manager = manager;
 	}
 
@@ -24,7 +24,8 @@ final class ServerResponse extends Response {
 				builder.packetType(),
 				builder.type(),
 				builder.message(),
-				builder.timeRemaining()
+				builder.timeRemaining(),
+				builder.effect()
 		);
 	}
 
@@ -71,6 +72,7 @@ final class ServerResponse extends Response {
 			this.manager = builder.manager;
 		}
 
+		@SuppressWarnings("MethodDoesntCallSuperMethod")
 		@Override
 		public Response.@NotNull Builder clone() {
 			return new Builder(this);

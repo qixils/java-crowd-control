@@ -146,7 +146,7 @@ public class RequestTests {
 		Request.Builder builder = new Request.Builder();
 
 		// id test
-		Assertions.assertEquals(-1, builder.id());
+		Assertions.assertEquals(0, builder.id());
 		builder = builder.id(1);
 		Assertions.assertEquals(1, builder.id());
 

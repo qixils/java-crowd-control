@@ -257,12 +257,13 @@ public class Request implements JsonObject {
 
 	/**
 	 * Gets the name of the effect to play.
+	 * May be null if {@link #getType()} is not an {@link Type#isEffectType() effect type}.
 	 *
 	 * @return effect name
 	 * @since 1.0.0
 	 */
 	@ApiStatus.AvailableSince("1.0.0")
-	@NotNull
+	@Nullable
 	@CheckReturnValue
 	public String getEffect() {
 		return effect;
@@ -630,7 +631,7 @@ public class Request implements JsonObject {
 	@SuppressWarnings("DuplicatedCode") // not really fixable unless I added a getter interface (which is silly do to for this one constructor)
 	public static class Builder implements Cloneable {
 		private transient Socket originatingSocket;
-		private int id = -1;
+		private int id = 0;
 		private String effect;
 		private String message;
 		private String viewer;

@@ -122,7 +122,7 @@ public final class ClientSocketManager implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (socket != null && !socket.isClosed()) {
-			Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).send();
+			Response.ofDisconnectMessage(socket, reason).send();
 			socket.close();
 		}
 	}

@@ -23,7 +23,7 @@ final class SocketThread extends Thread implements SocketManager {
 	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-SocketThread");
 
 	static {
-		Response resp = new Response(0, null, Response.PacketType.LOGIN, null);
+		Response resp = new Response((Socket) null, Response.PacketType.LOGIN, null);
 		RAW_PASSWORD_REQUEST = resp.toJSON();
 		byte[] json = RAW_PASSWORD_REQUEST.getBytes(StandardCharsets.UTF_8);
 		// array copy adds an extra 0x00 byte to the end, indicating the end of the packet
@@ -112,7 +112,7 @@ final class SocketThread extends Thread implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (!socket.isClosed()) {
-			try {Response.ofDisconnectMessage(cause == null ? 0 : cause.getId(), socket, reason).rawSend();}
+			try {Response.ofDisconnectMessage(socket, reason).rawSend();}
 			catch (IOException exc) {logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");}
 			try {socket.close();}
 			catch (IOException exc) {logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");}

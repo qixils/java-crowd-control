@@ -80,7 +80,7 @@ final class EffectExecutor {
 				request.buildResponse().type(Response.ResultType.NOT_READY).message("Client has not logged in").send();
 			} else if (password.equalsIgnoreCase(request.getMessage())) {
 				logger.info("New client successfully logged in (" + socketThread.displayName + ")");
-				new Response(request.getId(), socket, Response.PacketType.LOGIN_SUCCESS, "Successfully logged in").send();
+				new Response(socket, Response.PacketType.LOGIN_SUCCESS, "Successfully logged in").send();
 				loggedIn = true;
 			} else {
 				logger.info("Aborting connection due to incorrect password (" + socketThread.displayName + ")");
