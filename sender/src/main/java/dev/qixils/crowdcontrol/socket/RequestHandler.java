@@ -96,7 +96,9 @@ final class RequestHandler implements SimulatedService<Response> {
 	}
 
 	@Override
-	public @NotNull TriState isEffectAvailable(@NotNull String effect) {
+	public @NotNull TriState isEffectAvailable(@Nullable String effect) {
+		if (effect == null)
+			return TriState.FALSE;
 		return TriState.fromBoolean(effectAvailabilityMap.get(effect));
 	}
 
@@ -216,7 +218,9 @@ final class RequestHandler implements SimulatedService<Response> {
 			throw new IllegalArgumentException("Request type is null");
 
 		// create request (done first to ensure it is valid (i.e. doesn't throw))
-		Request request = builder.id(++nextRequestId).build();
+		if (type.isEffectType())
+			builder.id(++nextRequestId);
+		Request request = builder.build();
 
 		// ensure effect is available
 		if (type.isEffectType() && isEffectAvailable(request.getEffect()) == TriState.FALSE)

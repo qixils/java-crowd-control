@@ -159,6 +159,10 @@ public class Request implements JsonObject {
 			throw new IllegalArgumentException("duration cannot be negative");
 		this.duration = duration;
 		this.parameters = parameters;
+		if (this.id == 0 && this.type.isEffectType())
+			throw new IllegalArgumentException("ID cannot be 0 for effect packets");
+		if (this.id != 0 && !this.type.isEffectType())
+			throw new IllegalArgumentException("ID must be 0 for non-effect packets");
 
 		// validate targets are not null
 		if (targets != null) {

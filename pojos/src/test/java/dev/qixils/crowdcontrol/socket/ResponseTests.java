@@ -404,16 +404,16 @@ public class ResponseTests {
 		Assertions.assertNull(builder.originatingSocket());
 
 		// constructor 2 test
-		builder = new Response.Builder(new Request.Builder().id(2).type(Request.Type.KEEP_ALIVE).build());
+		builder = new Response.Builder(new Request.Builder().id(2).effect("effect").viewer("sdk").type(Request.Type.START).build());
 		Assertions.assertEquals(2, builder.id());
 		Assertions.assertNull(builder.originatingSocket());
 		// other constructor 2 test
-		builder = new Request.Builder().id(2).type(Request.Type.KEEP_ALIVE).build().buildResponse();
+		builder = new Request.Builder().id(2).effect("effect").viewer("sdk").type(Request.Type.START).build().buildResponse();
 		Assertions.assertEquals(2, builder.id());
 		Assertions.assertNull(builder.originatingSocket());
 
 		// constructor 3 test
-		builder = new Request.Builder().id(3).type(Request.Type.KEEP_ALIVE).build().buildResponse();
+		builder = new Request.Builder().id(3).effect("effect").viewer("sdk").type(Request.Type.START).build().buildResponse();
 		Assertions.assertEquals(3, builder.id());
 		Assertions.assertNull(builder.originatingSocket());
 
