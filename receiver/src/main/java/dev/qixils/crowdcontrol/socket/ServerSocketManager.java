@@ -54,8 +54,8 @@ public final class ServerSocketManager implements SocketManager {
 	}
 
 	@Override
-	public Response.@NotNull Builder buildResponse(int id) {
-		return new ServerResponse.Builder(id, this);
+	public Response.@NotNull Builder buildResponse() {
+		return new ServerResponse.Builder(this);
 	}
 
 	@NotNull List<SocketThread> getSocketThreads() {

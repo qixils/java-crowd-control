@@ -47,8 +47,8 @@ final class SocketThread extends Thread implements SocketManager {
 	}
 
 	@Override
-	public Response.@NotNull Builder buildResponse(int id) {
-		return new Response.Builder(id, socket);
+	public Response.@NotNull Builder buildResponse() {
+		return new Response.Builder().originatingSocket(socket);
 	}
 
 	public void run() {

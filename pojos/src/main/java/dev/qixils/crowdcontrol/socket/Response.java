@@ -913,9 +913,12 @@ public class Response implements JsonObject {
 		 * @param id                id of the response
 		 * @param originatingSocket socket that originated the request
 		 * @since 3.3.0
+		 * @deprecated use {@link #id(int)} and {@link #originatingSocket(Socket)} instead
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
 		@CheckReturnValue
+		@Deprecated
+		@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
 		Builder(int id, @Nullable Socket originatingSocket) {
 			this.id = id;
 			this.originatingSocket = originatingSocket;

@@ -1,5 +1,6 @@
 package dev.qixils.crowdcontrol.socket;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 final class ServerResponse extends Response {
 	private final transient @NotNull ServerSocketManager manager;
 
@@ -54,11 +56,11 @@ final class ServerResponse extends Response {
 			throw new AggregatedIOException(exceptions);
 	}
 
+	@ApiStatus.Internal
 	static final class Builder extends Response.Builder {
 		private final @NotNull ServerSocketManager manager;
 
-		Builder(int id, @NotNull ServerSocketManager manager) {
-			super(id, null);
+		Builder(@NotNull ServerSocketManager manager) {
 			this.manager = manager;
 		}
 

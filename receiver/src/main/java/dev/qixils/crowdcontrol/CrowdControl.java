@@ -163,8 +163,8 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	}
 
 	@Override
-	public Response.@NotNull Builder buildResponse(int id) {
-		return socketManager.buildResponse(id);
+	public Response.@NotNull Builder buildResponse() {
+		return socketManager.buildResponse();
 	}
 
 	/**

@@ -28,7 +28,7 @@ import static dev.qixils.crowdcontrol.util.StringUtils.repr;
  * @since 1.0.0
  */
 @ApiStatus.AvailableSince("1.0.0")
-public class Request implements JsonObject {
+public class Request implements JsonObject, Respondable {
 	private static final Logger logger = LoggerFactory.getLogger(Request.class);
 	transient @Nullable Socket originatingSocket;
 	private int id;
