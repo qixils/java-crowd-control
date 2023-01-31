@@ -97,9 +97,8 @@ public final class ServerSocketManager implements SocketManager {
 	public void shutdown(@Nullable Request cause, @Nullable String reason) throws IOException {
 		if (!running) return;
 		running = false;
-		for (SocketThread socketThread : socketThreads) {
-			if (socketThread.isSocketActive())
-				socketThread.shutdown(cause, reason);
+		for (SocketThread socketThread : getSocketThreads()) {
+			socketThread.shutdown(cause, reason);
 		}
 		if (serverSocket != null && !serverSocket.isClosed())
 			serverSocket.close();

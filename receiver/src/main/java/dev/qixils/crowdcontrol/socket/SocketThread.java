@@ -82,20 +82,20 @@ final class SocketThread extends Thread implements SocketManager {
 		} catch (IOException exc) {
 			if ("Connection reset".equals(exc.getMessage())) {
 				logger.info("Client disconnected from server (" + displayName + ")");
-				return;
-			}
+			} else {
+				// send disconnection message to socket & ensure socket is closed
+				try {
+					shutdown(null, running ? "Server encountered an error" : "Server is shutting down");
+				} catch (IOException ignored) {
+				}
 
-			// send disconnection message to socket & ensure socket is closed
-			try {
-				shutdown(null, running ? "Server encountered an error" : "Server is shutting down");
-			} catch (IOException ignored) {
+				// log disconnection
+				if (running)
+					logger.warn("Erroneously disconnected from client socket (" + displayName + ")", exc);
+				else
+					logger.info("Client socket shutting down (" + displayName + ")");
 			}
-
-			// log disconnection
-			if (running)
-				logger.warn("Erroneously disconnected from client socket (" + displayName + ")", exc);
-			else
-				logger.info("Client socket shutting down (" + displayName + ")");
+			running = false;
 		}
 	}
 
