@@ -19,6 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import static dev.qixils.crowdcontrol.util.StringUtils.repr;
+
 /**
  * An incoming packet from the Crowd Control TCP server which represents an effect to be played.
  *
@@ -429,6 +431,22 @@ public class Request implements JsonObject {
 		return result;
 	}
 
+	@Override
+	public String toString() {
+		return "Request{" +
+				"originatingSocket=" + originatingSocket +
+				", id=" + id +
+				", type=" + type +
+				", effect=" + repr(effect) +
+				", message=" + repr(message) +
+				", viewer=" + repr(viewer) +
+				", cost=" + cost +
+				", targets=" + Arrays.toString(targets) +
+				", duration=" + duration +
+				", parameters=" + Arrays.toString(parameters) +
+				'}';
+	}
+
 	/**
 	 * The type of incoming packet.
 	 * @since 1.0.0
@@ -539,9 +557,11 @@ public class Request implements JsonObject {
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	public static final class Target {
-		private String id;
-		private String name;
-		private String avatar;
+		private @Nullable String id;
+		private @Nullable String name;
+		private @Nullable String login;
+		private @Nullable String avatar;
+		// private ServiceType service; currently unimplemented
 
 		/**
 		 * Instantiates an empty {@link Target}.
@@ -558,14 +578,24 @@ public class Request implements JsonObject {
 		 * @param id     streamer ID
 		 * @param name   streamer name
 		 * @param avatar streamer avatar
-		 * @throws IllegalArgumentException if the ID is not positive or one of the other parameters is null
 		 * @since 3.3.0
+		 * @deprecated Use {@link Builder#Builder() the builder} instead.
 		 */
+		@SuppressWarnings("DeprecatedIsStillUsed") // deprecated constructors still need to be unit tested
 		@ApiStatus.AvailableSince("3.3.0")
-		public Target(@NotNull String id, @NotNull String name, @NotNull String avatar) throws IllegalArgumentException {
-			this.id = ExceptionUtil.validateNotNull(id, "id");
-			this.name = ExceptionUtil.validateNotNull(name, "name");
-			this.avatar = ExceptionUtil.validateNotNull(avatar, "avatar");
+		@Deprecated
+		@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
+		public Target(@Nullable String id, @Nullable String name, @Nullable String avatar) {
+			this.id = id;
+			this.name = name;
+			this.avatar = avatar;
+		}
+
+		private Target(@NotNull Builder builder) {
+			this.id = builder.id;
+			this.name = builder.name;
+			this.login = builder.login;
+			this.avatar = builder.avatar;
 		}
 
 		/**
@@ -573,39 +603,55 @@ public class Request implements JsonObject {
 		 * <p>
 		 * Prior to 3.4.0, this method returned an integer representing a Twitch streamer ID.
 		 * Now, it may return a string representing the ID of a streamer on Twitch or on a different
-		 * platform.
+		 * platform. It may also return null if the ID is unknown.
 		 *
 		 * @return streamer ID
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
-		@NotNull
+		@Nullable
 		@CheckReturnValue
 		public String getId() {
 			return id;
 		}
 
 		/**
-		 * The recipient's name on Twitch.
+		 * The recipient's display name.
+		 * May be null if the name is unknown.
 		 *
-		 * @return Twitch username
+		 * @return display name
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
-		@NotNull
+		@Nullable
 		@CheckReturnValue
 		public String getName() {
 			return name;
 		}
 
 		/**
-		 * Gets the URL of the recipient's avatar on Twitch.
+		 * The recipient's username.
+		 * May be null if the username is unknown.
 		 *
-		 * @return Twitch avatar URL
+		 * @return username
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		@Nullable
+		@CheckReturnValue
+		public String getLogin() {
+			return login;
+		}
+
+		/**
+		 * Gets the URL of the recipient's avatar.
+		 * May be null if the avatar is unknown.
+		 *
+		 * @return avatar URL
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
-		@NotNull
+		@Nullable
 		@CheckReturnValue
 		public String getAvatar() {
 			return avatar;
@@ -617,13 +663,224 @@ public class Request implements JsonObject {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			Target target = (Target) o;
-			return getId().equals(target.getId()) && getName().equals(target.getName()) && getAvatar().equals(target.getAvatar());
+			return Objects.equals(getId(), target.getId())
+					&& Objects.equals(getName(), target.getName())
+					&& Objects.equals(getLogin(), target.getLogin())
+					&& Objects.equals(getAvatar(), target.getAvatar());
 		}
 
 		@Override
 		@CheckReturnValue
 		public int hashCode() {
-			return Objects.hash(getId(), getName(), getAvatar());
+			return Objects.hash(getId(), getName(), getLogin(), getAvatar());
+		}
+
+		@Override
+		public String toString() {
+			return "Target{" +
+					"id=" + repr(id) +
+					", name=" + repr(name) +
+					", login=" + repr(login) +
+					", avatar=" + repr(avatar) +
+					'}';
+		}
+
+		/**
+		 * Creates a mutable {@link Builder} with a copy of the data in this {@link Target}.
+		 *
+		 * @return a new {@link Builder}
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		@NotNull
+		@CheckReturnValue
+		public Builder toBuilder() {
+			return new Builder(this);
+		}
+
+		/**
+		 * Mutable builder for the immutable {@link Target} class.
+		 * @since 3.5.2
+		 */
+		@ApiStatus.AvailableSince("3.5.2")
+		public static final class Builder implements Cloneable {
+			private @Nullable String id;
+			private @Nullable String name;
+			private @Nullable String login;
+			private @Nullable String avatar;
+			// private ServiceType service; currently unimplemented
+
+			// constructors //
+
+			/**
+			 * Creates a new builder.
+			 *
+			 * @since 3.5.2
+			 */
+			public Builder() {
+			}
+
+			private Builder(@NotNull Target target) {
+				this.id = target.id;
+				this.name = target.name;
+				this.login = target.login;
+				this.avatar = target.avatar;
+			}
+
+			private Builder(@NotNull Builder builder) {
+				this.id = builder.id;
+				this.name = builder.name;
+				this.login = builder.login;
+				this.avatar = builder.avatar;
+			}
+
+			// setters //
+
+			/**
+			 * Sets the recipient's ID.
+			 *
+			 * @param id streamer ID
+			 * @return this builder
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@NotNull
+			@Contract("_ -> this")
+			@CheckReturnValue
+			public Builder id(@Nullable String id) {
+				this.id = id;
+				return this;
+			}
+
+			/**
+			 * Sets the recipient's display name.
+			 *
+			 * @param name display name
+			 * @return this builder
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@NotNull
+			@Contract("_ -> this")
+			@CheckReturnValue
+			public Builder name(@Nullable String name) {
+				this.name = name;
+				return this;
+			}
+
+			/**
+			 * Sets the recipient's username.
+			 *
+			 * @param login username
+			 * @return this builder
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@NotNull
+			@Contract("_ -> this")
+			@CheckReturnValue
+			public Builder login(@Nullable String login) {
+				this.login = login;
+				return this;
+			}
+
+			/**
+			 * Sets the URL of the recipient's avatar.
+			 *
+			 * @param avatar avatar URL
+			 * @return this builder
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@NotNull
+			@Contract("_ -> this")
+			@CheckReturnValue
+			public Builder avatar(@Nullable String avatar) {
+				this.avatar = avatar;
+				return this;
+			}
+
+			// getters //
+
+			/**
+			 * Gets the recipient's ID.
+			 *
+			 * @return streamer ID
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@Nullable
+			@CheckReturnValue
+			public String id() {
+				return id;
+			}
+
+			/**
+			 * Gets the recipient's display name.
+			 *
+			 * @return display name
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@Nullable
+			@CheckReturnValue
+			public String name() {
+				return name;
+			}
+
+			/**
+			 * Gets the recipient's username.
+			 *
+			 * @return username
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@Nullable
+			@CheckReturnValue
+			public String login() {
+				return login;
+			}
+
+			/**
+			 * Gets the URL of the recipient's avatar.
+			 *
+			 * @return avatar URL
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@Nullable
+			@CheckReturnValue
+			public String avatar() {
+				return avatar;
+			}
+
+			// misc
+
+			/**
+			 * Creates a new builder object with the same parameters.
+			 *
+			 * @return cloned builder
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@SuppressWarnings("MethodDoesntCallSuperMethod")
+			@Override
+			public @NotNull Builder clone() {
+				return new Builder(this);
+			}
+
+			/**
+			 * Builds a new {@link Target} object.
+			 *
+			 * @return new Request
+			 * @since 3.5.2
+			 */
+			@ApiStatus.AvailableSince("3.5.2")
+			@NotNull
+			@CheckReturnValue
+			public Target build() {
+				return new Target(this);
+			}
 		}
 	}
 
@@ -993,7 +1250,7 @@ public class Request implements JsonObject {
 		}
 
 		/**
-		 * Creates a new {@link Response.Builder} object with the same parameters.
+		 * Creates a new builder object with the same parameters.
 		 *
 		 * @return cloned builder
 		 * @since 3.3.0
