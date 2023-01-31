@@ -232,7 +232,7 @@ public class Request implements JsonObject {
 	@ApiStatus.AvailableSince("1.0.0")
 	public static Request fromJSON(@NotNull String json) throws JsonSyntaxException {
 		ExceptionUtil.validateNotNull(json, "json");
-		logger.debug("Parsing JSON: {}", json);
+		logger.debug("Incoming Packet: {}", json);
 		return ByteAdapter.GSON.fromJson(json, Request.class);
 	}
 
@@ -472,6 +472,12 @@ public class Request implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
 		STOP(true),
+//		/**
+//		 * Indicates a request for information about a player.
+//		 * @since 3.?.?
+//		 */
+//		@ApiStatus.AvailableSince("3.?.?")
+//		PLAYER_INFO(true), // seems to use incremental IDs rn but could change
 		/**
 		 * Indicates that a streamer is attempting to log in to the Crowd Control server.
 		 * <p>

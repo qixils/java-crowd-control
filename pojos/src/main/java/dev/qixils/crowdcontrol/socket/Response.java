@@ -504,6 +504,8 @@ public class Response implements JsonObject {
 			return;
 		}
 
+		logger.debug("Outgoing Packet: " + toJSON());
+
 		//object is never updated after assignment, so we can ignore this error:
 		//noinspection SynchronizeOnNonFinalField
 		synchronized (originatingSocket) {
