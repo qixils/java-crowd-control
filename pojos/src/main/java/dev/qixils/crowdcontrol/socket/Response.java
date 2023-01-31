@@ -349,15 +349,11 @@ public class Response implements JsonObject {
 
 	/**
 	 * Gets the type of packet represented by this response.
-	 * <p>
-	 * Note: unless directly working with library internals, this will always be
-	 * {@link PacketType#EFFECT_RESULT EFFECT_RESULT}.
 	 *
 	 * @return packet type
 	 * @since 3.3.0
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
-	@ApiStatus.Internal
 	@NotNull
 	@CheckReturnValue
 	public PacketType getPacketType() {
@@ -1095,8 +1091,6 @@ public class Response implements JsonObject {
 
 		/**
 		 * Sets the type of packet that this Response represents.
-		 * <p>
-		 * Note: this is intended only for internal library use.
 		 *
 		 * @param packetType type of packet
 		 * @return this builder
@@ -1105,7 +1099,6 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("3.0.0")
 		@NotNull
 		@Contract("_ -> this")
-		@ApiStatus.Internal
 		public Builder packetType(@Nullable PacketType packetType) {
 			this.packetType = packetType;
 			return this;
@@ -1195,15 +1188,12 @@ public class Response implements JsonObject {
 
 		/**
 		 * Gets the type of packet that this {@link Response} represents.
-		 * <p>
-		 * Note: this is intended only for internal library use.
 		 *
 		 * @return packet type
 		 * @since 3.3.0
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
 		@Nullable
-		@ApiStatus.Internal
 		@CheckReturnValue
 		public PacketType packetType() {
 			return packetType;
