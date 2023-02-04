@@ -10,7 +10,16 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.time.Duration;
 
-public class DurationAdapter extends TypeAdapter<Duration> {
+/**
+ * GSON Adapter for {@link Duration} to/from JSON.
+ */
+class DurationAdapter extends TypeAdapter<Duration> {
+
+	/**
+	 * Constructs a new {@link DurationAdapter}.
+	 */
+	public DurationAdapter() {
+	}
 
 	@Override
 	public @Nullable Duration read(@NotNull JsonReader in) throws IOException {
