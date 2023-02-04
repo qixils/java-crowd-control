@@ -5,7 +5,7 @@
     <parent>
         <artifactId>java-crowd-control</artifactId>
         <groupId>dev.qixils.crowdcontrol</groupId>
-        <version>3.5.2</version>
+        <version>3.5.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -20,7 +20,7 @@
         <developerConnection>scm:git:https://github.com/qixils/java-crowd-control
         </developerConnection>
         <url>https://github.com/qixils/java-crowd-control.git</url>
-        <tag>v3.5.2</tag>
+        <tag>v3.5.3</tag>
     </scm>
     <licenses>
         <license>
