@@ -2,6 +2,7 @@ package dev.qixils.crowdcontrol.socket;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
+import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -161,9 +162,9 @@ public class Request implements JsonObject, Respondable {
 			throw new IllegalArgumentException("duration cannot be negative");
 		this.duration = duration;
 		this.parameters = parameters;
-		if (this.id == 0 && this.type.isEffectType())
+		if (this.id == 0 && this.type.usesIncrementalIds() == TriState.TRUE)
 			throw new IllegalArgumentException("ID cannot be 0 for effect packets");
-		if (this.id != 0 && !this.type.isEffectType())
+		if (this.id != 0 && this.type.usesIncrementalIds() == TriState.FALSE)
 			throw new IllegalArgumentException("ID must be 0 for non-effect packets");
 
 		// validate targets are not null
@@ -459,25 +460,25 @@ public class Request implements JsonObject, Respondable {
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		TEST(true),
+		TEST(TriState.TRUE),
 		/**
 		 * Indicates that you should start an effect, if available.
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		START(true),
+		START(TriState.TRUE),
 		/**
 		 * Indicates that you should stop an effect.
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		STOP(true),
-//		/**
-//		 * Indicates a request for information about a player.
-//		 * @since 3.?.?
-//		 */
-//		@ApiStatus.AvailableSince("3.?.?")
-//		PLAYER_INFO(true), // seems to use incremental IDs rn but could change
+		STOP(TriState.TRUE),
+		/**
+		 * Identifies the connected player.
+		 * @since 3.5.3
+		 */
+		@ApiStatus.AvailableSince("3.5.3")
+		PLAYER_INFO(TriState.UNKNOWN, (byte) 0xE0),
 		/**
 		 * Indicates that a streamer is attempting to log in to the Crowd Control server.
 		 * <p>
@@ -487,7 +488,7 @@ public class Request implements JsonObject, Respondable {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		LOGIN(false, (byte) 0xF0),
+		LOGIN(TriState.UNKNOWN, (byte) 0xF0),
 		/**
 		 * This packet's sole purpose is to establish that the connection with the
 		 * Crowd Control server has not been dropped.
@@ -498,7 +499,7 @@ public class Request implements JsonObject, Respondable {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		KEEP_ALIVE(false, (byte) 0xFF);
+		KEEP_ALIVE(TriState.FALSE, (byte) 0xFF);
 
 		private static final @NotNull Map<Byte, Type> BY_BYTE;
 
@@ -509,15 +510,15 @@ public class Request implements JsonObject, Respondable {
 			BY_BYTE = map;
 		}
 
-		private final boolean isStandard;
+		private final @NotNull TriState isStandard;
 		private final byte encodedByte;
 
-		Type(boolean isStandard, byte encodedByte) {
+		Type(@NotNull TriState isStandard, byte encodedByte) {
 			this.isStandard = isStandard;
 			this.encodedByte = encodedByte;
 		}
 
-		Type(boolean isStandard) {
+		Type(@NotNull TriState isStandard) {
 			this.isStandard = isStandard;
 			this.encodedByte = (byte) ordinal();
 		}
@@ -551,6 +552,18 @@ public class Request implements JsonObject, Respondable {
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
 		public boolean isEffectType() {
+			return isStandard == TriState.TRUE;
+		}
+
+		/**
+		 * Determines if this packet is expected to use incremental IDs.
+		 *
+		 * @return if this packet is expected to use incremental IDs
+		 * @since 3.5.3
+		 */
+		@ApiStatus.AvailableSince("3.5.3")
+		@NotNull
+		public TriState usesIncrementalIds() {
 			return isStandard;
 		}
 	}

@@ -218,7 +218,7 @@ final class RequestHandler implements SimulatedService<Response> {
 			throw new IllegalArgumentException("Request type is null");
 
 		// create request (done first to ensure it is valid (i.e. doesn't throw))
-		if (type.isEffectType())
+		if (type.usesIncrementalIds() == TriState.TRUE)
 			builder.id(++nextRequestId);
 		Request request = builder.build();
 
