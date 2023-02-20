@@ -20,7 +20,7 @@ import java.util.function.Function;
 @ApiStatus.AvailableSince("3.3.0")
 public interface JsonObject {
 	/**
-	 * Obtains a JSON object from an input stream.
+	 * Obtains a JSON object from an input stream of 0x00-terminated json strings.
 	 *
 	 * @param input      an input stream
 	 * @param jsonMapper a function that maps a JSON string to a POJO
@@ -41,31 +41,26 @@ public interface JsonObject {
 		byte[] buffer = new byte[1024];
 		int idx = 0;
 
-		// create byte array for reading one byte at a time
-		final byte[] results = new byte[1];
-
 		while (true) {
 			// read next byte
-			int bytes_read = input.read(results);
-			// if we've reached the end of the stream, truncate the buffer and break
-			if (results[0] == 0x00 || bytes_read == 0) {
+			int readByte = input.read();
+			// if we've reached the end of the stream (byte is 0x00 (end of string) or -1 (end of stream)),
+			// then truncate the buffer and break
+			if (readByte <= 0) {
 				buffer = Arrays.copyOf(buffer, idx);
 				break;
 			}
 			// if we've reached the end of the buffer, double it
-			if (idx == buffer.length) {
+			if (idx == buffer.length)
 				buffer = Arrays.copyOf(buffer, buffer.length * 2);
-			}
 			// set next byte in buffer
-			buffer[idx++] = results[0];
+			buffer[idx++] = (byte) readByte;
 		}
 
 		// convert bytes to UTF-8 string
 		String inJSON = new String(buffer, StandardCharsets.UTF_8);
 
 		// ensure string is not blank
-		if (inJSON.isEmpty())
-			return null;
 		boolean eligible = false;
 		for (char chr : inJSON.toCharArray()) {
 			if (!Character.isWhitespace(chr)) {
