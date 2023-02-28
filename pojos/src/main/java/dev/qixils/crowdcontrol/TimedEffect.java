@@ -15,8 +15,10 @@ import javax.annotation.ParametersAreNullableByDefault;
 import java.time.Duration;
 import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -41,8 +43,11 @@ import java.util.function.Function;
 public final class TimedEffect {
 
 	private static final Map<MapKey, TimedEffect> ACTIVE_EFFECTS = new HashMap<>();
+	private static final Map<UUID, TimedEffect> ALL_ACTIVE_EFFECTS = new HashMap<>();
+	private static final Map<UUID, TimedEffect> ALL_PAUSED_EFFECTS = new HashMap<>();
 	private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
 	private static final Logger logger = LoggerFactory.getLogger("CC-TimedEffect");
+	private final @NotNull UUID id = UUID.randomUUID();
 	private final @NotNull Request request;
 	private final @NotNull MapKey globalKey;
 	private final MapKey @NotNull [] mapKeys;
@@ -59,6 +64,44 @@ public final class TimedEffect {
 	private boolean paused = false;
 	private boolean queued = false;
 	private @Nullable ScheduledFuture<?> future;
+
+	/**
+	 * Pauses all active effects.
+	 *
+	 * @since 3.5.3
+	 */
+	@ApiStatus.AvailableSince("3.5.3")
+	public static void pauseAll() {
+		for (Map.Entry<UUID, TimedEffect> entry : ALL_ACTIVE_EFFECTS.entrySet()) {
+			if (ALL_PAUSED_EFFECTS.containsKey(entry.getKey()))
+				continue;
+			try {
+				entry.getValue().pause();
+				ALL_PAUSED_EFFECTS.put(entry.getKey(), entry.getValue());
+			} catch (IllegalStateException e) {
+				logger.debug("Failed to pause effect", e);
+			}
+		}
+	}
+
+	/**
+	 * Resumes all effects previously paused by {@link #pauseAll()}.
+	 *
+	 * @since 3.5.3
+	 */
+	@ApiStatus.AvailableSince("3.5.3")
+	public static void resumeAll() {
+		Iterator<TimedEffect> iterator = ALL_PAUSED_EFFECTS.values().iterator();
+		while (iterator.hasNext()) {
+			TimedEffect effect = iterator.next();
+			try {
+				effect.resume();
+			} catch (IllegalStateException e) {
+				logger.debug("Failed to resume effect", e);
+			}
+			iterator.remove();
+		}
+	}
 
 	private TimedEffect(@NotNull Request request,
 						@Nullable String effectGroup,
@@ -219,6 +262,7 @@ public final class TimedEffect {
 	}
 
 	private void start() {
+		ALL_ACTIVE_EFFECTS.put(id, this);
 		// add to active effects if it blocks others
 		if (blocksOthers) {
 			if (mapKeys.length == 0)
@@ -251,10 +295,9 @@ public final class TimedEffect {
 		}
 
 		if (response == null)
-			response = request.buildResponse().type(Response.ResultType.SUCCESS);
-		else if (response.type() == null)
+			response = request.buildResponse();
+		if (response.type() == null)
 			response.type(Response.ResultType.SUCCESS);
-
 		if (response.type() == Response.ResultType.SUCCESS) {
 			response.timeRemaining(duration);
 			future = EXECUTOR.schedule(() -> complete(), duration, TimeUnit.MILLISECONDS);
@@ -358,6 +401,7 @@ public final class TimedEffect {
 			return false;
 		duration = -1;
 
+		ALL_ACTIVE_EFFECTS.remove(id, this);
 		if (blocksOthers) {
 			if (mapKeys.length == 0)
 				ACTIVE_EFFECTS.remove(globalKey, this);
