@@ -236,15 +236,24 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @param object class instance to register
 	 * @since 1.0.0
 	 */
+	@SuppressWarnings("deprecation") // backwards compatibility
 	@ApiStatus.AvailableSince("1.0.0")
 	public void registerHandlers(@NotNull Object object) {
 		Class<?> clazz = object.getClass();
 		for (Method method : clazz.getMethods()) {
 			if (!method.isAnnotationPresent(Subscribe.class)) continue;
-			// effect name literally can't be null because java doesn't let you
-			String nullableEffect = method.getAnnotation(Subscribe.class).effect();
+			Subscribe annotation = method.getAnnotation(Subscribe.class);
+			final String rawEffect;
+			if (!annotation.value().isEmpty())
+				rawEffect = annotation.value();
+			else if (!annotation.effect().isEmpty())
+				rawEffect = annotation.effect();
+			else {
+				methodHandlerWarning(method, "effect name cannot be empty");
+				continue;
+			}
 
-			final String effect = nullableEffect.toLowerCase(Locale.ENGLISH);
+			final String effect = rawEffect.toLowerCase(Locale.ENGLISH);
 			if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
 				methodHandlerWarning(method, "handler by the name '" + effect + "' is already registered");
 				continue;
@@ -335,10 +344,12 @@ public final class CrowdControl implements SocketManager, RequestManager {
 
 	/**
 	 * Registers a check which will be called for every incoming {@link Request}.
-	 * A resulting value of {@link CheckResult#DISALLOW} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
+	 * A resulting value of {@link CheckResult#DISALLOW} will result in a
+	 * {@link Response.ResultType#FAILURE FAILURE} response packet.
 	 * <p>
-	 * This is used for validating that your service is accepting requests, and should return {@link CheckResult#DISALLOW}
-	 * if, for example, the game has not fully initialized or no players are connected.
+	 * This is used for validating that your service is accepting requests, and should return
+	 * {@link CheckResult#DISALLOW} if, for example, the game has not fully initialized or no
+	 * players are connected.
 	 *
 	 * @param check global check to register
 	 * @since 3.2.1
@@ -350,10 +361,12 @@ public final class CrowdControl implements SocketManager, RequestManager {
 
 	/**
 	 * Registers a check which will be called for every incoming {@link Request}.
-	 * A resulting value of {@link CheckResult#DISALLOW} will result in an {@link Response.ResultType#FAILURE FAILURE} response packet.
+	 * A resulting value of {@link CheckResult#DISALLOW} will result in a
+	 * {@link Response.ResultType#FAILURE FAILURE} response packet.
 	 * <p>
-	 * This is used for validating that your service is accepting requests, and should return {@link CheckResult#DISALLOW}
-	 * if, for example, the game has not fully initialized or no players are connected.
+	 * This is used for validating that your service is accepting requests, and should return
+	 * {@link CheckResult#DISALLOW} if, for example, the game has not fully initialized or no
+	 * players are connected.
 	 *
 	 * @param check global check to register
 	 * @since 3.2.1

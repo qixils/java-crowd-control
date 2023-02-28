@@ -19,13 +19,27 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Subscribe {
+
 	/**
 	 * The name of the effect to listen to.
 	 *
 	 * @return effect name
 	 * @since 1.0.0
+	 * @deprecated use {@link #value()} instead
 	 */
 	@ApiStatus.AvailableSince("1.0.0")
 	@NotNull
-	String effect();
+	@Deprecated
+	@ApiStatus.ScheduledForRemoval(inVersion = "4.0.0")
+	String effect() default "";
+
+	/**
+	 * The name of the effect to listen to.
+	 *
+	 * @return effect name
+	 * @since 3.5.3
+	 */
+	@ApiStatus.AvailableSince("3.5.3")
+	@NotNull
+	String value() default ""; // remove default in 4.0.0
 }
