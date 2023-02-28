@@ -923,6 +923,36 @@ public final class TimedEffect {
 		}
 
 		/**
+		 * Gets the callback that will be executed if and when the effect is paused.
+		 * May be {@code null} if not yet set.
+		 *
+		 * @return callback to execute upon pausing
+		 * @since 3.5.3
+		 */
+		@ApiStatus.AvailableSince("3.5.3")
+		@Nullable
+		@Contract(pure = true)
+		@CheckReturnValue
+		public Consumer<@NotNull TimedEffect> pauseCallback() {
+			return pauseCallback;
+		}
+
+		/**
+		 * Gets the callback that will be executed if and when the effect is resumed.
+		 * May be {@code null} if not yet set.
+		 *
+		 * @return callback to execute upon resuming
+		 * @since 3.5.3
+		 */
+		@ApiStatus.AvailableSince("3.5.3")
+		@Nullable
+		@Contract(pure = true)
+		@CheckReturnValue
+		public Consumer<@NotNull TimedEffect> resumeCallback() {
+			return resumeCallback;
+		}
+
+		/**
 		 * Gets the callback that will be executed if and when the effect completes.
 		 * May be {@code null} if not yet set.
 		 *

@@ -14,7 +14,7 @@ import java.util.function.Function;
 /**
  * Miscellaneous tests for the TimedEffect class that can be run in isolation.
  */
-@SuppressWarnings({"ConstantConditions", "BusyWait"})
+@SuppressWarnings({"ConstantConditions", "BusyWait", "deprecation"})
 public class TimedEffectTests {
 	private static final @NotNull Request request = new Request(1,
 			Request.Type.START,
@@ -35,6 +35,8 @@ public class TimedEffectTests {
 				.effectGroup("test")
 				.duration(Duration.ofSeconds(10))
 				.startCallback(effect -> null)
+				.pauseCallback(effect -> {})
+				.resumeCallback(effect -> {})
 				.completionCallback(effect -> {})
 				.blocks(false)
 				.waits(false);
@@ -47,6 +49,12 @@ public class TimedEffectTests {
 
 		// valid null effect group test
 		Assertions.assertDoesNotThrow(() -> builder.clone().effectGroup(null).build());
+
+		// valid null pause callback test
+		Assertions.assertDoesNotThrow(() -> builder.clone().pauseCallback(null).build());
+
+		// valid null resume callback test
+		Assertions.assertDoesNotThrow(() -> builder.clone().resumeCallback(null).build());
 
 		// valid null completion callback test
 		Assertions.assertDoesNotThrow(() -> builder.clone().completionCallback(null).build());
@@ -137,6 +145,16 @@ public class TimedEffectTests {
 		builder.startCallback(callback);
 		Assertions.assertNotNull(builder.startCallback());
 		Assertions.assertEquals(response, builder.startCallback().apply(null));
+
+		Assertions.assertNull(builder.pauseCallback());
+		builder.pauseCallback($ -> {
+		});
+		Assertions.assertNotNull(builder.pauseCallback());
+
+		Assertions.assertNull(builder.resumeCallback());
+		builder.resumeCallback($ -> {
+		});
+		Assertions.assertNotNull(builder.resumeCallback());
 
 		Assertions.assertNull(builder.completionCallback());
 		builder.completionCallback($ -> {
