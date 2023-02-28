@@ -48,6 +48,8 @@ public final class TimedEffect {
 	private final MapKey @NotNull [] mapKeys;
 	private final @NotNull String effectGroup;
 	private final @NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
+	private final @Nullable Consumer<@NotNull TimedEffect> pauseCallback;
+	private final @Nullable Consumer<@NotNull TimedEffect> resumeCallback;
 	private final @Nullable Consumer<@NotNull TimedEffect> completionCallback;
 	private final long originalDuration;
 	private final boolean waitsForOthers;
@@ -62,7 +64,9 @@ public final class TimedEffect {
 						@Nullable String effectGroup,
 						@Nullable Duration duration,
 						@NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> callback,
-						@Nullable Consumer<TimedEffect> completionCallback,
+						@Nullable Consumer<@NotNull TimedEffect> pauseCallback,
+						@Nullable Consumer<@NotNull TimedEffect> resumeCallback,
+						@Nullable Consumer<@NotNull TimedEffect> completionCallback,
 						boolean waitsForOthers,
 						boolean blocksOthers) throws IllegalArgumentException {
 		this.request = ExceptionUtil.validateNotNull(request, "request");
@@ -78,6 +82,8 @@ public final class TimedEffect {
 			throw new IllegalArgumentException("duration must not be negative");
 		this.originalDuration = this.duration;
 		this.callback = ExceptionUtil.validateNotNull(callback, "callback");
+		this.pauseCallback = pauseCallback;
+		this.resumeCallback = resumeCallback;
 		this.completionCallback = completionCallback;
 		this.waitsForOthers = waitsForOthers;
 		this.blocksOthers = blocksOthers;
@@ -91,7 +97,7 @@ public final class TimedEffect {
 
 	@SuppressWarnings("ConstantConditions") // the other constructor will check for null
 	private TimedEffect(@NotNull Builder builder) {
-		this(builder.request, builder.effectGroup, builder.duration, builder.callback, builder.completionCallback, builder.waitsForOthers, builder.blocksOthers);
+		this(builder.request, builder.effectGroup, builder.duration, builder.callback, builder.pauseCallback, builder.resumeCallback, builder.completionCallback, builder.waitsForOthers, builder.blocksOthers);
 	}
 
 	/**
@@ -264,11 +270,11 @@ public final class TimedEffect {
 	 * @since 2.1.0
 	 */
 	@ApiStatus.AvailableSince("2.1.0")
-	public void pause() throws IllegalStateException {
+	public void pause() throws IllegalStateException { // TODO: change to boolean return in major version
+		if (future == null || startedAt == -1)
+			throw new IllegalStateException("Effect has not started");
 		if (paused)
 			throw new IllegalStateException("Effect is already paused");
-		if (startedAt == -1)
-			throw new IllegalStateException("Effect has not started");
 		if (duration == -1)
 			throw new IllegalStateException("Effect has already completed");
 
@@ -276,8 +282,15 @@ public final class TimedEffect {
 		if (duration <= 0)
 			throw new IllegalStateException("Effect has already completed");
 
-		assert future != null;
 		future.cancel(false);
+
+		if (pauseCallback != null) {
+			try {
+				pauseCallback.accept(this);
+			} catch (Exception e) {
+				logger.error("Exception occurred during pause callback", e);
+			}
+		}
 
 		paused = true;
 		request.buildResponse().type(Response.ResultType.PAUSED).timeRemaining(duration).send();
@@ -297,6 +310,14 @@ public final class TimedEffect {
 			throw new IllegalStateException("Effect has already completed");
 		if (startedAt == -1)
 			throw new IllegalStateException("Effect has not started");
+
+		if (resumeCallback != null) {
+			try {
+				resumeCallback.accept(this);
+			} catch (Exception e) {
+				logger.error("Exception occurred during resume callback", e);
+			}
+		}
 
 		paused = false;
 		startedAt = System.currentTimeMillis();
@@ -516,6 +537,8 @@ public final class TimedEffect {
 		private @Nullable Request request;
 		private @Nullable String effectGroup;
 		private @Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> callback;
+		private @Nullable Consumer<@NotNull TimedEffect> pauseCallback;
+		private @Nullable Consumer<@NotNull TimedEffect> resumeCallback;
 		private @Nullable Consumer<@NotNull TimedEffect> completionCallback;
 		private @Nullable Duration duration;
 		private boolean blocksOthers = true;
@@ -543,6 +566,8 @@ public final class TimedEffect {
 			this.request = builder.request;
 			this.effectGroup = builder.effectGroup;
 			this.callback = builder.callback;
+			this.pauseCallback = builder.pauseCallback;
+			this.resumeCallback = builder.resumeCallback;
 			this.completionCallback = builder.completionCallback;
 			this.duration = builder.duration;
 			this.blocksOthers = builder.blocksOthers;
@@ -562,6 +587,8 @@ public final class TimedEffect {
 			this.request = effect.request;
 			this.effectGroup = effect.effectGroup;
 			this.callback = effect.callback;
+			this.pauseCallback = effect.pauseCallback;
+			this.resumeCallback = effect.resumeCallback;
 			this.completionCallback = effect.completionCallback;
 			this.duration = effect.getOriginalDuration();
 			this.blocksOthers = effect.blocksOthers;
@@ -602,6 +629,8 @@ public final class TimedEffect {
 		 * Sets the callback that will be executed when the effect starts.
 		 * <p>
 		 * If the callback returns {@code null}, it will be interpreted as a successful completion.
+		 * This behavior is not recommended and will be removed in a future version. Instead, you
+		 * should return the builder, as it defaults to a successful completion.
 		 *
 		 * @param callback callback to execute
 		 * @return this builder
@@ -624,7 +653,10 @@ public final class TimedEffect {
 		 * @return this builder
 		 * @see #startCallback(Function)
 		 * @since 3.3.2
+		 * @deprecated use {@link #startCallback(Function)} instead
 		 */
+		@Deprecated
+		@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
 		@ApiStatus.AvailableSince("3.3.2")
 		@NotNull
 		@Contract("_ -> this")
@@ -637,6 +669,36 @@ public final class TimedEffect {
 					return null;
 				};
 
+			return this;
+		}
+
+		/**
+		 * Sets the callback that will be executed when the effect is paused.
+		 *
+		 * @param callback callback to execute
+		 * @return this builder
+		 * @since 3.5.3
+		 */
+		@ApiStatus.AvailableSince("3.5.3")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder pauseCallback(@Nullable Consumer<@NotNull TimedEffect> callback) {
+			this.pauseCallback = callback;
+			return this;
+		}
+
+		/**
+		 * Sets the callback that will be executed when the effect is resumed.
+		 *
+		 * @param callback callback to execute
+		 * @return this builder
+		 * @since 3.5.3
+		 */
+		@ApiStatus.AvailableSince("3.5.3")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder resumeCallback(@Nullable Consumer<@NotNull TimedEffect> callback) {
+			this.resumeCallback = callback;
 			return this;
 		}
 
