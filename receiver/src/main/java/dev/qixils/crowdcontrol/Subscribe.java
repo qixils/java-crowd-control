@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 /**
  * Indicates that the annotated method is an effect handler for the
- * {@link #effect() provided effect}. The containing class must be
+ * {@link #value() provided effect}. The containing class must be
  * {@link CrowdControl#registerHandlers(Object) registered}.
  *
  * @since 1.0.0
