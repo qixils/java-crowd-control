@@ -13,6 +13,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -105,7 +106,7 @@ public final class EffectResponseTests {
 	@Test
 	public void variableCheckResponse() throws InterruptedException {
 		Consumer<CrowdControl> modifier = client -> client.registerCheck(request ->
-				request.getEffect().equals("check")
+				Objects.equals(request.getEffect(), "check")
 						? CheckResult.DISALLOW
 						: CheckResult.ALLOW);
 		basicTest("check", Response.ResultType.FAILURE, modifier);
