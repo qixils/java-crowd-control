@@ -211,7 +211,7 @@ public final class EffectResponseTests {
 
 		// send first effect
 		// note: the timed effect duration, as defined in EffectHandlers, is 0.2 seconds
-		Request.Target target = new Request.Target("1", "qixils", "https://i.qixils.dev/favicon.png");
+		Request.Target target = new Request.Target.Builder().id("1").name("qixils").avatar("https://i.qixils.dev/favicon.png").build();
 		Request.Builder builder = new Request.Builder()
 				.effect("timed")
 				.viewer("test")
@@ -318,8 +318,7 @@ public final class EffectResponseTests {
 				.request(noTargetsRequest)
 				.effectGroup("random_name")
 				.duration(100)
-				.legacyStartCallback($ -> {
-				});
+				.startCallback($ -> noTargetsRequest.buildResponse());
 		TimedEffect globalEffect = effectBuilder.build();
 		globalEffect.queue();
 		Assertions.assertTrue(globalEffect.hasStarted());
@@ -439,7 +438,7 @@ public final class EffectResponseTests {
 		Request.Builder builder = new Request.Builder()
 				.effect("timedEffectCompletionCallback")
 				.viewer("test")
-				.targets(new Request.Target("1", "qixils", "google.com"));
+				.targets(new Request.Target.Builder().id("1").name("qixils").avatar("google.com").build());
 		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		// test first response
@@ -491,7 +490,7 @@ public final class EffectResponseTests {
 		Request.Builder builder = new Request.Builder()
 				.effect("timedEffectCompletionCallback")
 				.viewer("test")
-				.targets(new Request.Target("1", "qixils", "google.com"));
+				.targets(new Request.Target.Builder().id("1").name("qixils").avatar("google.com").build());
 		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		// test first response
@@ -543,7 +542,7 @@ public final class EffectResponseTests {
 		Request.Builder builder = new Request.Builder()
 				.effect("timedEffectCompletionCallback")
 				.viewer("test")
-				.targets(new Request.Target("1", "qixils", "google.com"));
+				.targets(new Request.Target.Builder().id("1").name("qixils").avatar("google.com").build());
 		Flux<Response> responseFlux = server.sendRequest(builder).blockFirst();
 		Assertions.assertNotNull(responseFlux);
 		// test first response
@@ -590,7 +589,7 @@ public final class EffectResponseTests {
 		Assertions.assertTrue(server.isAcceptingRequests());
 
 		// test response builder
-		Response response = client.buildResponse(1).type(Response.ResultType.SUCCESS).build();
+		Response response = client.buildResponse().id(1).type(Response.ResultType.SUCCESS).build();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals(1, response.getId());
@@ -633,7 +632,7 @@ public final class EffectResponseTests {
 		Assertions.assertTrue(client.isAcceptingRequests());
 
 		// test response builder
-		Response response = server.buildResponse(1).type(Response.ResultType.SUCCESS).build();
+		Response response = server.buildResponse().id(1).type(Response.ResultType.SUCCESS).build();
 		Assertions.assertNotNull(response);
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 		Assertions.assertEquals(1, response.getId());

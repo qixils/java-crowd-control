@@ -29,22 +29,22 @@ public final class EffectHandlers {
 		this(null, null);
 	}
 
-	@Subscribe(effect = "success")
+	@Subscribe("success")
 	public Response success(Request request) {
 		return request.buildResponse().type(Response.ResultType.SUCCESS).build();
 	}
 
-	@Subscribe(effect = "failure")
+	@Subscribe("failure")
 	public Response.Builder failure(Request request) {
 		return request.buildResponse().type(Response.ResultType.FAILURE);
 	}
 
-	@Subscribe(effect = "retry")
+	@Subscribe("retry")
 	public void retry(Request request) {
 		request.buildResponse().type(Response.ResultType.RETRY).send();
 	}
 
-	@Subscribe(effect = "timed")
+	@Subscribe("timed")
 	public void timed(Request request) {
 		new TimedEffect.Builder()
 				.request(request)
@@ -53,12 +53,12 @@ public final class EffectHandlers {
 				.build().queue();
 	}
 
-	@Subscribe(effect = "nothing")
+	@Subscribe("nothing")
 	public void nothing(Request request) {
 		// this should time out
 	}
 
-	@Subscribe(effect = "timedEffectError")
+	@Subscribe("timedEffectError")
 	public void timedEffectError(Request request) {
 		new TimedEffect.Builder()
 				.request(request)
@@ -70,7 +70,7 @@ public final class EffectHandlers {
 				.build().queue();
 	}
 
-	@Subscribe(effect = "timedEffectRetry")
+	@Subscribe("timedEffectRetry")
 	public void timedEffectRetry(Request request) {
 		new TimedEffect.Builder()
 				.request(request)
@@ -80,7 +80,7 @@ public final class EffectHandlers {
 				.build().queue();
 	}
 
-	@Subscribe(effect = "timedEffectCompletionCallback")
+	@Subscribe("timedEffectCompletionCallback")
 	public void timedEffectCompletionCallback(Request request) {
 		TimedEffect effect = new TimedEffect.Builder()
 				.request(request)

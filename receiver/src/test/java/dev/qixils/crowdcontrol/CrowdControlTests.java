@@ -49,61 +49,61 @@ public class CrowdControlTests {
 		server.registerHandlers(new Object() {
 			// true valid handlers
 
-			@Subscribe(effect = "3")
+			@Subscribe("3")
 			public Response test(Request request) {
 				return new Response(request, Response.ResultType.SUCCESS, null, 0);
 			}
 
-			@Subscribe(effect = "4")
+			@Subscribe("4")
 			public Response.Builder test2(Request request) {
 				return new Response(request, Response.ResultType.SUCCESS, null, 0).toBuilder();
 			}
 
-			@Subscribe(effect = "5")
+			@Subscribe("5")
 			public void test3(Request request) {
 			}
 
 			// "valid" handlers
 
-			@Subscribe(effect = "6")
+			@Subscribe("6")
 			public Response test4(Request request) {
 				return null;
 			}
 
-			@Subscribe(effect = "7")
+			@Subscribe("7")
 			public Response test5(Request request) throws IllegalAccessException {
 				throw new IllegalAccessException();
 			}
 
-			@Subscribe(effect = "8")
+			@Subscribe("8")
 			public void test6(Request request) throws IllegalAccessException {
 				throw new IllegalAccessException();
 			}
 
-			@Subscribe(effect = "9")
+			@Subscribe("9")
 			public void test7(Request request) {
 			}
 
-			@Subscribe(effect = "10")
+			@Subscribe("10")
 			private void invalidTest0(Request request) {
 			}
 
 			// invalid handlers
 
-			@Subscribe(effect = "11")
+			@Subscribe("11")
 			public Object invalidTest1(Request request) {
 				return new Object();
 			}
 
-			@Subscribe(effect = "12")
+			@Subscribe("12")
 			public void invalidTest2(Object object) {
 			}
 
-			@Subscribe(effect = "13")
+			@Subscribe("13")
 			public void invalidTest3(Object object1, Object object2) {
 			}
 
-			@Subscribe(effect = "14")
+			@Subscribe("14")
 			public void invalidTest4() {
 			}
 		});
