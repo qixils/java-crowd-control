@@ -191,7 +191,7 @@ public class Response implements JsonObject {
 	Response(@NotNull Request request,
 			 @NotNull PacketType packetType,
 			 @Nullable String message) throws IllegalArgumentException {
-		this(ExceptionUtil.validateNotNull(request, "request").originatingSocket, packetType, message);
+		this(ExceptionUtil.validateNotNull(request, "request").getOriginatingSocket(), packetType, message);
 		this.effect = request.getEffect();
 	}
 
@@ -252,7 +252,7 @@ public class Response implements JsonObject {
 	@NotNull
 	static Response ofDisconnectMessage(@NotNull Request request, @Nullable String message) {
 		//noinspection DataFlowIssue - null check is performed in constructor; checking again would be redundant
-		return ofDisconnectMessage(ExceptionUtil.validateNotNull(request, "request").originatingSocket, message);
+		return ofDisconnectMessage(ExceptionUtil.validateNotNull(request, "request").getOriginatingSocket(), message);
 	}
 
 	/**
@@ -824,7 +824,7 @@ public class Response implements JsonObject {
 		@ApiStatus.Internal
 		protected Builder(@NotNull Request request) {
 			this.id = request.getId();
-			this.originatingSocket = request.originatingSocket;
+			this.originatingSocket = request.getOriginatingSocket();
 			this.effect = request.getEffect();
 		}
 

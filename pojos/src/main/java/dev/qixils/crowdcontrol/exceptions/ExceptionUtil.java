@@ -31,6 +31,7 @@ public class ExceptionUtil {
 		validateNotNull(potentialCause, "potentialCause");
 		if (exception == null) return false;
 		if (potentialCause.isInstance(exception)) return true;
+		// TODO: handle AggregatedIOException
 		return isCause(potentialCause, exception.getCause());
 	}
 

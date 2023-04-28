@@ -25,6 +25,7 @@ final class EffectExecutor {
 	private final RequestManager crowdControl;
 	private final @Nullable String password;
 	private boolean loggedIn = false;
+	private Request.@Nullable Target player = null;
 
 	EffectExecutor(SocketThread socketThread) throws IOException {
 		this.socketThread = socketThread;
@@ -67,7 +68,13 @@ final class EffectExecutor {
 			return;
 		}
 
-		request.originatingSocket = socket;
+		if (request.getType() == Request.Type.PLAYER_INFO && request.getTargets().length == 1) {
+			player = request.getTargets()[0];
+		} else if (player != null) {
+			request.setSource(player);
+		}
+
+		request.setOriginatingSocket(socket);
 
 		if (request.getType() == Request.Type.KEEP_ALIVE) {
 			request.buildResponse().packetType(Response.PacketType.KEEP_ALIVE).send();

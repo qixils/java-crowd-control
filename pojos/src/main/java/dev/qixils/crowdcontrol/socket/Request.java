@@ -31,7 +31,8 @@ import static dev.qixils.crowdcontrol.util.StringUtils.repr;
 @ApiStatus.AvailableSince("1.0.0")
 public class Request implements JsonObject, Respondable {
 	private static final Logger logger = LoggerFactory.getLogger(Request.class);
-	transient @Nullable Socket originatingSocket;
+	private transient @Nullable Socket originatingSocket;
+	private transient @Nullable Target source; // TODO: add to builder and add unit tests
 	private int id;
 	private Type type;
 	@SerializedName("code")
@@ -345,6 +346,42 @@ public class Request implements JsonObject, Respondable {
 	@Nullable
 	public Socket getOriginatingSocket() {
 		return originatingSocket;
+	}
+
+	/**
+	 * Sets the {@link Socket} that this {@link Request} originated from.
+	 *
+	 * @param originatingSocket originating socket
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@ApiStatus.Internal
+	public void setOriginatingSocket(@Nullable Socket originatingSocket) {
+		this.originatingSocket = originatingSocket;
+	}
+
+	/**
+	 * Gets the {@link Target streamer} that this {@link Request} originated from.
+	 *
+	 * @return originating streamer
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@Nullable
+	public Target getSource() {
+		return source;
+	}
+
+	/**
+	 * Sets the {@link Target streamer} that this {@link Request} originated from.
+	 *
+	 * @param source originating streamer
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@ApiStatus.Internal
+	public void setSource(@Nullable Target source) {
+		this.source = source;
 	}
 
 	/**
