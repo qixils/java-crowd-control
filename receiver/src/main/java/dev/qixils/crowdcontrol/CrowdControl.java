@@ -411,8 +411,10 @@ public final class CrowdControl implements SocketManager, RequestManager {
 				effectHandlers.get(effect).apply(request).send();
 			else if (asyncHandlers.containsKey(effect))
 				asyncHandlers.get(effect).accept(request);
-			else
+			else {
 				request.buildResponse().type(Response.ResultType.UNAVAILABLE).message("The effect couldn't be found").send();
+				request.buildResponse().id(0).packetType(Response.PacketType.EFFECT_STATUS).type(Response.ResultType.NOT_VISIBLE).send();
+			}
 		} catch (Exception e) {
 			if (ExceptionUtil.isCause(NoApplicableTarget.class, e)) {
 				request.buildResponse().type(Response.ResultType.FAILURE).message("Streamer(s) unavailable").send();
