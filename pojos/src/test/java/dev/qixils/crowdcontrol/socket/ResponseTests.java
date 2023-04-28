@@ -504,17 +504,5 @@ public class ResponseTests {
 		Assertions.assertEquals(Duration.ofSeconds(1), response.getTimeRemaining());
 		Assertions.assertEquals(1, response.getId());
 		Assertions.assertFalse(response.isOriginKnown());
-
-		// test unavailable response
-		response = request.buildResponse()
-				.type(Response.ResultType.UNAVAILABLE)
-				.message("Effect not usable in this game")
-				.build();
-		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
-		Assertions.assertEquals(Response.ResultType.UNAVAILABLE, response.getResultType());
-		Assertions.assertEquals("Effect not usable in this game [effect: test]", response.getMessage());
-		Assertions.assertNull(response.getTimeRemaining());
-		Assertions.assertEquals(1, response.getId());
-		Assertions.assertFalse(response.isOriginKnown());
 	}
 }

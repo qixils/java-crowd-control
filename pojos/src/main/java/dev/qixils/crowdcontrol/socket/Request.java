@@ -405,7 +405,7 @@ public class Request implements JsonObject, Respondable {
 	@ApiStatus.AvailableSince("3.0.0")
 	@CheckReturnValue
 	public Response.@NotNull Builder buildResponse() {
-		return new RequestResponseBuilder(this);
+		return new Response.Builder(this);
 	}
 
 	@Override
