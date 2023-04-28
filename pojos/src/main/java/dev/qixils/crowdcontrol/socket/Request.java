@@ -56,41 +56,6 @@ public class Request implements JsonObject, Respondable {
 
 	/**
 	 * Instantiates a {@link Request} with the given parameters.
-	 *
-	 * @param id      the ID of the request
-	 * @param effect  the effect to be played
-	 * @param message the message to be displayed
-	 * @param viewer  the viewer who requested the effect
-	 * @param cost    the cost of the effect
-	 * @param type    the packet type to send
-	 * @param targets the targets of the effect
-	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
-	 *                                  <ul>
-	 *                                      <li>if the given ID is negative</li>
-	 *                                      <li>if the given packet type is null</li>
-	 *                                      <li>if the given packet type is an {@link Type#isEffectType() effect type} and the effect or viewer is null</li>
-	 *                                      <li>if the given packet type is not an {@link Type#isEffectType()} effect type} and the effect, viewer, cost, or targets is non-null</li>
-	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
-	 *                                  </ul>
-	 * @since 3.3.0
-	 * @deprecated Obsoleted by {@link #Request(int, Type, String, String, String, Integer, Duration, Target[], Object[])};
-	 *             to be removed in v3.6.0
-	 */
-	@ApiStatus.AvailableSince("3.3.0")
-	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
-	public Request(int id,
-				   @NotNull Type type,
-				   @Nullable String effect,
-				   @Nullable String viewer,
-				   @Nullable String message,
-				   @Nullable Integer cost,
-				   Target @Nullable [] targets) throws IllegalArgumentException {
-		this(id, type, effect, viewer, message, cost, null, targets, null);
-	}
-
-	/**
-	 * Instantiates a {@link Request} with the given parameters.
 	 * <p>
 	 * This constructor is marked as {@link ApiStatus.Experimental experimental} because it is frequently deprecated and
 	 * eventually removed in new releases. Please use {@link Request.Builder} where possible instead.
@@ -370,6 +335,19 @@ public class Request implements JsonObject, Respondable {
 	}
 
 	/**
+	 * Gets the {@link Socket} that this {@link Request} originated from.
+	 *
+	 * @return originating socket
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@ApiStatus.Internal
+	@Nullable
+	public Socket getOriginatingSocket() {
+		return originatingSocket;
+	}
+
+	/**
 	 * Outputs this object as a JSON string.
 	 *
 	 * @return JSON string
@@ -589,25 +567,6 @@ public class Request implements JsonObject, Respondable {
 		 */
 		@SuppressWarnings("unused") // used by GSON
 		Target() {
-		}
-
-		/**
-		 * Instantiates a {@link Target} with the given streamer information.
-		 *
-		 * @param id     streamer ID
-		 * @param name   streamer name
-		 * @param avatar streamer avatar
-		 * @since 3.3.0
-		 * @deprecated Use {@link Builder#Builder() the builder} instead.
-		 */
-		@SuppressWarnings("DeprecatedIsStillUsed") // deprecated constructors still need to be unit tested
-		@ApiStatus.AvailableSince("3.3.0")
-		@Deprecated
-		@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
-		public Target(@Nullable String id, @Nullable String name, @Nullable String avatar) {
-			this.id = id;
-			this.name = name;
-			this.avatar = avatar;
 		}
 
 		private Target(@NotNull Builder builder) {
@@ -1087,9 +1046,10 @@ public class Request implements JsonObject, Respondable {
 		 * @since 3.3.0
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
+		@ApiStatus.Internal
 		@NotNull
 		@Contract("_ -> this")
-		Builder originatingSocket(@Nullable Socket originatingSocket) {
+		public Builder originatingSocket(@Nullable Socket originatingSocket) {
 			this.originatingSocket = originatingSocket;
 			return this;
 		}
@@ -1222,9 +1182,10 @@ public class Request implements JsonObject, Respondable {
 		 * @since 3.3.0
 		 */
 		@ApiStatus.AvailableSince("3.3.0")
+		@ApiStatus.Internal
 		@Nullable
 		@CheckReturnValue
-		Socket originatingSocket() {
+		public Socket originatingSocket() {
 			return originatingSocket;
 		}
 

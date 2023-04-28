@@ -8,20 +8,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 // doubles as a test for all the possible handlers available to #registerEffects!
 @SuppressWarnings("unused") // used by reflection
 public final class EffectHandlers {
-	private final @NotNull Consumer<@NotNull TimedEffect> timedEffectCallback;
+	private final @NotNull Function<@NotNull TimedEffect, Response.@Nullable Builder> timedEffectCallback;
 	private final @Nullable Consumer<@NotNull TimedEffect> completionCallback;
 
-	EffectHandlers(@Nullable Consumer<@NotNull TimedEffect> timedEffectCallback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
-		this.timedEffectCallback = ExceptionUtil.validateNotNullElse(timedEffectCallback, $ -> {
-		});
+	EffectHandlers(@Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> timedEffectCallback, @Nullable Consumer<@NotNull TimedEffect> completionCallback) {
+		this.timedEffectCallback = ExceptionUtil.validateNotNullElse(timedEffectCallback, $ -> new Response.Builder());
 		this.completionCallback = completionCallback;
 	}
 
-	EffectHandlers(@Nullable Consumer<@NotNull TimedEffect> timedEffectCallback) {
+	EffectHandlers(@Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> timedEffectCallback) {
 		this(timedEffectCallback, null);
 	}
 
@@ -49,7 +49,7 @@ public final class EffectHandlers {
 		new TimedEffect.Builder()
 				.request(request)
 				.duration(200)
-				.legacyStartCallback(timedEffectCallback)
+				.startCallback(timedEffectCallback)
 				.build().queue();
 	}
 
@@ -66,7 +66,7 @@ public final class EffectHandlers {
 				.startCallback($ -> {
 					throw new RuntimeException("This is an error");
 				})
-				.completionCallback(timedEffectCallback)
+				.completionCallback(timedEffectCallback::apply)
 				.build().queue();
 	}
 
@@ -76,7 +76,7 @@ public final class EffectHandlers {
 				.request(request)
 				.duration(Duration.ofMillis(30))
 				.startCallback($ -> request.buildResponse().type(Response.ResultType.RETRY))
-				.completionCallback(timedEffectCallback)
+				.completionCallback(timedEffectCallback::apply)
 				.build().queue();
 	}
 
@@ -85,7 +85,7 @@ public final class EffectHandlers {
 		TimedEffect effect = new TimedEffect.Builder()
 				.request(request)
 				.duration(Duration.ofMillis(75))
-				.legacyStartCallback(timedEffectCallback)
+				.startCallback(timedEffectCallback)
 				.completionCallback(completionCallback)
 				.build();
 		effect.queue();

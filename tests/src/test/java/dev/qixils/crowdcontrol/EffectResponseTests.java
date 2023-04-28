@@ -199,6 +199,7 @@ public final class EffectResponseTests {
 				firstFuture.complete(null);
 			else
 				secondFuture.complete(timedEffect);
+			return new Response.Builder();
 		}));
 
 		// give client time to connect
@@ -346,7 +347,10 @@ public final class EffectResponseTests {
 
 		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
-		client.registerHandlers(new EffectHandlers($ -> completionFuture.complete(null)));
+		client.registerHandlers(new EffectHandlers($ -> {
+			completionFuture.complete(null);
+			return new Response.Builder();
+		}));
 
 		// give client time to connect
 		int delay = 1;
@@ -384,7 +388,10 @@ public final class EffectResponseTests {
 
 		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
-		client.registerHandlers(new EffectHandlers($ -> completionFuture.complete(null)));
+		client.registerHandlers(new EffectHandlers($ -> {
+			completionFuture.complete(null);
+			return new Response.Builder();
+		}));
 
 		// give client time to connect
 		int delay = 1;
@@ -423,7 +430,10 @@ public final class EffectResponseTests {
 		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 		client.registerHandlers(new EffectHandlers(
-				effect -> EXECUTOR.schedule(() -> effect.complete(), 10, TimeUnit.MILLISECONDS),
+				effect -> {
+					EXECUTOR.schedule(() -> effect.complete(), 10, TimeUnit.MILLISECONDS);
+					return new Response.Builder();
+				},
 				$ -> completionFuture.complete(null)
 		));
 
@@ -475,7 +485,10 @@ public final class EffectResponseTests {
 		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 		client.registerHandlers(new EffectHandlers(
-				effect -> EXECUTOR.schedule(() -> effect.complete(true), 10, TimeUnit.MILLISECONDS),
+				effect -> {
+					EXECUTOR.schedule(() -> effect.complete(true), 10, TimeUnit.MILLISECONDS);
+					return new Response.Builder();
+				},
 				$ -> completionFuture.complete(null)
 		));
 
@@ -527,7 +540,10 @@ public final class EffectResponseTests {
 		CrowdControl client = CrowdControl.client().ip("localhost").port(server.getPort()).build();
 		CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 		client.registerHandlers(new EffectHandlers(
-				effect -> EXECUTOR.schedule(() -> effect.complete(false), 10, TimeUnit.MILLISECONDS),
+				effect -> {
+					EXECUTOR.schedule(() -> effect.complete(false), 10, TimeUnit.MILLISECONDS);
+					return new Response.Builder();
+				},
 				$ -> completionFuture.complete(null)
 		));
 

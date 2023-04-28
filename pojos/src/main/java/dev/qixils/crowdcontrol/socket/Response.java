@@ -196,67 +196,6 @@ public class Response implements JsonObject {
 	}
 
 	/**
-	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
-	 * and information about the result of the execution.
-	 *
-	 * @param request       originating request
-	 * @param type          result of execution
-	 * @param message       result message
-	 * @param timeRemaining time remaining in milliseconds until the effect completes
-	 *                      or {@code 0} if the effect is not time-based
-	 * @throws IllegalArgumentException May be thrown in various circumstances:
-	 *                                  <ul>
-	 *                                      <li>if the {@code request} is null</li>
-	 *                                      <li>if the {@code type} is null</li>
-	 *                                      <li>if the {@code timeRemaining} is negative</li>
-	 *                                  </ul>
-	 * @since 3.0.0
-	 * @deprecated Use {@link #Response(Request, ResultType, String, Duration)} instead
-	 */
-	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
-	@ApiStatus.AvailableSince("3.0.0")
-	public Response(@NotNull Request request,
-					@NotNull ResultType type,
-					@Nullable String message,
-					long timeRemaining) throws IllegalArgumentException {
-		this(request, type, message, timeRemaining == 0 ? null : Duration.ofMillis(timeRemaining));
-	}
-
-	/**
-	 * Constructs a response to a {@link Request} given the {@link Request} that caused it
-	 * and information about the result of the execution.
-	 * <p>
-	 * This constructor is being removed in favor of {@link Request#buildResponse()}.
-	 *
-	 * @param request       originating request
-	 * @param type          result of execution
-	 * @param message       result message
-	 * @param timeRemaining time remaining until the effect completes
-	 *                      or {@code null} if the effect is not time-based
-	 * @throws IllegalArgumentException May be thrown in various circumstances:
-	 *                                  <ul>
-	 *                                      <li>if the {@code request} is null</li>
-	 *                                      <li>if the {@code type} is null</li>
-	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
-	 *                                  </ul>
-	 * @since 3.5.0
-	 * @deprecated Use {@link Request#buildResponse()} instead
-	 */
-	@ApiStatus.AvailableSince("3.5.0")
-	@ApiStatus.Experimental
-	@CheckReturnValue
-	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
-	public Response(@NotNull Request request,
-					@NotNull ResultType type,
-					@Nullable String message,
-					@Nullable Duration timeRemaining) throws IllegalArgumentException {
-		this(ExceptionUtil.validateNotNull(request, "request").getId(),
-				request.originatingSocket, PacketType.EFFECT_RESULT, type, message, timeRemaining, request.getEffect());
-	}
-
-	/**
 	 * Constructs a response to a {@link Request} from a {@link Builder}.
 	 *
 	 * @param builder {@link Response} builder
@@ -908,23 +847,6 @@ public class Response implements JsonObject {
 		}
 
 		/**
-		 * Manually creates a new builder with the given id and socket.
-		 *
-		 * @param id                id of the response
-		 * @param originatingSocket socket that originated the request
-		 * @since 3.3.0
-		 * @deprecated use {@link #id(int)} and {@link #originatingSocket(Socket)} instead
-		 */
-		@ApiStatus.AvailableSince("3.3.0")
-		@CheckReturnValue
-		@Deprecated
-		@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
-		Builder(int id, @Nullable Socket originatingSocket) {
-			this.id = id;
-			this.originatingSocket = originatingSocket;
-		}
-
-		/**
 		 * Sets the ID of the {@link Request} that prompted this {@link Response}.
 		 *
 		 * @param id id of the request
@@ -947,9 +869,10 @@ public class Response implements JsonObject {
 		 * @since 3.4.0
 		 */
 		@ApiStatus.AvailableSince("3.4.0")
+		@ApiStatus.Internal
 		@NotNull
 		@Contract("_ -> this")
-		Builder originatingSocket(@Nullable Socket originatingSocket) {
+		public Builder originatingSocket(@Nullable Socket originatingSocket) {
 			this.originatingSocket = originatingSocket;
 			return this;
 		}
@@ -1146,7 +1069,7 @@ public class Response implements JsonObject {
 		@ApiStatus.Internal
 		@Nullable
 		@CheckReturnValue
-		Socket originatingSocket() {
+		public Socket originatingSocket() {
 			return originatingSocket;
 		}
 

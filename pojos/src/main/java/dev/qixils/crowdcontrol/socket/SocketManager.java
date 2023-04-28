@@ -22,25 +22,6 @@ public interface SocketManager extends Respondable {
 	 * Unlike the usual methods of creating a {@link Response}, this does not require a
 	 * corresponding {@link Request} to send the packet.
 	 *
-	 * @param id the ID of the packet
-	 * @return a new response builder
-	 * @since 3.4.0
-	 * @deprecated use {@link #buildResponse()} instead
-	 */
-	@Deprecated
-	@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
-	@ApiStatus.AvailableSince("3.4.0")
-	default Response.@NotNull Builder buildResponse(int id) {
-		return buildResponse().id(id);
-	}
-
-	/**
-	 * Creates a {@link Response} {@link Response.Builder builder} which will be dispatched to
-	 * the connected server or clients upon calling {@link Response#send()}.
-	 * <p>
-	 * Unlike the usual methods of creating a {@link Response}, this does not require a
-	 * corresponding {@link Request} to send the packet.
-	 *
 	 * @return a new response builder
 	 * @since 3.5.2
 	 */

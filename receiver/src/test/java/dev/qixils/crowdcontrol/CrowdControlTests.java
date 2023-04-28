@@ -43,7 +43,7 @@ public class CrowdControlTests {
 		server.registerHandler("1", $ -> {
 		});
 		server.registerHandler("2",
-				(Function<Request, Response>) request -> new Response(request, Response.ResultType.SUCCESS, null, 0)
+				(Function<Request, Response>) request -> request.buildResponse().type(Response.ResultType.SUCCESS).build()
 		);
 		//noinspection unused
 		server.registerHandlers(new Object() {
@@ -51,12 +51,12 @@ public class CrowdControlTests {
 
 			@Subscribe("3")
 			public Response test(Request request) {
-				return new Response(request, Response.ResultType.SUCCESS, null, 0);
+				return request.buildResponse().type(Response.ResultType.SUCCESS).build();
 			}
 
 			@Subscribe("4")
 			public Response.Builder test2(Request request) {
-				return new Response(request, Response.ResultType.SUCCESS, null, 0).toBuilder();
+				return request.buildResponse().type(Response.ResultType.SUCCESS);
 			}
 
 			@Subscribe("5")

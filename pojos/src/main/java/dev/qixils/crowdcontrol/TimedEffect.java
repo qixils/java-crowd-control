@@ -296,6 +296,12 @@ public final class TimedEffect {
 
 		if (response == null)
 			response = request.buildResponse();
+		else {
+			if (response.originatingSocket() == null)
+				response.originatingSocket(request.getOriginatingSocket());
+			if (response.id() == 0)
+				response.id(request.getId());
+		}
 		if (response.type() == null)
 			response.type(Response.ResultType.SUCCESS);
 		if (response.type() == Response.ResultType.SUCCESS) {
@@ -674,11 +680,10 @@ public final class TimedEffect {
 		 * <p>
 		 * If the callback returns {@code null}, it will be interpreted as a successful completion.
 		 * This behavior is not recommended and will be removed in a future version. Instead, you
-		 * should return the builder, as it defaults to a successful completion.
+		 * should return the {@link Request#buildResponse() builder}, as it defaults to a successful completion.
 		 *
 		 * @param callback callback to execute
 		 * @return this builder
-		 * @see #legacyStartCallback(Consumer)
 		 * @since 3.3.2
 		 */
 		@ApiStatus.AvailableSince("3.3.2")
@@ -686,33 +691,6 @@ public final class TimedEffect {
 		@Contract("_ -> this")
 		public Builder startCallback(@Nullable Function<@NotNull TimedEffect, Response.@Nullable Builder> callback) {
 			this.callback = callback;
-			return this;
-		}
-
-		/**
-		 * Sets the callback that will be executed when the effect starts.
-		 * The callback is assumed to be always successful.
-		 *
-		 * @param callback callback to execute
-		 * @return this builder
-		 * @see #startCallback(Function)
-		 * @since 3.3.2
-		 * @deprecated use {@link #startCallback(Function)} instead
-		 */
-		@Deprecated
-		@ApiStatus.ScheduledForRemoval(inVersion = "3.6.0")
-		@ApiStatus.AvailableSince("3.3.2")
-		@NotNull
-		@Contract("_ -> this")
-		public Builder legacyStartCallback(@Nullable Consumer<@NotNull TimedEffect> callback) {
-			if (callback == null)
-				this.callback = null;
-			else
-				this.callback = effect -> {
-					callback.accept(effect);
-					return null;
-				};
-
 			return this;
 		}
 
