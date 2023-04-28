@@ -7,38 +7,8 @@ import java.time.Duration;
 
 @SuppressWarnings("ConstantConditions")
 public class RequestTests {
-	@SuppressWarnings("deprecation") // old constructors still need to be tested! :)
 	@Test
 	public void constructorTest() {
-		// old constructor tests //
-
-		// negative ID test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request(-1, Request.Type.START, "summon", "qixils", null, null, null));
-		// null type test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request(1, null, "summon", "qixils", null, null, null));
-		// null effect test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request(1, Request.Type.START, null, "qixils", null, null, null));
-		// null viewer test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request(1, Request.Type.START, "summon", null, null, null, null));
-		// negative cost test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request(1, Request.Type.START, "summon", "qixils", null, -1, null));
-		// null target test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request(1, Request.Type.START, "summon", "qixils", null, null,
-						new Request.Target[]{null}));
-		// valid request test
-		Assertions.assertDoesNotThrow(
-				() -> new Request(1, Request.Type.START, "summon", "qixils", null, null, null));
-		// also valid request test
-		Assertions.assertDoesNotThrow(
-				() -> new Request(1, Request.Type.START, "summon", "qixils", "Purchased effect", 10,
-						new Request.Target[]{new Request.Target.Builder().id("12345").name("qixils").avatar("https://i.qixils.dev/favicon.png").build()}));
-
 		// new constructor tests //
 
 		// negative ID test
@@ -100,18 +70,11 @@ public class RequestTests {
 
 		// target constructor tests //
 
-		// valid target tests
-		Assertions.assertDoesNotThrow(
-				() -> new Request.Target(null, null, null));
-		Assertions.assertDoesNotThrow(
-				() -> new Request.Target("1", "streamer", "https://i.qixils.dev/favicon.png"));
-
 		// target builder tests //
 		Assertions.assertDoesNotThrow(
 				() -> new Request.Target.Builder().id("493").name("epic streamer 493").login("streamer").avatar("https://i.qixils.dev/favicon.png").clone().build());
 	}
 
-	@SuppressWarnings("deprecation") // deprecated stuff still needs to be tested
 	@Test
 	public void getterTest() {
 		Request request = new Request(1,
@@ -122,7 +85,6 @@ public class RequestTests {
 				10,
 				Duration.ofSeconds(10),
 				new Request.Target[]{
-						new Request.Target("12345", "streamer", "https://i.qixils.dev/favicon.png"),
 						new Request.Target.Builder().id("493").name("epic streamer 493").login("streamer").avatar("https://i.qixils.dev/favicon.png").clone().build().toBuilder().build(),
 						new Request.Target.Builder().clone().build().toBuilder().build()
 				},
@@ -139,23 +101,17 @@ public class RequestTests {
 		Assertions.assertFalse(request.isGlobal());
 		Assertions.assertEquals(3, request.getTargets().length);
 		// target 1
-		Assertions.assertEquals("12345", request.getTargets()[0].getId());
-		Assertions.assertEquals("streamer", request.getTargets()[0].getName());
-		Assertions.assertNull(request.getTargets()[0].getLogin());
+		Assertions.assertEquals("493", request.getTargets()[0].getId());
+		Assertions.assertEquals("epic streamer 493", request.getTargets()[0].getName());
+		Assertions.assertEquals("streamer", request.getTargets()[0].getLogin());
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", request.getTargets()[0].getAvatar());
 		// target 2
-		Assertions.assertEquals("493", request.getTargets()[1].getId());
-		Assertions.assertEquals("epic streamer 493", request.getTargets()[1].getName());
-		Assertions.assertEquals("streamer", request.getTargets()[1].getLogin());
-		Assertions.assertEquals("https://i.qixils.dev/favicon.png", request.getTargets()[1].getAvatar());
-		// target 3
-		Assertions.assertNull(request.getTargets()[2].getId());
-		Assertions.assertNull(request.getTargets()[2].getName());
-		Assertions.assertNull(request.getTargets()[2].getLogin());
-		Assertions.assertNull(request.getTargets()[2].getAvatar());
+		Assertions.assertNull(request.getTargets()[1].getId());
+		Assertions.assertNull(request.getTargets()[1].getName());
+		Assertions.assertNull(request.getTargets()[1].getLogin());
+		Assertions.assertNull(request.getTargets()[1].getAvatar());
 	}
 
-	@SuppressWarnings("deprecation") // deprecated stuff still needs to be tested
 	@Test
 	public void builderTest() {
 		Request.Builder builder = new Request.Builder();
@@ -209,26 +165,20 @@ public class RequestTests {
 		// targets test
 		Assertions.assertNull(builder.targets());
 		builder = builder.targets(
-				new Request.Target("12345", "streamer", "https://i.qixils.dev/favicon.png"),
 				targetBuilder.build(),
 				new Request.Target.Builder().clone().build().toBuilder().build()
 		);
 		Assertions.assertEquals(3, builder.targets().length);
 		// target 1
-		Assertions.assertEquals("12345", builder.targets()[0].getId());
-		Assertions.assertEquals("streamer", builder.targets()[0].getName());
-		Assertions.assertNull(builder.targets()[0].getLogin());
+		Assertions.assertEquals("493", builder.targets()[0].getId());
+		Assertions.assertEquals("epic streamer 493", builder.targets()[0].getName());
+		Assertions.assertEquals("streamer", builder.targets()[0].getLogin());
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.targets()[0].getAvatar());
 		// target 2
-		Assertions.assertEquals("493", builder.targets()[1].getId());
-		Assertions.assertEquals("epic streamer 493", builder.targets()[1].getName());
-		Assertions.assertEquals("streamer", builder.targets()[1].getLogin());
-		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.targets()[1].getAvatar());
-		// target 3
-		Assertions.assertNull(builder.targets()[2].getId());
-		Assertions.assertNull(builder.targets()[2].getName());
-		Assertions.assertNull(builder.targets()[2].getLogin());
-		Assertions.assertNull(builder.targets()[2].getAvatar());
+		Assertions.assertNull(builder.targets()[1].getId());
+		Assertions.assertNull(builder.targets()[1].getName());
+		Assertions.assertNull(builder.targets()[1].getLogin());
+		Assertions.assertNull(builder.targets()[1].getAvatar());
 
 		// parameters test
 		Assertions.assertNull(builder.parameters());
@@ -250,23 +200,17 @@ public class RequestTests {
 		Assertions.assertFalse(request.isGlobal());
 		Assertions.assertEquals(3, builder.targets().length);
 		// target 1
-		Assertions.assertEquals("12345", builder.targets()[0].getId());
-		Assertions.assertEquals("streamer", builder.targets()[0].getName());
-		Assertions.assertNull(builder.targets()[0].getLogin());
+		Assertions.assertEquals("493", builder.targets()[0].getId());
+		Assertions.assertEquals("epic streamer 493", builder.targets()[0].getName());
+		Assertions.assertEquals("streamer", builder.targets()[0].getLogin());
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.targets()[0].getAvatar());
 		// target 2
-		Assertions.assertEquals("493", builder.targets()[1].getId());
-		Assertions.assertEquals("epic streamer 493", builder.targets()[1].getName());
-		Assertions.assertEquals("streamer", builder.targets()[1].getLogin());
-		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.targets()[1].getAvatar());
-		// target 3
-		Assertions.assertNull(builder.targets()[2].getId());
-		Assertions.assertNull(builder.targets()[2].getName());
-		Assertions.assertNull(builder.targets()[2].getLogin());
-		Assertions.assertNull(builder.targets()[2].getAvatar());
+		Assertions.assertNull(builder.targets()[1].getId());
+		Assertions.assertNull(builder.targets()[1].getName());
+		Assertions.assertNull(builder.targets()[1].getLogin());
+		Assertions.assertNull(builder.targets()[1].getAvatar());
 	}
 
-	@SuppressWarnings("deprecation") // deprecated stuff still needs to be tested
 	@Test
 	public void serializationTest() {
 		// instead of directly comparing JSON strings which could have key order differences,
@@ -281,13 +225,12 @@ public class RequestTests {
 				.cost(10)
 				.duration(Duration.ofSeconds(10))
 				.targets(
-						new Request.Target("12345", "streamer", "https://i.qixils.dev/favicon.png"),
 						new Request.Target.Builder().id("493").name("epic streamer 493").login("streamer").avatar("https://i.qixils.dev/favicon.png").clone().build().toBuilder().build(),
 						new Request.Target.Builder().clone().build().toBuilder().build())
 				.parameters(5d) // json treats number params as doubles by default
 				.clone()
 				.build();
-		String json = "{\"id\":1,\"type\":1,\"code\":\"summon\",\"viewer\":\"qixils\",\"message\":\"Hello\",\"cost\":10,\"duration\":10000,\"targets\":[{\"id\":12345,\"name\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\"},{\"id\":\"493\",\"name\":\"epic streamer 493\",\"login\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\"},{}],\"parameters\":[5]}";
+		String json = "{\"id\":1,\"type\":1,\"code\":\"summon\",\"viewer\":\"qixils\",\"message\":\"Hello\",\"cost\":10,\"duration\":10000,\"targets\":[{\"id\":\"493\",\"name\":\"epic streamer 493\",\"login\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\"},{}],\"parameters\":[5]}";
 		Assertions.assertEquals(request, Request.fromJSON(json));
 		Assertions.assertEquals(Request.fromJSON(request.toJSON()), Request.fromJSON(json));
 	}

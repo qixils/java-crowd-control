@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("ConstantConditions")
 public class ResponseTests {
-	@SuppressWarnings("deprecation") // old constructors still need to be tested! :)
 	@Test
 	public void constructorTest() {
 		Request request = new Request.Builder().effect("test").viewer("sdk").id(1).build();
@@ -128,49 +127,6 @@ public class ResponseTests {
 				request,
 				Response.PacketType.DISCONNECT,
 				"Server is disconnecting"
-		));
-
-		// Constructor 4
-
-		// null request throws IllegalArgumentException
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				null,
-				Response.ResultType.SUCCESS,
-				"Effect applied successfully",
-				1000
-		));
-		// null result type throws IllegalArgumentException
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				request,
-				null,
-				"Effect applied successfully",
-				1000
-		));
-		// negative timeRemaining throws IllegalArgumentException
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
-				request,
-				Response.ResultType.SUCCESS,
-				"Effect applied successfully",
-				-1
-		));
-		// doesn't throw when all parameters are valid
-		Assertions.assertDoesNotThrow(() -> new Response(
-				request,
-				Response.ResultType.SUCCESS,
-				"Effect applied successfully",
-				1000
-		));
-		Assertions.assertDoesNotThrow(() -> new Response(
-				request,
-				Response.ResultType.SUCCESS,
-				"Effect applied successfully",
-				0
-		));
-		Assertions.assertDoesNotThrow(() -> new Response(
-				request,
-				Response.ResultType.SUCCESS,
-				null,
-				0
 		));
 
 		// Main constructor
@@ -323,7 +279,6 @@ public class ResponseTests {
 		));
 	}
 
-	@SuppressWarnings("deprecation") // old constructors still need to be tested! :)
 	@Test
 	public void getterTest() {
 		// Constructor 1
@@ -366,54 +321,12 @@ public class ResponseTests {
 		Assertions.assertNull(response.getResultType());
 		Assertions.assertEquals("Effect applied successfully", response.getMessage());
 		Assertions.assertNull(response.getTimeRemaining());
-
-		// Constructor 4
-		response = new Response(
-				new Request.Builder().id(1).effect("effect").viewer("sdk").type(Request.Type.START).build(),
-				Response.ResultType.SUCCESS,
-				"Effect applied successfully",
-				1000
-		);
-		Assertions.assertEquals(1, response.getId());
-		Assertions.assertFalse(response.isOriginKnown());
-		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
-		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
-		Assertions.assertEquals("Effect applied successfully", response.getMessage());
-		Assertions.assertEquals(Duration.ofSeconds(1), response.getTimeRemaining());
-
-		// Constructor 5
-		response = new Response(
-				new Request.Builder().id(1).effect("effect").viewer("sdk").type(Request.Type.START).build(),
-				Response.ResultType.SUCCESS,
-				"Effect applied successfully",
-				Duration.ofSeconds(1)
-		);
-		Assertions.assertEquals(1, response.getId());
-		Assertions.assertFalse(response.isOriginKnown());
-		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
-		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
-		Assertions.assertEquals("Effect applied successfully", response.getMessage());
-		Assertions.assertEquals(Duration.ofSeconds(1), response.getTimeRemaining());
 	}
 
 	@Test
 	public void builderTest() {
 		// constructor 1 test
-		Response.Builder builder = new Response.Builder(1, null).clone();
-		Assertions.assertEquals(1, builder.id());
-		Assertions.assertNull(builder.originatingSocket());
-
-		// constructor 2 test
-		builder = new Response.Builder(new Request.Builder().id(2).effect("effect").viewer("sdk").type(Request.Type.START).build());
-		Assertions.assertEquals(2, builder.id());
-		Assertions.assertNull(builder.originatingSocket());
-		// other constructor 2 test
-		builder = new Request.Builder().id(2).effect("effect").viewer("sdk").type(Request.Type.START).build().buildResponse();
-		Assertions.assertEquals(2, builder.id());
-		Assertions.assertNull(builder.originatingSocket());
-
-		// constructor 3 test
-		builder = new Request.Builder().id(3).effect("effect").viewer("sdk").type(Request.Type.START).build().buildResponse();
+		Response.Builder builder = new Request.Builder().id(3).effect("effect").viewer("sdk").type(Request.Type.START).build().buildResponse();
 		Assertions.assertEquals(3, builder.id());
 		Assertions.assertNull(builder.originatingSocket());
 

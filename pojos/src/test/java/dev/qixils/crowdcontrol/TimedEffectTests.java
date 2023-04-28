@@ -14,7 +14,7 @@ import java.util.function.Function;
 /**
  * Miscellaneous tests for the TimedEffect class that can be run in isolation.
  */
-@SuppressWarnings({"ConstantConditions", "BusyWait", "deprecation"})
+@SuppressWarnings({"ConstantConditions", "BusyWait"})
 public class TimedEffectTests {
 	private static final @NotNull Request request = new Request(1,
 			Request.Type.START,
@@ -59,9 +59,6 @@ public class TimedEffectTests {
 		// valid null completion callback test
 		Assertions.assertDoesNotThrow(() -> builder.clone().completionCallback(null).build());
 
-		// valid legacy start callback test
-		Assertions.assertDoesNotThrow(() -> builder.clone().legacyStartCallback(effect -> {}).build());
-
 		// invalid negative duration test
 		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.clone().duration(Duration.ofSeconds(-1)).build());
 
@@ -70,9 +67,6 @@ public class TimedEffectTests {
 
 		// invalid null start callback test
 		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.clone().startCallback(null).build());
-
-		// invalid null legacy start callback test
-		Assertions.assertThrows(IllegalArgumentException.class, () -> builder.clone().legacyStartCallback(null).build());
 	}
 
 	@Test
@@ -80,8 +74,7 @@ public class TimedEffectTests {
 		TimedEffect timedEffect = new TimedEffect.Builder()
 				.request(request)
 				.duration(1000)
-				.legacyStartCallback($ -> {
-				})
+				.startCallback($ -> new Response.Builder())
 				.build();
 
 		// getters
@@ -136,10 +129,6 @@ public class TimedEffectTests {
 		Assertions.assertEquals("test2", builder.effectGroup());
 
 		Assertions.assertNull(builder.startCallback());
-		builder.legacyStartCallback($ -> {
-		});
-		Assertions.assertNotNull(builder.startCallback());
-		Assertions.assertNull(builder.startCallback().apply(null));
 		Response.Builder response = request.buildResponse();
 		Function<TimedEffect, Response.Builder> callback = $ -> response;
 		builder.startCallback(callback);
