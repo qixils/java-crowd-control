@@ -9,7 +9,7 @@ left of this document._
 
 ## Logging
 
-The libraries maintained in this repository utilize the SLF4J 2.0.5 logging framework. It provides
+The libraries maintained in this repository utilize the SLF4J logging framework. It provides
 no logging implementation by default, meaning that logs will be silently ignored. To enable logging,
 you must add a logging implementation to your class path which is typically done by adding the
 implementation to your project's dependencies in Maven or Gradle. Popular implementations include
@@ -98,6 +98,8 @@ CrowdControl crowdControl = CrowdControl.client()
 
 You must also use the `SimpleTCPConnector` type inside your effect pack's C# file that gets loaded
 into the Crowd Control app. Example:
+
+<!-- TODO: Update for CC 2.0 -->
 
 ```cs
 using System;
