@@ -1135,8 +1135,9 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("3.6.0")
 		@NotNull
 		@Contract("_ -> this")
-		public Builder addArguments(Object @NotNull ... arguments) {
-			Collections.addAll(this.args, arguments);
+		public Builder addArguments(@Nullable Object @Nullable ... arguments) {
+			if (arguments != null)
+				Collections.addAll(this.args, arguments);
 			return this;
 		}
 
@@ -1151,8 +1152,9 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("3.6.0")
 		@NotNull
 		@Contract("_ -> this")
-		public Builder addArguments(@NotNull Collection<Object> arguments) {
-			this.args.addAll(arguments);
+		public Builder addArguments(@Nullable Collection<@Nullable Object> arguments) {
+			if (arguments != null)
+				this.args.addAll(arguments);
 			return this;
 		}
 
