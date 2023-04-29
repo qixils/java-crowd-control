@@ -52,8 +52,11 @@ public class Request implements JsonObject, Respondable {
 	 * Used internally by the library, specifically for {@link com.google.gson.Gson} deserialization.
 	 */
 	@SuppressWarnings("unused") // used by GSON
+	@ApiStatus.Internal
 	Request() {
 	}
+
+	// TODO: (package)-private all constructors
 
 	/**
 	 * Instantiates a {@link Request} with the given parameters.

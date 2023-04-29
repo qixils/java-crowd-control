@@ -20,7 +20,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +55,10 @@ public class Response implements JsonObject {
 	@Nullable
 	@SerializedName("code")
 	private String effect;
+	@Nullable
+	private String method;
+	@Nullable
+	private Object @Nullable [] args;
 
 	/**
 	 * Instantiates an empty {@link Response}.
@@ -71,6 +80,8 @@ public class Response implements JsonObject {
 	 * @param message           result message; defaults to the {@link ResultType#name() name} of the {@code type} if null
 	 * @param timeRemaining     time remaining until the effect completes or {@code null} if the effect is not time-based
 	 * @param effect            the code of the effect that was executed
+	 * @param method            the remote function to execute if the packet type is {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION}
+	 * @param args              the arguments to pass to the remote function
 	 * @throws IllegalArgumentException May be thrown in various circumstances:
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
@@ -83,6 +94,7 @@ public class Response implements JsonObject {
 	 *                                      <li>if the {@code effect} is null and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
 	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is not a status} and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
 	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is a status} and {@code packetType} is not {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
+	 *                                      <li>if the {@code packetType} is {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION} and {@code method} is null</li>
 	 *                                  </ul>
 	 */
 	Response(int id,
@@ -91,7 +103,9 @@ public class Response implements JsonObject {
 			 @Nullable ResultType type,
 			 @Nullable String message,
 			 @Nullable Duration timeRemaining,
-			 @Nullable String effect) throws IllegalArgumentException {
+			 @Nullable String effect,
+			 @Nullable String method,
+			 @Nullable Object @Nullable [] args) throws IllegalArgumentException {
 		this.id = id;
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
@@ -102,6 +116,8 @@ public class Response implements JsonObject {
 
 		this.originatingSocket = originatingSocket;
 		this.effect = effect;
+		this.method = method;
+		this.args = args;
 
 		// validate packet type and result type
 		this.packetType = ExceptionUtil.validateNotNullElse(packetType, PacketType.EFFECT_RESULT);
@@ -121,6 +137,9 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("id must be 0 if packetType is not EFFECT_RESULT");
 		if (this.packetType == PacketType.EFFECT_RESULT && this.id == 0)
 			throw new IllegalArgumentException("id must be non-zero if packetType is EFFECT_RESULT");
+
+		if (this.packetType == PacketType.REMOTE_FUNCTION && this.method == null)
+			throw new IllegalArgumentException("method cannot be null if packetType is REMOTE_FUNCTION");
 
 		// set message
 		if (message != null)
@@ -145,7 +164,7 @@ public class Response implements JsonObject {
 	Response(@Nullable Socket originatingSocket,
 			 @NotNull PacketType packetType,
 			 @Nullable String message) throws IllegalArgumentException {
-		this(0, originatingSocket, packetType, null, message, null, null);
+		this(0, originatingSocket, packetType, null, message, null, null, null, null);
 	}
 
 	/**
@@ -170,7 +189,7 @@ public class Response implements JsonObject {
 			 @NotNull ResultType type,
 			 @Nullable String message,
 			 @Nullable Duration timeRemaining) throws IllegalArgumentException {
-		this(id, originatingSocket, ExceptionUtil.validateNotNull(type, "type").isStatus() ? PacketType.EFFECT_STATUS : PacketType.EFFECT_RESULT, type, message, timeRemaining, null);
+		this(id, originatingSocket, ExceptionUtil.validateNotNull(type, "type").isStatus() ? PacketType.EFFECT_STATUS : PacketType.EFFECT_RESULT, type, message, timeRemaining, null, null, null);
 	}
 
 	/**
@@ -203,7 +222,7 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	private Response(@NotNull Builder builder) {
 		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect);
+				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect, builder.method, builder.args.toArray());
 	}
 
 	/**
@@ -341,6 +360,33 @@ public class Response implements JsonObject {
 	}
 
 	/**
+	 * Gets the name of the remote function to be executed.
+	 *
+	 * @return remote function name
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@CheckReturnValue
+	@Nullable
+	public String getMethod() {
+		return method;
+	}
+
+	/**
+	 * Gets a copy of the arguments to be passed to the remote function.
+	 *
+	 * @return remote function arguments
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@CheckReturnValue
+	@Nullable
+	public Object @Nullable [] getArguments() {
+		if (args == null) return null;
+		return Arrays.copyOf(args, args.length);
+	}
+
+	/**
 	 * Outputs this object as a JSON string for use in the server connection.
 	 *
 	 * @return JSON string
@@ -467,12 +513,22 @@ public class Response implements JsonObject {
 		EFFECT_RESULT(false, true),
 		/**
 		 * The packet is updating the status of an effect.
-		 * This should be used with an {@link #getId() id} of 0.
+		 * This should be used with an {@link Builder#id(int) id} of 0.
 		 *
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
 		EFFECT_STATUS(false, true),
+		/**
+		 * The packet is triggering a remote function to be run in the CS.
+		 * This should be used with an {@link Builder#id(int) id} of 0 and should specify the function name to execute
+		 * in the {@link Builder#method(String) method} field.
+		 * This may optionally be used with the {@link Builder#addArguments(Object...) args} field.
+		 *
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		REMOTE_FUNCTION(false, false, (byte) 0xD0),
 		/**
 		 * <b>Internal value</b> used to prompt a connecting client for a password.
 		 *
@@ -782,6 +838,8 @@ public class Response implements JsonObject {
 		private Duration timeRemaining;
 		private PacketType packetType;
 		private String effect;
+		private String method;
+		private final List<Object> args = new ArrayList<>();
 
 		/**
 		 * Creates a new empty builder.
@@ -809,6 +867,9 @@ public class Response implements JsonObject {
 			this.timeRemaining = source.timeRemaining;
 			this.packetType = source.packetType;
 			this.effect = source.effect;
+			this.method = source.method;
+			if (source.args != null)
+				Collections.addAll(this.args, source.args);
 		}
 
 		/**
@@ -844,6 +905,8 @@ public class Response implements JsonObject {
 			this.timeRemaining = builder.timeRemaining;
 			this.packetType = builder.packetType;
 			this.effect = builder.effect;
+			this.method = builder.method;
+			this.args.addAll(builder.args);
 		}
 
 		/**
@@ -1045,6 +1108,54 @@ public class Response implements JsonObject {
 			return this;
 		}
 
+		/**
+		 * Sets the name of the remote function to be called.
+		 * To be used with {@link PacketType#REMOTE_FUNCTION}.
+		 *
+		 * @param method name of remote function
+		 * @return this builder
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder method(@Nullable String method) {
+			this.method = method;
+			return this;
+		}
+
+		/**
+		 * Adds arguments to be passed to the remote function.
+		 * To be used with {@link PacketType#REMOTE_FUNCTION}.
+		 *
+		 * @param arguments arguments to pass
+		 * @return this builder
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder addArguments(Object @NotNull ... arguments) {
+			Collections.addAll(this.args, arguments);
+			return this;
+		}
+
+		/**
+		 * Adds arguments to be passed to the remote function.
+		 * To be used with {@link PacketType#REMOTE_FUNCTION}.
+		 *
+		 * @param arguments arguments to pass
+		 * @return this builder
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder addArguments(@NotNull Collection<Object> arguments) {
+			this.args.addAll(arguments);
+			return this;
+		}
+
 		// getters
 
 		/**
@@ -1136,6 +1247,32 @@ public class Response implements JsonObject {
 		@CheckReturnValue
 		public String effect() {
 			return effect;
+		}
+
+		/**
+		 * Gets the name of the remote function to be called.
+		 *
+		 * @return name of remote function
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@Nullable
+		@CheckReturnValue
+		public String method() {
+			return method;
+		}
+
+		/**
+		 * Gets a view of the arguments to be passed to the remote function.
+		 *
+		 * @return arguments to pass
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@CheckReturnValue
+		public List<Object> arguments() {
+			return Collections.unmodifiableList(args);
 		}
 
 		// miscellaneous

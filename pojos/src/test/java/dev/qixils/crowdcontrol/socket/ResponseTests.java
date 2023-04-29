@@ -139,6 +139,8 @@ public class ResponseTests {
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				null,
+				null,
+				null,
 				null
 		));
 		// non-zero ID throws IllegalArgumentException when PacketType is not EFFECT_RESULT
@@ -148,6 +150,8 @@ public class ResponseTests {
 				Response.PacketType.DISCONNECT,
 				null,
 				"Server is disconnecting",
+				null,
+				null,
 				null,
 				null
 		));
@@ -159,6 +163,8 @@ public class ResponseTests {
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				Duration.ofSeconds(-1),
+				null,
+				null,
 				null
 		));
 		// zero timeRemaining throws IllegalArgumentException
@@ -169,6 +175,8 @@ public class ResponseTests {
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				Duration.ZERO,
+				null,
+				null,
 				null
 		));
 		// when packetType requires a result type and type is null, throws IllegalArgumentException
@@ -179,12 +187,16 @@ public class ResponseTests {
 				null,
 				"Effect applied successfully",
 				null,
+				null,
+				null,
 				null
 		));
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				0,
 				null,
 				Response.PacketType.EFFECT_STATUS,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -198,6 +210,8 @@ public class ResponseTests {
 				Response.ResultType.SUCCESS,
 				"Server is disconnecting",
 				null,
+				null,
+				null,
 				null
 		));
 		// when message is null and packetType requires a message, throws IllegalArgumentException
@@ -205,6 +219,8 @@ public class ResponseTests {
 				0,
 				null,
 				Response.PacketType.DISCONNECT,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -218,6 +234,8 @@ public class ResponseTests {
 				Response.ResultType.VISIBLE,
 				null,
 				null,
+				null,
+				null,
 				null
 		));
 		// when type is not a status and packetType is EFFECT_STATUS
@@ -226,6 +244,8 @@ public class ResponseTests {
 				null,
 				Response.PacketType.EFFECT_STATUS,
 				Response.ResultType.SUCCESS,
+				null,
+				null,
 				null,
 				null,
 				null
@@ -238,6 +258,20 @@ public class ResponseTests {
 				Response.ResultType.VISIBLE,
 				null,
 				null,
+				null,
+				null,
+				null
+		));
+		// when packetType is REMOTE_FUNCTION and method is null, throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.REMOTE_FUNCTION,
+				null,
+				null,
+				null,
+				null,
+				null,
 				null
 		));
 		// valid parameters don't throw
@@ -248,6 +282,8 @@ public class ResponseTests {
 				null,
 				"Server is disconnecting",
 				null,
+				null,
+				null,
 				null
 		));
 		Assertions.assertDoesNotThrow(() -> new Response(
@@ -255,6 +291,8 @@ public class ResponseTests {
 				null,
 				null,
 				Response.ResultType.SUCCESS,
+				null,
+				null,
 				null,
 				null,
 				null
@@ -266,7 +304,9 @@ public class ResponseTests {
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				Duration.ofSeconds(1),
-				"effect"
+				"effect",
+				null,
+				null
 		));
 		Assertions.assertDoesNotThrow(() -> new Response(
 				0,
@@ -275,7 +315,31 @@ public class ResponseTests {
 				Response.ResultType.VISIBLE,
 				null,
 				null,
-				"effect"
+				"effect",
+				null,
+				null
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				0,
+				null,
+				Response.PacketType.REMOTE_FUNCTION,
+				null,
+				null,
+				null,
+				null,
+				"method",
+				null
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				0,
+				null,
+				Response.PacketType.REMOTE_FUNCTION,
+				null,
+				null,
+				null,
+				null,
+				"method",
+				new Object[]{"arg1", 2, 3.0}
 		));
 	}
 
