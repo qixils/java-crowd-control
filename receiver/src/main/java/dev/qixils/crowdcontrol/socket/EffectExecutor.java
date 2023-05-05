@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.Executor;
 
@@ -25,7 +26,7 @@ final class EffectExecutor {
 	private final RequestManager crowdControl;
 	private final @Nullable String password;
 	private boolean loggedIn = false;
-	private Request.@Nullable Target player = null;
+	private Request.@Nullable Source player = null;
 
 	EffectExecutor(SocketThread socketThread) throws IOException {
 		this.socketThread = socketThread;
@@ -47,15 +48,15 @@ final class EffectExecutor {
 
 	void run() throws IOException {
 		// get incoming data
-		Request request;
+		Request deserializedRequest;
 		try {
-			request = JsonObject.fromInputStream(input, Request::fromJSON);
+			deserializedRequest = JsonObject.fromInputStream(input, Request::fromJSON);
 		} catch (JsonParseException e) {
 			logger.error("Failed to parse JSON from socket", e);
 			return;
 		}
 
-		if (request == null) {
+		if (deserializedRequest == null) {
 			logger.debug("Received a blank packet; assuming client has disconnected");
 			try {
 				if (socketThread != null)
@@ -68,13 +69,21 @@ final class EffectExecutor {
 			return;
 		}
 
-		if (request.getType() == Request.Type.PLAYER_INFO && request.getTargets().length == 1) {
-			player = request.getTargets()[0];
+		Request.Builder builder = deserializedRequest.toBuilder();
+
+		if (deserializedRequest.getType() == Request.Type.PLAYER_INFO && deserializedRequest.getTargets().length == 1) {
+			Request.Source.Builder source = new Request.Source.Builder();
+			source.target(deserializedRequest.getTargets()[0]);
+			InetAddress address = socket.getInetAddress();
+			if (address != null)
+				source.ip(address.getHostAddress());
+			player = source.build();
 		} else if (player != null) {
-			request.setSource(player);
+			builder.source(player);
 		}
 
-		request.setOriginatingSocket(socket);
+		builder.originatingSocket(socket);
+		Request request = builder.build();
 
 		if (request.getType() == Request.Type.KEEP_ALIVE) {
 			request.buildResponse().packetType(Response.PacketType.KEEP_ALIVE).send();

@@ -16,16 +16,20 @@ import java.util.function.Function;
  */
 @SuppressWarnings({"ConstantConditions", "BusyWait"})
 public class TimedEffectTests {
-	private static final @NotNull Request request = new Request(1,
-			Request.Type.START,
-			"test",
-			"qixils",
-			"Hello World!",
-			10,
-			Duration.ofSeconds(15),
-			new Request.Target[]{new Request.Target.Builder().id("12345").name("qixils").avatar("https://i.qixils.dev/favicon.png").build()},
-			new Object[]{5}
-	);
+	private static final @NotNull Request.Source SOURCE = new Request.Source.Builder().target(new Request.Target.Builder().id("12345").name("qixils").avatar("https://i.qixils.dev/favicon.png").build()).build();
+	private static final @NotNull Request request = new Request.Builder()
+			.id(1)
+			.type(Request.Type.START)
+			.effect("test")
+			.viewer("qixils")
+			.message("Hello World!")
+			.cost(10)
+			.duration(Duration.ofSeconds(15))
+			.targets(SOURCE.target())
+			.parameters(5)
+			.quantity(3)
+			.source(SOURCE)
+			.build();
 
 	@Test
 	@SuppressWarnings("ResultOfMethodCallIgnored")

@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("ConstantConditions")
@@ -432,11 +433,15 @@ public class ResponseTests {
 		Assertions.assertEquals(Response.ResultType.SUCCESS, response.getResultType());
 
 		// misc
-		response = response.toBuilder().message(null).build();
+		response = response.toBuilder().message(null).clone().build().toBuilder().build();
 		Assertions.assertNull(response.getMessage());
 
-		response = response.toBuilder().packetType(null).build();
+		response = response.toBuilder().packetType(null).clone().build().toBuilder().build();
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
+
+		response = new Response.Builder().packetType(Response.PacketType.REMOTE_FUNCTION).addArguments("arg1", 2, 3.0).addArguments(Arrays.asList("arg4", 5, 6.0)).clone().build().toBuilder().build();
+		Assertions.assertEquals(Response.PacketType.REMOTE_FUNCTION, response.getPacketType());
+		Assertions.assertArrayEquals(new Object[]{"arg1", 2, 3.0, "arg4", 5, 6.0}, response.getArguments());
 	}
 
 	@Test

@@ -31,8 +31,8 @@ import static dev.qixils.crowdcontrol.util.StringUtils.repr;
 @ApiStatus.AvailableSince("1.0.0")
 public class Request implements JsonObject, Respondable {
 	private static final Logger logger = LoggerFactory.getLogger(Request.class);
-	private transient @Nullable Socket originatingSocket;
-	private transient @Nullable Target source; // TODO: add to builder and add unit tests
+	private transient final @Nullable Socket originatingSocket;
+	private transient final @Nullable Source source;
 	private int id;
 	private Type type;
 	@SerializedName("code")
@@ -45,6 +45,10 @@ public class Request implements JsonObject, Respondable {
 	@Nullable
 	private Duration duration;
 	private Object @Nullable [] parameters;
+	@Nullable
+	private Object value;
+	@Nullable
+	private Integer quantity;
 
 	/**
 	 * Instantiates an empty {@link Request}.
@@ -54,25 +58,14 @@ public class Request implements JsonObject, Respondable {
 	@SuppressWarnings("unused") // used by GSON
 	@ApiStatus.Internal
 	Request() {
+		this.originatingSocket = null;
+		this.source = null;
 	}
 
-	// TODO: (package)-private all constructors
-
 	/**
-	 * Instantiates a {@link Request} with the given parameters.
-	 * <p>
-	 * This constructor is marked as {@link ApiStatus.Experimental experimental} because it is frequently deprecated and
-	 * eventually removed in new releases. Please use {@link Request.Builder} where possible instead.
+	 * Instantiates a {@link Request} object from a {@link Builder}.
 	 *
-	 * @param id        the ID of the request
-	 * @param effect    the effect to be played
-	 * @param message   the message to be displayed
-	 * @param viewer    the viewer who requested the effect
-	 * @param cost      the cost of the effect
-	 * @param duration  the duration of the effect
-	 * @param type      the packet type to send
-	 * @param targets   the targets of the effect
-	 * @param parameters the miscellaneous parameters of the effect
+	 * @param builder the {@link Builder} to use
 	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
 	 *                                  <ul>
 	 *                                      <li>if the given ID is negative</li>
@@ -81,111 +74,66 @@ public class Request implements JsonObject, Respondable {
 	 *                                      <li>if the given packet type is not an {@link Type#isEffectType()} effect type} and the effect, viewer, cost, or targets is non-null</li>
 	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
 	 *                                  </ul>
-	 * @since 3.5.0
 	 */
-	@ApiStatus.AvailableSince("3.5.0")
-	@ApiStatus.Experimental
-	public Request(int id,
-				   @NotNull Type type,
-				   @Nullable String effect,
-				   @Nullable String viewer,
-				   @Nullable String message,
-				   @Nullable Integer cost,
-				   @Nullable Duration duration,
-				   Target @Nullable [] targets,
-				   Object @Nullable [] parameters) throws IllegalArgumentException {
+	private Request(Request.@NotNull Builder builder) throws IllegalArgumentException {
 		// validate request ID
-		this.id = id;
+		this.id = builder.id;
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
 
 		// validate type & related arguments
-		this.type = ExceptionUtil.validateNotNull(type, "type");
-		if (type.isEffectType()) {
-			if (effect == null)
+		this.type = ExceptionUtil.validateNotNull(builder.type, "type");
+		if (this.type.isEffectType()) {
+			if (builder.effect == null)
 				throw new IllegalArgumentException("effect cannot be null for effect packets");
-			if (viewer == null)
+			if (builder.viewer == null)
 				throw new IllegalArgumentException("viewer cannot be null for effect packets");
 		} else {
-			if (effect != null)
+			if (builder.effect != null)
 				throw new IllegalArgumentException("effect cannot be non-null for non-effect packets");
-			if (viewer != null)
+			if (builder.viewer != null)
 				throw new IllegalArgumentException("viewer cannot be non-null for non-effect packets");
-			if (cost != null)
+			if (builder.cost != null)
 				throw new IllegalArgumentException("cost cannot be non-null for non-effect packets");
-			if (targets != null)
+			if (builder.targets != null)
 				throw new IllegalArgumentException("targets cannot be non-null for non-effect packets");
+			if (builder.quantity != null)
+				throw new IllegalArgumentException("quantity cannot be non-null for non-effect packets");
 
-			if (message == null && type == Type.LOGIN)
+			if (builder.message == null && this.type == Type.LOGIN)
 				throw new IllegalArgumentException("message (password) cannot be null for login packets");
 		}
 
 		// other arguments
-		this.effect = effect == null ? null : effect.toLowerCase(Locale.ENGLISH);
-		this.viewer = viewer == null ? null : viewer.toLowerCase(Locale.ENGLISH);
-		this.message = message;
-		if (cost != null && cost < 0)
+		this.effect = builder.effect == null ? null : builder.effect.toLowerCase(Locale.ENGLISH);
+		this.viewer = builder.viewer;
+		this.message = builder.message;
+		if (builder.cost != null && builder.cost < 0)
 			throw new IllegalArgumentException("cost cannot be negative");
-		this.cost = cost;
-		if (duration != null && duration.isNegative())
+		this.cost = builder.cost;
+		if (builder.duration != null && builder.duration.isNegative())
 			throw new IllegalArgumentException("duration cannot be negative");
-		this.duration = duration;
-		this.parameters = parameters;
+		this.duration = builder.duration;
+		this.parameters = builder.parameters;
 		if (this.id == 0 && this.type.usesIncrementalIds() == TriState.TRUE)
 			throw new IllegalArgumentException("ID cannot be 0 for effect packets");
 		if (this.id != 0 && this.type.usesIncrementalIds() == TriState.FALSE)
 			throw new IllegalArgumentException("ID must be 0 for non-effect packets");
+		if (this.type != Type.REMOTE_FUNCTION_RESULT && builder.value != null)
+			throw new IllegalArgumentException("value cannot be non-null for non-remote function result packets");
+		this.value = builder.value;
+		this.quantity = builder.quantity;
+		this.source = builder.source;
+		this.originatingSocket = builder.originatingSocket;
 
 		// validate targets are not null
-		if (targets != null) {
-			for (Target target : targets) {
+		if (builder.targets != null) {
+			for (Target target : builder.targets) {
 				if (target == null)
 					throw new IllegalArgumentException("targets cannot contain null elements");
 			}
 		}
-		this.targets = targets;
-	}
-
-	/**
-	 * Instantiates a {@link Type#isEffectType() non-effect type} {@link Request} with the given parameters.
-	 *
-	 * @param id      the ID of the request
-	 * @param type    the packet type to send
-	 * @param message the message to be displayed
-	 * @throws IllegalArgumentException If a provided argument is invalid. Specifically:
-	 *                                  <ul>
-	 *                                      <li>if the given ID is negative</li>
-	 *                                      <li>if the given packet type is null</li>
-	 *                                      <li>if the given packet type is an {@link Type#isEffectType() effect type}</li>
-	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
-	 *                                  </ul>
-	 * @since 3.3.0
-	 */
-	@ApiStatus.AvailableSince("3.3.0")
-	public Request(int id, @NotNull Type type, @Nullable String message) throws IllegalArgumentException {
-		if (id < 0)
-			throw new IllegalArgumentException("ID cannot be negative");
-		ExceptionUtil.validateNotNull(type, "type");
-		if (type.isEffectType())
-			throw new IllegalArgumentException("type cannot be an effect type");
-		if (message == null && type == Type.LOGIN)
-			throw new IllegalArgumentException("message (password) cannot be null for login packets");
-		this.id = id;
-		this.type = type;
-		this.message = message;
-	}
-
-	/**
-	 * Instantiates a {@link Request} object from a {@link Builder}.
-	 *
-	 * @param builder the {@link Builder} to use
-	 * @since 3.3.0
-	 */
-	@ApiStatus.AvailableSince("3.3.0")
-	private Request(Request.@NotNull Builder builder) {
-		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.type, builder.effect, builder.viewer, builder.message, builder.cost, builder.duration, builder.targets, builder.parameters);
-		originatingSocket = builder.originatingSocket;
+		this.targets = builder.targets;
 	}
 
 	/**
@@ -327,6 +275,46 @@ public class Request implements JsonObject, Respondable {
 	}
 
 	/**
+	 * Gets the value returned by the remote function.
+	 * Applicable only when {@link #getType()} is {@link Type#REMOTE_FUNCTION_RESULT}.
+	 *
+	 * @return the value returned by the remote function
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@CheckReturnValue
+	@Nullable
+	public Object getValue() {
+		return value;
+	}
+
+	/**
+	 * Gets the quantity of the item to be added or removed.
+	 * May be null for non-effect requests or for effects that do not involve items.
+	 *
+	 * @return the quantity of the item to be added or removed
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@CheckReturnValue
+	@Nullable
+	public Integer getQuantity() {
+		return quantity;
+	}
+
+	/**
+	 * Gets the quantity of the item to be added or removed, or one if the quantity is null.
+	 *
+	 * @return the quantity of the item to be added or removed, or one if the quantity is null
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@CheckReturnValue
+	public int getQuantityOrDefault() {
+		return quantity == null ? 1 : quantity;
+	}
+
+	/**
 	 * Determines if this Request is triggering an effect for all users.
 	 *
 	 * @return if the triggered effect is global
@@ -352,39 +340,15 @@ public class Request implements JsonObject, Respondable {
 	}
 
 	/**
-	 * Sets the {@link Socket} that this {@link Request} originated from.
-	 *
-	 * @param originatingSocket originating socket
-	 * @since 3.6.0
-	 */
-	@ApiStatus.AvailableSince("3.6.0")
-	@ApiStatus.Internal
-	public void setOriginatingSocket(@Nullable Socket originatingSocket) {
-		this.originatingSocket = originatingSocket;
-	}
-
-	/**
-	 * Gets the {@link Target streamer} that this {@link Request} originated from.
+	 * Gets the {@link Source streamer} that this {@link Request} originated from.
 	 *
 	 * @return originating streamer
 	 * @since 3.6.0
 	 */
 	@ApiStatus.AvailableSince("3.6.0")
 	@Nullable
-	public Target getSource() {
+	public Source getSource() {
 		return source;
-	}
-
-	/**
-	 * Sets the {@link Target streamer} that this {@link Request} originated from.
-	 *
-	 * @param source originating streamer
-	 * @since 3.6.0
-	 */
-	@ApiStatus.AvailableSince("3.6.0")
-	@ApiStatus.Internal
-	public void setSource(@Nullable Target source) {
-		this.source = source;
 	}
 
 	/**
@@ -439,12 +403,15 @@ public class Request implements JsonObject, Respondable {
 				&& Objects.equals(cost, request.cost)
 				&& Arrays.equals(getTargets(), request.getTargets())
 				&& Arrays.equals(getParameters(), request.getParameters())
-				&& Objects.equals(duration, request.duration);
+				&& Objects.equals(duration, request.duration)
+//				&& Objects.equals(originatingSocket, request.originatingSocket)
+				&& Objects.equals(source, request.source)
+				&& Objects.equals(value, request.value);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hash(id, type, effect, message, viewer, cost, duration);
+		int result = Objects.hash(id, type, effect, message, viewer, cost, duration, source, value);
 		result = 31 * result + Arrays.hashCode(getTargets());
 		result = 31 * result + Arrays.hashCode(getParameters());
 		return result;
@@ -463,6 +430,8 @@ public class Request implements JsonObject, Respondable {
 				", targets=" + Arrays.toString(targets) +
 				", duration=" + duration +
 				", parameters=" + Arrays.toString(parameters) +
+				", source=" + source +
+				", value=" + value +
 				'}';
 	}
 
@@ -478,25 +447,31 @@ public class Request implements JsonObject, Respondable {
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		TEST(TriState.TRUE),
+		TEST(TriState.TRUE), // 0
 		/**
 		 * Indicates that you should start an effect, if available.
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		START(TriState.TRUE),
+		START(TriState.TRUE), // 1
 		/**
 		 * Indicates that you should stop an effect.
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		STOP(TriState.TRUE),
+		STOP(TriState.TRUE), // 2
+		/**
+		 * Indicates the result of a {@link Response.PacketType#REMOTE_FUNCTION}.
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		REMOTE_FUNCTION_RESULT(TriState.UNKNOWN, (byte) 0xD0), // 208
 		/**
 		 * Identifies the connected player.
 		 * @since 3.5.3
 		 */
 		@ApiStatus.AvailableSince("3.5.3")
-		PLAYER_INFO(TriState.UNKNOWN, (byte) 0xE0),
+		PLAYER_INFO(TriState.UNKNOWN, (byte) 0xE0), // 224
 		/**
 		 * Indicates that a streamer is attempting to log in to the Crowd Control server.
 		 * <p>
@@ -506,7 +481,7 @@ public class Request implements JsonObject, Respondable {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		LOGIN(TriState.UNKNOWN, (byte) 0xF0),
+		LOGIN(TriState.UNKNOWN, (byte) 0xF0), // 240
 		/**
 		 * This packet's sole purpose is to establish that the connection with the
 		 * Crowd Control server has not been dropped.
@@ -517,7 +492,7 @@ public class Request implements JsonObject, Respondable {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		KEEP_ALIVE(TriState.FALSE, (byte) 0xFF);
+		KEEP_ALIVE(TriState.FALSE, (byte) 0xFF); // 255
 
 		private static final @NotNull Map<Byte, Type> BY_BYTE;
 
@@ -589,7 +564,7 @@ public class Request implements JsonObject, Respondable {
 	/**
 	 * A recipient of an effect.
 	 * <p>
-	 * This corresponds to a Twitch streamer connected to the Crowd Control server.
+	 * This corresponds to a streamer connected to the Crowd Control server.
 	 * @since 3.0.0
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
@@ -598,7 +573,7 @@ public class Request implements JsonObject, Respondable {
 		private @Nullable String name;
 		private @Nullable String login;
 		private @Nullable String avatar;
-		// private ServiceType service; currently unimplemented
+		private @Nullable String service;
 
 		/**
 		 * Instantiates an empty {@link Target}.
@@ -614,6 +589,7 @@ public class Request implements JsonObject, Respondable {
 			this.name = builder.name;
 			this.login = builder.login;
 			this.avatar = builder.avatar;
+			this.service = builder.service;
 		}
 
 		/**
@@ -675,6 +651,19 @@ public class Request implements JsonObject, Respondable {
 			return avatar;
 		}
 
+		/**
+		 * Gets the service that the streamer is streaming on.
+		 *
+		 * @return service
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@Nullable
+		@CheckReturnValue
+		public String getService() {
+			return service;
+		}
+
 		@Override
 		@CheckReturnValue
 		public boolean equals(@Nullable Object o) {
@@ -684,13 +673,14 @@ public class Request implements JsonObject, Respondable {
 			return Objects.equals(getId(), target.getId())
 					&& Objects.equals(getName(), target.getName())
 					&& Objects.equals(getLogin(), target.getLogin())
-					&& Objects.equals(getAvatar(), target.getAvatar());
+					&& Objects.equals(getAvatar(), target.getAvatar())
+					&& Objects.equals(getService(), target.getService());
 		}
 
 		@Override
 		@CheckReturnValue
 		public int hashCode() {
-			return Objects.hash(getId(), getName(), getLogin(), getAvatar());
+			return Objects.hash(getId(), getName(), getLogin(), getAvatar(), getService());
 		}
 
 		@Override
@@ -700,6 +690,7 @@ public class Request implements JsonObject, Respondable {
 					", name=" + repr(name) +
 					", login=" + repr(login) +
 					", avatar=" + repr(avatar) +
+					", service=" + repr(service) +
 					'}';
 		}
 
@@ -726,7 +717,7 @@ public class Request implements JsonObject, Respondable {
 			private @Nullable String name;
 			private @Nullable String login;
 			private @Nullable String avatar;
-			// private ServiceType service; currently unimplemented
+			private @Nullable String service;
 
 			// constructors //
 
@@ -743,6 +734,7 @@ public class Request implements JsonObject, Respondable {
 				this.name = target.name;
 				this.login = target.login;
 				this.avatar = target.avatar;
+				this.service = target.service;
 			}
 
 			private Builder(@NotNull Builder builder) {
@@ -750,6 +742,7 @@ public class Request implements JsonObject, Respondable {
 				this.name = builder.name;
 				this.login = builder.login;
 				this.avatar = builder.avatar;
+				this.service = builder.service;
 			}
 
 			// setters //
@@ -764,7 +757,6 @@ public class Request implements JsonObject, Respondable {
 			@ApiStatus.AvailableSince("3.5.2")
 			@NotNull
 			@Contract("_ -> this")
-			@CheckReturnValue
 			public Builder id(@Nullable String id) {
 				this.id = id;
 				return this;
@@ -780,7 +772,6 @@ public class Request implements JsonObject, Respondable {
 			@ApiStatus.AvailableSince("3.5.2")
 			@NotNull
 			@Contract("_ -> this")
-			@CheckReturnValue
 			public Builder name(@Nullable String name) {
 				this.name = name;
 				return this;
@@ -796,7 +787,6 @@ public class Request implements JsonObject, Respondable {
 			@ApiStatus.AvailableSince("3.5.2")
 			@NotNull
 			@Contract("_ -> this")
-			@CheckReturnValue
 			public Builder login(@Nullable String login) {
 				this.login = login;
 				return this;
@@ -812,9 +802,23 @@ public class Request implements JsonObject, Respondable {
 			@ApiStatus.AvailableSince("3.5.2")
 			@NotNull
 			@Contract("_ -> this")
-			@CheckReturnValue
 			public Builder avatar(@Nullable String avatar) {
 				this.avatar = avatar;
+				return this;
+			}
+
+			/**
+			 * Sets the service that the streamer is streaming on.
+			 *
+			 * @param service service
+			 * @return this builder
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@NotNull
+			@Contract("_ -> this")
+			public Builder service(@Nullable String service) {
+				this.service = service;
 				return this;
 			}
 
@@ -872,6 +876,19 @@ public class Request implements JsonObject, Respondable {
 				return avatar;
 			}
 
+			/**
+			 * Gets the service that the streamer is streaming on.
+			 *
+			 * @return service
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@Nullable
+			@CheckReturnValue
+			public String service() {
+				return service;
+			}
+
 			// misc
 
 			/**
@@ -903,6 +920,200 @@ public class Request implements JsonObject, Respondable {
 	}
 
 	/**
+	 * The source of an effect.
+	 * <p>
+	 * This corresponds to a streamer connected to the Crowd Control server.
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	public static final class Source {
+		private final @Nullable Target target;
+		private final @Nullable String ip;
+
+		private Source(@NotNull Builder builder) {
+			this.target = builder.target;
+			this.ip = builder.ip;
+		}
+
+		/**
+		 * The identity of this source.
+		 *
+		 * @return the identity of this source
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@Nullable
+		@CheckReturnValue
+		public Target target() {
+			return target;
+		}
+
+		/**
+		 * The IP address of this source.
+		 *
+		 * @return the IP address of this source
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@Nullable
+		@CheckReturnValue
+		public String ip() {
+			return ip;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Source source = (Source) o;
+			return Objects.equals(target, source.target) && Objects.equals(ip, source.ip);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(target, ip);
+		}
+
+		@Override
+		public String toString() {
+			return "Source{" +
+					"target=" + target +
+					", ip=" + repr(ip) +
+					'}';
+		}
+
+		/**
+		 * Creates a builder with the same parameters as this object.
+		 *
+		 * @return a builder with the same parameters as this object
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@CheckReturnValue
+		public Builder toBuilder() {
+			return new Builder(this);
+		}
+
+		/**
+		 * Mutable builder for the immutable {@link Source} class.
+		 *
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		public static final class Builder implements Cloneable {
+			private @Nullable Target target;
+			private @Nullable String ip;
+
+			/**
+			 * Creates a new builder.
+			 *
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@CheckReturnValue
+			public Builder() {
+			}
+
+			private Builder(@NotNull Source source) {
+				this.target = source.target;
+				this.ip = source.ip;
+			}
+
+			private Builder(@NotNull Builder builder) {
+				this.target = builder.target;
+				this.ip = builder.ip;
+			}
+
+			/**
+			 * Sets the identity of this source.
+			 *
+			 * @param target the identity of this source
+			 * @return this builder
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@NotNull
+			@Contract("_ -> this")
+			public Builder target(@Nullable Target target) {
+				this.target = target;
+				return this;
+			}
+
+			/**
+			 * Sets the IP address of this source.
+			 *
+			 * @param ip the IP address of this source
+			 * @return this builder
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@NotNull
+			@Contract("_ -> this")
+			public Builder ip(@Nullable String ip) {
+				this.ip = ip;
+				return this;
+			}
+
+			// getters
+
+			/**
+			 * Gets the identity of this source.
+			 *
+			 * @return the identity of this source
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@Nullable
+			@CheckReturnValue
+			public Target target() {
+				return target;
+			}
+
+			/**
+			 * Gets the IP address of this source.
+			 *
+			 * @return the IP address of this source
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@Nullable
+			@CheckReturnValue
+			public String ip() {
+				return ip;
+			}
+
+			// misc
+
+			/**
+			 * Creates a new builder object with the same parameters.
+			 *
+			 * @return cloned builder
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@SuppressWarnings("MethodDoesntCallSuperMethod")
+			@Override
+			public @NotNull Builder clone() {
+				return new Builder(this);
+			}
+
+			/**
+			 * Builds a new {@link Source} object.
+			 *
+			 * @return new Request
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@NotNull
+			@CheckReturnValue
+			public Source build() {
+				return new Source(this);
+			}
+		}
+	}
+
+	/**
 	 * Mutable builder for the immutable {@link Request} class.
 	 * @since 3.3.0
 	 */
@@ -919,6 +1130,9 @@ public class Request implements JsonObject, Respondable {
 		private Target @Nullable [] targets;
 		private @Nullable Duration duration;
 		private Object @Nullable [] parameters;
+		private @Nullable Source source;
+		private @Nullable Object value;
+		private @Nullable Integer quantity;
 
 		/**
 		 * Creates a new builder.
@@ -948,6 +1162,9 @@ public class Request implements JsonObject, Respondable {
 			this.targets = source.targets;
 			this.duration = source.duration;
 			this.parameters = source.parameters;
+			this.source = source.source;
+			this.value = source.value;
+			this.quantity = source.quantity;
 		}
 
 		/**
@@ -969,6 +1186,9 @@ public class Request implements JsonObject, Respondable {
 			this.targets = builder.targets;
 			this.duration = builder.duration;
 			this.parameters = builder.parameters;
+			this.source = builder.source;
+			this.value = builder.value;
+			this.quantity = builder.quantity;
 		}
 
 		// setters
@@ -1058,7 +1278,7 @@ public class Request implements JsonObject, Respondable {
 		@ApiStatus.AvailableSince("3.3.0")
 		@NotNull
 		@Contract("_ -> this")
-		public Builder targets(Target @Nullable ... targets) {
+		public Builder targets(@NotNull Target @Nullable ... targets) {
 			this.targets = targets;
 			return this;
 		}
@@ -1121,6 +1341,51 @@ public class Request implements JsonObject, Respondable {
 		@Contract("_ -> this")
 		public Builder parameters(Object @Nullable ... parameters) {
 			this.parameters = parameters;
+			return this;
+		}
+
+		/**
+		 * Sets the streamer through which the effect was requested.
+		 *
+		 * @param source streamer through which the effect was requested
+		 * @return this builder
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder source(@Nullable Source source) {
+			this.source = source;
+			return this;
+		}
+
+		/**
+		 * Sets the value returned by a {@link Type#REMOTE_FUNCTION_RESULT remote function}.
+		 *
+		 * @param value remote function result
+		 * @return this builder
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder value(@Nullable Object value) {
+			this.value = value;
+			return this;
+		}
+
+		/**
+		 * Sets the quantity of the item to be added or removed.
+		 *
+		 * @param quantity quantity of the item to be added or removed
+		 * @return this builder
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder quantity(@Nullable Integer quantity) {
+			this.quantity = quantity;
 			return this;
 		}
 
@@ -1252,6 +1517,45 @@ public class Request implements JsonObject, Respondable {
 		@CheckReturnValue
 		public Object @Nullable [] parameters() {
 			return parameters;
+		}
+
+		/**
+		 * Gets the streamer through which the effect was requested.
+		 *
+		 * @return streamer through which the effect was requested
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@Nullable
+		@CheckReturnValue
+		public Source source() {
+			return source;
+		}
+
+		/**
+		 * Gets the value returned by a {@link Type#REMOTE_FUNCTION_RESULT remote function}.
+		 *
+		 * @return remote function result
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@Nullable
+		@CheckReturnValue
+		public Object value() {
+			return value;
+		}
+
+		/**
+		 * Gets the quantity of the item to be added or removed.
+		 *
+		 * @return quantity of the item to be added or removed
+		 * @since 3.6.0
+		 */
+		@ApiStatus.AvailableSince("3.6.0")
+		@Nullable
+		@CheckReturnValue
+		public Integer quantity() {
+			return quantity;
 		}
 
 		// build

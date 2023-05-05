@@ -510,7 +510,7 @@ public class Response implements JsonObject {
 		 * @since 3.0.0
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
-		EFFECT_RESULT(false, true),
+		EFFECT_RESULT(false, true), // 0
 		/**
 		 * The packet is updating the status of an effect.
 		 * This should be used with an {@link Builder#id(int) id} of 0.
@@ -518,7 +518,7 @@ public class Response implements JsonObject {
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		EFFECT_STATUS(false, true),
+		EFFECT_STATUS(false, true), // 1
 		/**
 		 * The packet is triggering a remote function to be run in the CS.
 		 * This should be used with an {@link Builder#id(int) id} of 0 and should specify the function name to execute
@@ -528,7 +528,7 @@ public class Response implements JsonObject {
 		 * @since 3.6.0
 		 */
 		@ApiStatus.AvailableSince("3.6.0")
-		REMOTE_FUNCTION(false, false, (byte) 0xD0),
+		REMOTE_FUNCTION(false, false, (byte) 0xD0), // 208
 		/**
 		 * <b>Internal value</b> used to prompt a connecting client for a password.
 		 *
@@ -536,7 +536,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		LOGIN(false, false, (byte) 0xF0),
+		LOGIN(false, false, (byte) 0xF0), // 240
 		/**
 		 * <b>Internal value</b> used to indicate a successful login.
 		 *
@@ -544,7 +544,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.1.0")
 		@ApiStatus.Internal
-		LOGIN_SUCCESS(false, false, (byte) 0xF1),
+		LOGIN_SUCCESS(false, false, (byte) 0xF1), // 241
 		/**
 		 * <b>Internal value</b> used to indicate that the socket is being disconnected.
 		 *
@@ -552,7 +552,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.1.0")
 		@ApiStatus.Internal
-		DISCONNECT(true, false, (byte) 0xFE),
+		DISCONNECT(true, false, (byte) 0xFE), // 254
 		/**
 		 * <b>Internal value</b> used to reply to a keep alive packet.
 		 *
@@ -560,7 +560,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		KEEP_ALIVE(false, false, (byte) 0xFF);
+		KEEP_ALIVE(false, false, (byte) 0xFF); // 255
 
 		private static final Map<Byte, PacketType> BY_BYTE;
 
@@ -646,28 +646,28 @@ public class Response implements JsonObject {
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		SUCCESS(false, false),
+		SUCCESS(false, false), // 0
 		/**
 		 * The effect failed to be applied. Will refund the purchaser.
 		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		FAILURE(true, false),
+		FAILURE(true, false), // 1
 		/**
 		 * The requested effect is unusable and should not be requested again.
 		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		UNAVAILABLE(true, false),
+		UNAVAILABLE(true, false), // 2
 		/**
 		 * The effect is momentarily unavailable but may be retried in a few seconds.
 		 *
 		 * @since 1.0.0
 		 */
 		@ApiStatus.AvailableSince("1.0.0")
-		RETRY(false, false),
+		RETRY(false, false), // 3
 		/**
 		 * The timed effect has been paused and is now waiting.
 		 *
@@ -675,7 +675,7 @@ public class Response implements JsonObject {
 		 * @since 2.0.0
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
-		PAUSED(false, false, (byte) 0x06),
+		PAUSED(false, false, (byte) 0x06), // 6
 		/**
 		 * The timed effect has been resumed and is counting down again.
 		 *
@@ -683,7 +683,7 @@ public class Response implements JsonObject {
 		 * @since 2.0.0
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
-		RESUMED(false, false, (byte) 0x07),
+		RESUMED(false, false, (byte) 0x07), // 7
 		/**
 		 * The timed effect has finished.
 		 *
@@ -691,7 +691,7 @@ public class Response implements JsonObject {
 		 * @since 2.0.0
 		 */
 		@ApiStatus.AvailableSince("2.0.0")
-		FINISHED(true, false, (byte) 0x08),
+		FINISHED(true, false, (byte) 0x08), // 8
 		/**
 		 * Instructs the client to display this effect in its menu.
 		 * <p>
@@ -702,7 +702,7 @@ public class Response implements JsonObject {
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		VISIBLE(true, true, (byte) 0x80),
+		VISIBLE(true, true, (byte) 0x80), // 128
 		/**
 		 * Instructs the client to hide this effect in its menu.
 		 * <p>
@@ -713,7 +713,7 @@ public class Response implements JsonObject {
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		NOT_VISIBLE(true, true, (byte) 0x81),
+		NOT_VISIBLE(true, true, (byte) 0x81), // 129
 		/**
 		 * Instructs the client to make this effect in its menu selectable.
 		 * <p>
@@ -724,7 +724,7 @@ public class Response implements JsonObject {
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		SELECTABLE(true, true, (byte) 0x82),
+		SELECTABLE(true, true, (byte) 0x82), // 130
 		/**
 		 * Instructs the client to make this effect in its menu unselectable.
 		 * <p>
@@ -735,7 +735,7 @@ public class Response implements JsonObject {
 		 * @since 3.5.2
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
-		NOT_SELECTABLE(true, true, (byte) 0x83),
+		NOT_SELECTABLE(true, true, (byte) 0x83), // 131
 		/**
 		 * Indicates that this Crowd Control server is not yet accepting requests.
 		 * <p>
@@ -747,7 +747,7 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
-		NOT_READY(true, false, (byte) 0xFF);
+		NOT_READY(true, false, (byte) 0xFF); // 255
 
 		private static final Map<Byte, ResultType> BY_BYTE;
 
