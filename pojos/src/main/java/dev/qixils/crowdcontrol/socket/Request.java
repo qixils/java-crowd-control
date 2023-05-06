@@ -31,8 +31,8 @@ import static dev.qixils.crowdcontrol.util.StringUtils.repr;
 @ApiStatus.AvailableSince("1.0.0")
 public class Request implements JsonObject, Respondable {
 	private static final Logger logger = LoggerFactory.getLogger(Request.class);
-	private transient final @Nullable Socket originatingSocket;
-	private transient final @Nullable Source source;
+	private transient @Nullable Socket originatingSocket;
+	private transient @Nullable Source source;
 	private int id;
 	private Type type;
 	@SerializedName("code")
@@ -58,8 +58,6 @@ public class Request implements JsonObject, Respondable {
 	@SuppressWarnings("unused") // used by GSON
 	@ApiStatus.Internal
 	Request() {
-		this.originatingSocket = null;
-		this.source = null;
 	}
 
 	/**
@@ -340,6 +338,19 @@ public class Request implements JsonObject, Respondable {
 	}
 
 	/**
+	 * Sets the {@link Socket} that this {@link Request} originated from.
+	 * <p>
+	 * This method is for internal use only, see {@link Builder#originatingSocket(Socket)} if you need to set this value.
+	 *
+	 * @param originatingSocket originating socket
+	 * @since 3.6.0
+	 */
+	@ApiStatus.Internal
+	public void setOriginatingSocket(@Nullable Socket originatingSocket) {
+		this.originatingSocket = originatingSocket;
+	}
+
+	/**
 	 * Gets the {@link Source streamer} that this {@link Request} originated from.
 	 *
 	 * @return originating streamer
@@ -349,6 +360,19 @@ public class Request implements JsonObject, Respondable {
 	@Nullable
 	public Source getSource() {
 		return source;
+	}
+
+	/**
+	 * Sets the {@link Source streamer} that this {@link Request} originated from.
+	 * <p>
+	 * This method is for internal use only, see {@link Builder#source(Source)} if you need to set this value.
+	 *
+	 * @param source originating streamer
+	 * @since 3.6.0
+	 */
+	@ApiStatus.Internal
+	public void setSource(@Nullable Source source) {
+		this.source = source;
 	}
 
 	/**

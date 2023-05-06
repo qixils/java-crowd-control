@@ -48,15 +48,15 @@ final class EffectExecutor {
 
 	void run() throws IOException {
 		// get incoming data
-		Request deserializedRequest;
+		Request request;
 		try {
-			deserializedRequest = JsonObject.fromInputStream(input, Request::fromJSON);
+			request = JsonObject.fromInputStream(input, Request::fromJSON);
 		} catch (JsonParseException e) {
 			logger.error("Failed to parse JSON from socket", e);
 			return;
 		}
 
-		if (deserializedRequest == null) {
+		if (request == null) {
 			logger.debug("Received a blank packet; assuming client has disconnected");
 			try {
 				if (socketThread != null)
@@ -69,21 +69,18 @@ final class EffectExecutor {
 			return;
 		}
 
-		Request.Builder builder = deserializedRequest.toBuilder();
-
-		if (deserializedRequest.getType() == Request.Type.PLAYER_INFO && deserializedRequest.getTargets().length == 1) {
+		if (request.getType() == Request.Type.PLAYER_INFO && request.getTargets().length == 1) {
 			Request.Source.Builder source = new Request.Source.Builder();
-			source.target(deserializedRequest.getTargets()[0]);
+			source.target(request.getTargets()[0]);
 			InetAddress address = socket.getInetAddress();
 			if (address != null)
 				source.ip(address.getHostAddress());
 			player = source.build();
 		} else if (player != null) {
-			builder.source(player);
+			request.setSource(player);
 		}
 
-		builder.originatingSocket(socket);
-		Request request = builder.build();
+		request.setOriginatingSocket(socket);
 
 		if (request.getType() == Request.Type.KEEP_ALIVE) {
 			request.buildResponse().packetType(Response.PacketType.KEEP_ALIVE).send();
