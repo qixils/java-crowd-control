@@ -301,15 +301,17 @@ public class Request implements JsonObject, Respondable {
 	}
 
 	/**
-	 * Gets the quantity of the item to be added or removed, or one if the quantity is null.
+	 * Gets the quantity of the item to be added or removed.
+	 * If null or below 1, returns 1.
 	 *
-	 * @return the quantity of the item to be added or removed, or one if the quantity is null
+	 * @return the quantity of the item to be added or removed
 	 * @since 3.6.0
 	 */
 	@ApiStatus.AvailableSince("3.6.0")
 	@CheckReturnValue
 	public int getQuantityOrDefault() {
-		return quantity == null ? 1 : quantity;
+		if (quantity == null) return 1;
+		return Math.max(1, quantity);
 	}
 
 	/**
