@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.function.Consumer;
 
 /**
@@ -75,4 +76,14 @@ public interface SocketManager extends Respondable {
 	 */
 	@ApiStatus.AvailableSince("3.4.0")
 	void addConnectListener(@NotNull Consumer<SocketManager> consumer); // TODO: unit tests
+
+	/**
+	 * Gets the {@link Request.Source}s that this {@link SocketManager} is connected to.
+	 * The returned collection is unmodifiable.
+	 *
+	 * @return the sources that this socket manager is connected to
+	 * @since 3.6.0
+	 */
+	@ApiStatus.AvailableSince("3.6.0")
+	@NotNull Collection<Request.Source> getSources();
 }

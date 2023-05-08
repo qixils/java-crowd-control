@@ -13,8 +13,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -102,5 +105,13 @@ public final class ServerSocketManager implements SocketManager {
 		}
 		if (serverSocket != null && !serverSocket.isClosed())
 			serverSocket.close();
+	}
+
+	@Override
+	public @NotNull Collection<Request.Source> getSources() {
+		Set<Request.Source> sources = new HashSet<>();
+		for (SocketThread socketThread : getSocketThreads())
+			sources.addAll(socketThread.getSources());
+		return Collections.unmodifiableSet(sources);
 	}
 }

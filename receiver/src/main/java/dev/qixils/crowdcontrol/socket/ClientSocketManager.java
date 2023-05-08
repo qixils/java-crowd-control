@@ -12,6 +12,8 @@ import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -32,6 +34,7 @@ public final class ClientSocketManager implements SocketManager {
 	private volatile boolean running = true;
 	private int sleep = 1;
 	private boolean connected = false;
+	private EffectExecutor effectExecutor;
 
 	/**
 	 * Creates a new client-side socket manager. This is intended only for use by the library.
@@ -71,7 +74,7 @@ public final class ClientSocketManager implements SocketManager {
 				}
 				sleep = 1;
 				connected = true;
-				EffectExecutor effectExecutor = new EffectExecutor(
+				effectExecutor = new EffectExecutor(
 						socket,
 						effectPool,
 						crowdControl
@@ -124,5 +127,12 @@ public final class ClientSocketManager implements SocketManager {
 			Response.ofDisconnectMessage(socket, reason).send();
 			socket.close();
 		}
+	}
+
+	@Override
+	public @NotNull Collection<Request.Source> getSources() {
+		if (effectExecutor == null)
+			return Collections.emptySet();
+		return Collections.singleton(effectExecutor.getSource());
 	}
 }

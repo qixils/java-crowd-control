@@ -46,6 +46,10 @@ final class EffectExecutor {
 		this.password = crowdControl.getPassword();
 	}
 
+	Request.Source getSource() {
+		return player;
+	}
+
 	void run() throws IOException {
 		// get incoming data
 		Request request;

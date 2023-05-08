@@ -18,6 +18,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -476,6 +477,11 @@ public final class CrowdControl implements SocketManager, RequestManager {
 		} catch (IOException e) {
 			logger.warn("Encountered an exception while shutting down socket", e);
 		}
+	}
+
+	@Override
+	public @NotNull Collection<Request.Source> getSources() {
+		return socketManager.getSources();
 	}
 
 }

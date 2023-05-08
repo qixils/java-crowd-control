@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -35,6 +37,7 @@ final class SocketThread extends Thread implements SocketManager {
 	final @NotNull Socket socket;
 	final @NotNull String displayName = UUID.randomUUID().toString().substring(30).toUpperCase(Locale.ENGLISH);
 	private volatile boolean running = true;
+	private EffectExecutor effectExecutor;
 
 	SocketThread(@NotNull ServerSocketManager socketManager, @NotNull Socket clientSocket) {
 		this.socketManager = socketManager;
@@ -62,7 +65,7 @@ final class SocketThread extends Thread implements SocketManager {
 		}
 
 		try {
-			EffectExecutor effectExecutor = new EffectExecutor(this);
+			effectExecutor = new EffectExecutor(this);
 
 			// prompt client for password
 			OutputStream output = socket.getOutputStream();
@@ -117,5 +120,12 @@ final class SocketThread extends Thread implements SocketManager {
 			try {socket.close();}
 			catch (IOException exc) {logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");}
 		}
+	}
+
+	@Override
+	public @NotNull Collection<Request.Source> getSources() {
+		if (effectExecutor == null)
+			return Collections.emptySet();
+		return Collections.singleton(effectExecutor.getSource());
 	}
 }
