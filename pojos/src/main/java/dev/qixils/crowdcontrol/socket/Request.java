@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -954,7 +956,7 @@ public class Request implements JsonObject, Respondable {
 	@ApiStatus.AvailableSince("3.6.0")
 	public static final class Source {
 		private final @Nullable Target target;
-		private final @Nullable String ip;
+		private final @Nullable InetAddress ip;
 
 		private Source(@NotNull Builder builder) {
 			this.target = builder.target;
@@ -983,7 +985,7 @@ public class Request implements JsonObject, Respondable {
 		@ApiStatus.AvailableSince("3.6.0")
 		@Nullable
 		@CheckReturnValue
-		public String ip() {
+		public InetAddress ip() {
 			return ip;
 		}
 
@@ -1004,7 +1006,7 @@ public class Request implements JsonObject, Respondable {
 		public String toString() {
 			return "Source{" +
 					"target=" + target +
-					", ip=" + repr(ip) +
+					", ip=" + ip +
 					'}';
 		}
 
@@ -1029,7 +1031,7 @@ public class Request implements JsonObject, Respondable {
 		@ApiStatus.AvailableSince("3.6.0")
 		public static final class Builder implements Cloneable {
 			private @Nullable Target target;
-			private @Nullable String ip;
+			private @Nullable InetAddress ip;
 
 			/**
 			 * Creates a new builder.
@@ -1076,8 +1078,24 @@ public class Request implements JsonObject, Respondable {
 			@ApiStatus.AvailableSince("3.6.0")
 			@NotNull
 			@Contract("_ -> this")
-			public Builder ip(@Nullable String ip) {
+			public Builder ip(@Nullable InetAddress ip) {
 				this.ip = ip;
+				return this;
+			}
+
+			/**
+			 * Sets the IP address of this source.
+			 *
+			 * @param ip the IP address of this source
+			 * @return this builder
+			 * @throws UnknownHostException if the IP address is invalid
+			 * @since 3.6.0
+			 */
+			@ApiStatus.AvailableSince("3.6.0")
+			@NotNull
+			@Contract("_ -> this")
+			public Builder ip(@Nullable String ip) throws UnknownHostException {
+				this.ip = ip == null ? null : InetAddress.getByName(ip);
 				return this;
 			}
 
@@ -1105,7 +1123,7 @@ public class Request implements JsonObject, Respondable {
 			@ApiStatus.AvailableSince("3.6.0")
 			@Nullable
 			@CheckReturnValue
-			public String ip() {
+			public InetAddress ip() {
 				return ip;
 			}
 

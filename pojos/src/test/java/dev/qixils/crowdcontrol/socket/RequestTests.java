@@ -3,6 +3,7 @@ package dev.qixils.crowdcontrol.socket;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.net.InetAddress;
 import java.time.Duration;
 
 @SuppressWarnings("ConstantConditions")
@@ -198,7 +199,8 @@ public class RequestTests {
 		Assertions.assertEquals("TWITCH", sourceBuilder.target().getService());
 		Assertions.assertEquals(targetBuilder.build(), sourceBuilder.target());
 		Assertions.assertNull(sourceBuilder.ip());
-		Assertions.assertEquals("127.0.0.1", sourceBuilder.ip("127.0.0.1").clone().build().toBuilder().ip());
+		InetAddress ip = Assertions.assertDoesNotThrow(() -> InetAddress.getByName("127.0.0.1")); // lol
+		Assertions.assertEquals(ip, sourceBuilder.ip(ip).clone().build().toBuilder().ip());
 
 		// parameters test
 		Assertions.assertNull(builder.parameters());
@@ -245,7 +247,7 @@ public class RequestTests {
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.source().target().getAvatar());
 		Assertions.assertEquals("TWITCH", builder.source().target().getService());
 		Assertions.assertEquals(targetBuilder.build(), builder.source().target());
-		Assertions.assertEquals("127.0.0.1", builder.source().ip());
+		Assertions.assertEquals(ip, builder.source().ip());
 	}
 
 	@Test
@@ -267,7 +269,7 @@ public class RequestTests {
 						new Request.Target.Builder().clone().build().toBuilder().build())
 				.parameters(5d) // json treats number params as doubles by default
 				.quantity(3)
-				.source(new Request.Source.Builder().target(target).ip("127.0.0.1").clone().build().toBuilder().build())
+				.source(new Request.Source.Builder().target(target).clone().build().toBuilder().build())
 				.clone()
 				.build();
 		String json = "{\"id\":1,\"type\":1,\"code\":\"summon\",\"viewer\":\"qixils\",\"message\":\"Hello\",\"cost\":10,\"duration\":10000,\"targets\":[{\"id\":\"493\",\"name\":\"epic streamer 493\",\"login\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\",\"source\":\"TWITCH\"},{}],\"parameters\":[5],\"quantity\":3}";

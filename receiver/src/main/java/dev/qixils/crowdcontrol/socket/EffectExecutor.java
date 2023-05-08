@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.Executor;
 
@@ -76,9 +75,7 @@ final class EffectExecutor {
 		if (request.getType() == Request.Type.PLAYER_INFO && request.getTargets().length == 1) {
 			Request.Source.Builder source = new Request.Source.Builder();
 			source.target(request.getTargets()[0]);
-			InetAddress address = socket.getInetAddress();
-			if (address != null)
-				source.ip(address.getHostAddress());
+			source.ip(socket.getInetAddress());
 			player = source.build();
 		} else if (player != null) {
 			request.setSource(player);
