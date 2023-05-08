@@ -106,7 +106,6 @@ public final class ClientSocketManager implements SocketManager {
 				Throwable exc = connected ? e : null;
 				logger.warn(error + ". Reconnecting in " + sleep + "s", exc);
 				try {
-					// TODO: address busy waiting ? probably not worth the refactoring effort
 					Thread.sleep(sleep * 1000L);
 				} catch (InterruptedException ignored) {
 					if (!running) return;
