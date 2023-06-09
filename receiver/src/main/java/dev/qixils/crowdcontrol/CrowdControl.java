@@ -485,7 +485,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	}
 
 	@Override
-	public @NotNull List<SocketManager> getConnections() {
+	public @NotNull List<? extends SocketManager> getConnections() {
 		return socketManager.getConnections();
 	}
 }

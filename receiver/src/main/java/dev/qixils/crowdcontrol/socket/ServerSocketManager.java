@@ -115,7 +115,7 @@ public final class ServerSocketManager implements SocketManager {
 	}
 
 	@Override
-	public @NotNull List<SocketManager> getConnections() {
-		return Collections.unmodifiableList(new ArrayList<>(socketThreads));
+	public @NotNull List<? extends SocketManager> getConnections() {
+		return getSocketThreads();
 	}
 }

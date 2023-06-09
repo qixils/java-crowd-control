@@ -60,7 +60,7 @@ public class Response implements JsonObject {
 	@Nullable
 	private Object @Nullable [] args;
 	@Nullable
-	private Object @Nullable [] data;
+	private Map<@NotNull String, @Nullable Object> data;
 	@Nullable
 	private String eventType;
 	@Nullable
@@ -116,7 +116,7 @@ public class Response implements JsonObject {
 			 @Nullable String effect,
 			 @Nullable String method,
 			 @Nullable Object @Nullable [] args,
-			 @Nullable Object @Nullable [] data,
+			 @Nullable Map<@NotNull String, @Nullable Object> data,
 			 @Nullable String eventType,
 			 @Nullable Boolean internal) throws IllegalArgumentException {
 		this.id = id;
@@ -130,8 +130,10 @@ public class Response implements JsonObject {
 		this.originatingSocket = originatingSocket;
 		this.effect = effect;
 		this.method = method;
-		this.args = args;
-		this.data = data;
+		if (args != null && args.length != 0)
+			this.args = args;
+		if (data != null && !data.isEmpty())
+			this.data = data;
 		this.eventType = eventType;
 		this.internal = internal;
 
@@ -241,7 +243,7 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	private Response(@NotNull Builder builder) {
 		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect, builder.method, builder.args.toArray(), builder.data.toArray(), builder.eventType, builder.internal);
+				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect, builder.method, builder.args.toArray(), new HashMap<>(builder.data), builder.eventType, builder.internal);
 	}
 
 	/**
@@ -408,7 +410,7 @@ public class Response implements JsonObject {
 	}
 
 	/**
-	 * Gets a copy of the event data.
+	 * Gets a view of the event data.
 	 * Null if the packet type is not {@link PacketType#GENERIC_EVENT GENERIC_EVENT}.
 	 *
 	 * @return event data
@@ -417,9 +419,9 @@ public class Response implements JsonObject {
 	@ApiStatus.AvailableSince("3.6.1")
 	@CheckReturnValue
 	@Nullable
-	public Object @Nullable [] getData() {
+	public Map<@NotNull String, @Nullable Object> getData() {
 		if (data == null) return null;
-		return Arrays.copyOf(data, data.length);
+		return Collections.unmodifiableMap(data);
 	}
 
 	/**
@@ -502,7 +504,7 @@ public class Response implements JsonObject {
 				&& Objects.equals(effect, response.effect)
 				&& Objects.equals(method, response.method)
 				&& Arrays.equals(args, response.args)
-				&& Arrays.equals(data, response.data)
+				&& Objects.equals(data, response.data)
 				&& Objects.equals(eventType, response.eventType)
 				&& Objects.equals(internal, response.internal)
 				&& Objects.equals(originatingSocket, response.originatingSocket);
@@ -510,9 +512,8 @@ public class Response implements JsonObject {
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hash(packetType, originatingSocket, id, type, message, timeRemaining, effect, method, eventType, internal);
+		int result = Objects.hash(packetType, originatingSocket, id, type, message, timeRemaining, effect, method, eventType, internal, data);
 		result = 31 * result + Arrays.hashCode(args);
-		result = 31 * result + Arrays.hashCode(data);
 		return result;
 	}
 
@@ -919,7 +920,7 @@ public class Response implements JsonObject {
 		private String effect;
 		private String method;
 		private final List<Object> args = new ArrayList<>();
-		private final List<Object> data = new ArrayList<>();
+		private final Map<String, Object> data = new HashMap<>();
 		private String eventType;
 		private Boolean internal;
 
@@ -953,7 +954,7 @@ public class Response implements JsonObject {
 			if (source.args != null)
 				Collections.addAll(this.args, source.args);
 			if (source.data != null)
-				Collections.addAll(this.data, source.data);
+				this.data.putAll(source.data);
 			this.eventType = source.eventType;
 			this.internal = source.internal;
 		}
@@ -993,7 +994,7 @@ public class Response implements JsonObject {
 			this.effect = builder.effect;
 			this.method = builder.method;
 			this.args.addAll(builder.args);
-			this.data.addAll(builder.data);
+			this.data.putAll(builder.data);
 			this.eventType = builder.eventType;
 			this.internal = builder.internal;
 		}
@@ -1251,33 +1252,16 @@ public class Response implements JsonObject {
 		 * Adds data to be passed in this event.
 		 * To be used with {@link PacketType#GENERIC_EVENT}.
 		 *
-		 * @param data data to pass
+		 * @param key   data key
+		 * @param value data value
 		 * @return this builder
 		 * @since 3.6.1
 		 */
 		@ApiStatus.AvailableSince("3.6.1")
 		@NotNull
-		@Contract("_ -> this")
-		public Builder addData(@Nullable Object @Nullable ... data) {
-			if (data != null)
-				Collections.addAll(this.data, data);
-			return this;
-		}
-
-		/**
-		 * Adds data to be passed in this event.
-		 * To be used with {@link PacketType#GENERIC_EVENT}.
-		 *
-		 * @param data data to pass
-		 * @return this builder
-		 * @since 3.6.1
-		 */
-		@ApiStatus.AvailableSince("3.6.1")
-		@NotNull
-		@Contract("_ -> this")
-		public Builder addData(@Nullable Collection<@Nullable Object> data) {
-			if (data != null)
-				this.data.addAll(data);
+		@Contract("_, _ -> this")
+		public Builder putData(@NotNull String key, @Nullable Object value) {
+			this.data.put(key, value);
 			return this;
 		}
 
@@ -1441,8 +1425,8 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("3.6.1")
 		@NotNull
 		@CheckReturnValue
-		public List<Object> data() {
-			return Collections.unmodifiableList(data);
+		public Map<String, Object> data() {
+			return Collections.unmodifiableMap(data);
 		}
 
 		/**

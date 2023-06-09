@@ -113,7 +113,7 @@ public interface SocketManager extends Respondable {
 	 * @since 3.6.1
 	 */
 	@ApiStatus.AvailableSince("3.6.1")
-	default @NotNull List<SocketManager> getConnections() {
+	default @NotNull List<? extends SocketManager> getConnections() {
 		return Collections.singletonList(this);
 	}
 }
