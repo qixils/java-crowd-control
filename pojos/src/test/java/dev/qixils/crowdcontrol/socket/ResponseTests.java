@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("ConstantConditions")
@@ -435,7 +436,9 @@ public class ResponseTests {
 				null,
 				null,
 				null,
-				new Object[]{"arg1", 2, 3.0},
+				new HashMap<String, Object>() {{
+					put("key", "value");
+				}},
 				"event",
 				true
 		));
