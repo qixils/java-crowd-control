@@ -5,7 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -85,5 +87,33 @@ public interface SocketManager extends Respondable {
 	 * @since 3.6.0
 	 */
 	@ApiStatus.AvailableSince("3.6.0")
-	@NotNull Collection<Request.Source> getSources();
+	@NotNull Set<Request.Source> getSources();
+
+	/**
+	 * Gets the {@link Request.Source} that this {@link SocketManager} is connected to
+	 * if there is only one. If there are zero or more than one, {@code null} is returned.
+	 *
+	 * @return the source that this socket manager is connected to, or {@code null}
+	 * @since 3.6.1
+	 */
+	@ApiStatus.AvailableSince("3.6.1")
+	default Request.@Nullable Source getSource() {
+		Set<Request.Source> sources = getSources();
+		if (sources.size() == 1)
+			return sources.iterator().next();
+		return null;
+	}
+
+	/**
+	 * Returns an unmodifiable collection of the individual connected {@link SocketManager}s represented by this
+	 * {@link SocketManager}. If this {@link SocketManager} is standalone, a list containing only this instance is
+	 * returned.
+	 *
+	 * @return the active socket managers
+	 * @since 3.6.1
+	 */
+	@ApiStatus.AvailableSince("3.6.1")
+	default @NotNull List<SocketManager> getConnections() {
+		return Collections.singletonList(this);
+	}
 }

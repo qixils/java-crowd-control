@@ -10,9 +10,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -123,9 +123,14 @@ final class SocketThread extends Thread implements SocketManager {
 	}
 
 	@Override
-	public @NotNull Collection<Request.Source> getSources() {
-		if (effectExecutor == null)
+	public @NotNull Set<Request.Source> getSources() {
+		if (effectExecutor == null || effectExecutor.getSource() == null)
 			return Collections.emptySet();
 		return Collections.singleton(effectExecutor.getSource());
+	}
+
+	@Override
+	public Request.@Nullable Source getSource() {
+		return effectExecutor == null ? null : effectExecutor.getSource();
 	}
 }

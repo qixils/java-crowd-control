@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 final class ServerResponse extends Response {
 	private final transient @NotNull ServerSocketManager manager;
 
-	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, @Nullable Duration timeRemaining, @Nullable String effect, @Nullable String method, @Nullable Object @Nullable [] args) throws IllegalArgumentException {
-		super(id, null, packetType, type, message, timeRemaining, effect, method, args);
+	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, @Nullable Duration timeRemaining, @Nullable String effect, @Nullable String method, @Nullable Object @Nullable [] args, @Nullable Object @Nullable [] data, @Nullable String eventType, @Nullable Boolean internal) throws IllegalArgumentException {
+		super(id, null, packetType, type, message, timeRemaining, effect, method, args, data, eventType, internal);
 		this.manager = manager;
 	}
 
@@ -29,7 +29,10 @@ final class ServerResponse extends Response {
 				builder.timeRemaining(),
 				builder.effect(),
 				builder.method(),
-				builder.arguments().toArray()
+				builder.arguments().toArray(),
+				builder.data().toArray(),
+				builder.eventType(),
+				builder.internal()
 		);
 	}
 

@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -108,10 +107,15 @@ public final class ServerSocketManager implements SocketManager {
 	}
 
 	@Override
-	public @NotNull Collection<Request.Source> getSources() {
+	public @NotNull Set<Request.Source> getSources() {
 		Set<Request.Source> sources = new HashSet<>();
 		for (SocketThread socketThread : getSocketThreads())
 			sources.addAll(socketThread.getSources());
 		return Collections.unmodifiableSet(sources);
+	}
+
+	@Override
+	public @NotNull List<SocketManager> getConnections() {
+		return Collections.unmodifiableList(new ArrayList<>(socketThreads));
 	}
 }

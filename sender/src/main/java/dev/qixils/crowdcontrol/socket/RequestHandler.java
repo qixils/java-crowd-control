@@ -128,7 +128,7 @@ final class RequestHandler implements SimulatedService<Response> {
 						logger.info("Login prompted; sending password");
 						sendRequest(new Request.Builder()
 								.type(Request.Type.LOGIN)
-								.message(encryptedPassword)
+								.password(encryptedPassword)
 						).subscribe();
 						break;
 

@@ -18,12 +18,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -480,8 +480,12 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	}
 
 	@Override
-	public @NotNull Collection<Request.Source> getSources() {
+	public @NotNull Set<Request.Source> getSources() {
 		return socketManager.getSources();
 	}
 
+	@Override
+	public @NotNull List<SocketManager> getConnections() {
+		return socketManager.getConnections();
+	}
 }

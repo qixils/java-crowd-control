@@ -142,6 +142,9 @@ public class ResponseTests {
 				null,
 				null,
 				null,
+				null,
+                null,
+				null,
 				null
 		));
 		// non-zero ID throws IllegalArgumentException when PacketType is not EFFECT_RESULT
@@ -151,6 +154,9 @@ public class ResponseTests {
 				Response.PacketType.DISCONNECT,
 				null,
 				"Server is disconnecting",
+				null,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -166,6 +172,9 @@ public class ResponseTests {
 				Duration.ofSeconds(-1),
 				null,
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		// zero timeRemaining throws IllegalArgumentException
@@ -176,6 +185,9 @@ public class ResponseTests {
 				Response.ResultType.SUCCESS,
 				"Effect applied successfully",
 				Duration.ZERO,
+				null,
+				null,
+				null,
 				null,
 				null,
 				null
@@ -190,12 +202,18 @@ public class ResponseTests {
 				null,
 				null,
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
 				0,
 				null,
 				Response.PacketType.EFFECT_STATUS,
+				null,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -213,6 +231,9 @@ public class ResponseTests {
 				null,
 				null,
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		// when message is null and packetType requires a message, throws IllegalArgumentException
@@ -220,6 +241,9 @@ public class ResponseTests {
 				0,
 				null,
 				Response.PacketType.DISCONNECT,
+				null,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -237,6 +261,9 @@ public class ResponseTests {
 				null,
 				null,
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		// when type is not a status and packetType is EFFECT_STATUS
@@ -245,6 +272,9 @@ public class ResponseTests {
 				null,
 				Response.PacketType.EFFECT_STATUS,
 				Response.ResultType.SUCCESS,
+				null,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -261,6 +291,9 @@ public class ResponseTests {
 				null,
 				null,
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		// when packetType is REMOTE_FUNCTION and method is null, throws IllegalArgumentException
@@ -268,6 +301,24 @@ public class ResponseTests {
 				0,
 				null,
 				Response.PacketType.REMOTE_FUNCTION,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+		));
+		// when packetType is GENERIC_EVENT and eventType is null, throws IllegalArgumentException
+		Assertions.assertThrows(IllegalArgumentException.class, () -> new Response(
+				0,
+				null,
+				Response.PacketType.GENERIC_EVENT,
+				null,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -285,6 +336,9 @@ public class ResponseTests {
 				null,
 				null,
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		Assertions.assertDoesNotThrow(() -> new Response(
@@ -292,6 +346,9 @@ public class ResponseTests {
 				null,
 				null,
 				Response.ResultType.SUCCESS,
+				null,
+				null,
+				null,
 				null,
 				null,
 				null,
@@ -307,6 +364,9 @@ public class ResponseTests {
 				Duration.ofSeconds(1),
 				"effect",
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		Assertions.assertDoesNotThrow(() -> new Response(
@@ -318,6 +378,9 @@ public class ResponseTests {
 				null,
 				"effect",
 				null,
+				null,
+				null,
+				null,
 				null
 		));
 		Assertions.assertDoesNotThrow(() -> new Response(
@@ -329,6 +392,9 @@ public class ResponseTests {
 				null,
 				null,
 				"method",
+				null,
+				null,
+				null,
 				null
 		));
 		Assertions.assertDoesNotThrow(() -> new Response(
@@ -340,7 +406,38 @@ public class ResponseTests {
 				null,
 				null,
 				"method",
-				new Object[]{"arg1", 2, 3.0}
+				new Object[]{"arg1", 2, 3.0},
+				null,
+				null,
+				null
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				0,
+				null,
+				Response.PacketType.GENERIC_EVENT,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				"event",
+				null
+		));
+		Assertions.assertDoesNotThrow(() -> new Response(
+				0,
+				null,
+				Response.PacketType.GENERIC_EVENT,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				new Object[]{"arg1", 2, 3.0},
+				"event",
+				true
 		));
 	}
 
@@ -439,8 +536,9 @@ public class ResponseTests {
 		response = response.toBuilder().packetType(null).clone().build().toBuilder().build();
 		Assertions.assertEquals(Response.PacketType.EFFECT_RESULT, response.getPacketType());
 
-		response = new Response.Builder().packetType(Response.PacketType.REMOTE_FUNCTION).addArguments("arg1", 2, 3.0).addArguments(Arrays.asList("arg4", 5, 6.0)).clone().build().toBuilder().build();
+		response = new Response.Builder().packetType(Response.PacketType.REMOTE_FUNCTION).method("method").addArguments("arg1", 2, 3.0).addArguments(Arrays.asList("arg4", 5, 6.0)).clone().build().toBuilder().build();
 		Assertions.assertEquals(Response.PacketType.REMOTE_FUNCTION, response.getPacketType());
+		Assertions.assertEquals("method", response.getMethod());
 		Assertions.assertArrayEquals(new Object[]{"arg1", 2, 3.0, "arg4", 5, 6.0}, response.getArguments());
 	}
 

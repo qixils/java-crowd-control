@@ -16,9 +16,6 @@ public class RequestTests {
 		// negative ID test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request.Builder().id(-1).type(Request.Type.START).effect("summon").viewer("qixils").build());
-		// null type test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request.Builder().id(1).effect("summon").viewer("qixils").build());
 		// null effect test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request.Builder().id(1).type(Request.Type.START).viewer("qixils").build());
@@ -88,6 +85,8 @@ public class RequestTests {
 				.parameters(5d)
 				.quantity(3)
 				.source(new Request.Source.Builder().target(source).build())
+				.login("qixils")
+				.password("password")
 				.build();
 		Assertions.assertEquals(1, request.getId());
 		Assertions.assertEquals(Request.Type.START, request.getType());
@@ -99,7 +98,9 @@ public class RequestTests {
 		Assertions.assertEquals(1, request.getParameters().length);
 		Assertions.assertEquals(5d, request.getParameters()[0]);
 		Assertions.assertFalse(request.isGlobal());
-		Assertions.assertEquals(3, request.getTargets().length);
+		Assertions.assertEquals("qixils", request.getLogin());
+		Assertions.assertEquals("password", request.getPassword());
+		Assertions.assertEquals(2, request.getTargets().length);
 		Assertions.assertEquals(3, request.getQuantity());
 		// target 1
 		Assertions.assertEquals("493", request.getTargets()[0].getId());
@@ -156,6 +157,16 @@ public class RequestTests {
 		builder = builder.duration(Duration.ofSeconds(10));
 		Assertions.assertEquals(Duration.ofSeconds(10), builder.duration());
 
+		// login test
+		Assertions.assertNull(builder.login());
+		builder = builder.login("qixils");
+		Assertions.assertEquals("qixils", builder.login());
+
+		// password test
+		Assertions.assertNull(builder.password());
+		builder = builder.password("password");
+		Assertions.assertEquals("password", builder.password());
+
 		// target builder test
 		Request.Target.Builder targetBuilder = new Request.Target.Builder();
 		Assertions.assertNull(targetBuilder.id());
@@ -175,7 +186,7 @@ public class RequestTests {
 				targetBuilder.build(),
 				new Request.Target.Builder().clone().build().toBuilder().build()
 		);
-		Assertions.assertEquals(3, builder.targets().length);
+		Assertions.assertEquals(2, builder.targets().length);
 		// target 1
 		Assertions.assertEquals("493", builder.targets()[0].getId());
 		Assertions.assertEquals("epic streamer 493", builder.targets()[0].getName());
@@ -201,6 +212,10 @@ public class RequestTests {
 		Assertions.assertNull(sourceBuilder.ip());
 		InetAddress ip = Assertions.assertDoesNotThrow(() -> InetAddress.getByName("127.0.0.1")); // lol
 		Assertions.assertEquals(ip, sourceBuilder.ip(ip).clone().build().toBuilder().ip());
+		Assertions.assertNull(sourceBuilder.login());
+		Assertions.assertEquals("qixils", sourceBuilder.login("qixils").clone().build().toBuilder().login());
+		Assertions.assertNull(builder.source());
+		builder = builder.source(sourceBuilder.build());
 
 		// parameters test
 		Assertions.assertNull(builder.parameters());
@@ -224,7 +239,9 @@ public class RequestTests {
 		Assertions.assertEquals(1, request.getParameters().length);
 		Assertions.assertEquals(5d, request.getParameters()[0]);
 		Assertions.assertFalse(request.isGlobal());
-		Assertions.assertEquals(3, builder.targets().length);
+		Assertions.assertEquals("qixils", request.getLogin());
+		Assertions.assertEquals("password", request.getPassword());
+		Assertions.assertEquals(2, builder.targets().length);
 		Assertions.assertEquals(4, request.getQuantity());
 		Assertions.assertEquals(1, request.toBuilder().quantity(null).build().getQuantityOrDefault());
 		Assertions.assertNull(request.toBuilder().quantity(null).build().getQuantity());
@@ -241,6 +258,7 @@ public class RequestTests {
 		Assertions.assertNull(builder.targets()[1].getAvatar());
 		Assertions.assertNull(builder.targets()[1].getService());
 		// source
+		Assertions.assertNotNull(builder.source());
 		Assertions.assertEquals("493", builder.source().target().getId());
 		Assertions.assertEquals("epic streamer 493", builder.source().target().getName());
 		Assertions.assertEquals("streamer", builder.source().target().getLogin());
@@ -248,6 +266,7 @@ public class RequestTests {
 		Assertions.assertEquals("TWITCH", builder.source().target().getService());
 		Assertions.assertEquals(targetBuilder.build(), builder.source().target());
 		Assertions.assertEquals(ip, builder.source().ip());
+		Assertions.assertEquals("qixils", builder.source().login());
 	}
 
 	@Test
@@ -267,13 +286,14 @@ public class RequestTests {
 				.targets(
 						target,
 						new Request.Target.Builder().clone().build().toBuilder().build())
-				.parameters(5d) // json treats number params as doubles by default
+				.parameters(5.0d) // json treats number params as doubles by default
 				.quantity(3)
-				.source(new Request.Source.Builder().target(target).clone().build().toBuilder().build())
+				.login("qixils")
+				.password("password")
 				.clone()
 				.build();
-		String json = "{\"id\":1,\"type\":1,\"code\":\"summon\",\"viewer\":\"qixils\",\"message\":\"Hello\",\"cost\":10,\"duration\":10000,\"targets\":[{\"id\":\"493\",\"name\":\"epic streamer 493\",\"login\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\",\"source\":\"TWITCH\"},{}],\"parameters\":[5],\"quantity\":3}";
-		Assertions.assertEquals(request, Request.fromJSON(json));
-		Assertions.assertEquals(Request.fromJSON(request.toJSON()), Request.fromJSON(json));
+		String json = "{\"id\":1,\"type\":1,\"code\":\"summon\",\"viewer\":\"qixils\",\"message\":\"Hello\",\"cost\":10,\"duration\":10000,\"targets\":[{\"id\":\"493\",\"name\":\"epic streamer 493\",\"login\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\",\"service\":\"TWITCH\"},{}],\"parameters\":[5.0],\"quantity\":3,\"login\":\"qixils\",\"password\":\"password\"}";
+		Assertions.assertEquals(request, Request.fromJSON(json), () -> "JSONs: " + request.toJSON() + " vs " + json);
+		Assertions.assertEquals(Request.fromJSON(request.toJSON()), Request.fromJSON(json), () -> "JSONs: " + request.toJSON() + " vs " + json);
 	}
 }

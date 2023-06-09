@@ -59,6 +59,12 @@ public class Response implements JsonObject {
 	private String method;
 	@Nullable
 	private Object @Nullable [] args;
+	@Nullable
+	private Object @Nullable [] data;
+	@Nullable
+	private String eventType;
+	@Nullable
+	private Boolean internal;
 
 	/**
 	 * Instantiates an empty {@link Response}.
@@ -82,6 +88,9 @@ public class Response implements JsonObject {
 	 * @param effect            the code of the effect that was executed
 	 * @param method            the remote function to execute if the packet type is {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION}
 	 * @param args              the arguments to pass to the remote function
+	 * @param data              the data of an {@link PacketType#GENERIC_EVENT event}
+	 * @param eventType         the type of an {@link PacketType#GENERIC_EVENT event}
+	 * @param internal          whether the packet is internal or not
 	 * @throws IllegalArgumentException May be thrown in various circumstances:
 	 *                                  <ul>
 	 *                                      <li>if the {@code id} is negative</li>
@@ -95,6 +104,7 @@ public class Response implements JsonObject {
 	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is not a status} and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
 	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is a status} and {@code packetType} is not {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
 	 *                                      <li>if the {@code packetType} is {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION} and {@code method} is null</li>
+	 *                                      <li>if the {@code eventType} is null and the {@code packetType} is {@link PacketType#GENERIC_EVENT GENERIC_EVENT}</li>
 	 *                                  </ul>
 	 */
 	Response(int id,
@@ -105,7 +115,10 @@ public class Response implements JsonObject {
 			 @Nullable Duration timeRemaining,
 			 @Nullable String effect,
 			 @Nullable String method,
-			 @Nullable Object @Nullable [] args) throws IllegalArgumentException {
+			 @Nullable Object @Nullable [] args,
+			 @Nullable Object @Nullable [] data,
+			 @Nullable String eventType,
+			 @Nullable Boolean internal) throws IllegalArgumentException {
 		this.id = id;
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
@@ -118,6 +131,9 @@ public class Response implements JsonObject {
 		this.effect = effect;
 		this.method = method;
 		this.args = args;
+		this.data = data;
+		this.eventType = eventType;
+		this.internal = internal;
 
 		// validate packet type and result type
 		this.packetType = ExceptionUtil.validateNotNullElse(packetType, PacketType.EFFECT_RESULT);
@@ -140,6 +156,9 @@ public class Response implements JsonObject {
 
 		if (this.packetType == PacketType.REMOTE_FUNCTION && this.method == null)
 			throw new IllegalArgumentException("method cannot be null if packetType is REMOTE_FUNCTION");
+
+		if (this.packetType == PacketType.GENERIC_EVENT && this.eventType == null)
+			throw new IllegalArgumentException("eventType cannot be null if packetType is GENERIC_EVENT");
 
 		// set message
 		if (message != null)
@@ -164,7 +183,7 @@ public class Response implements JsonObject {
 	Response(@Nullable Socket originatingSocket,
 			 @NotNull PacketType packetType,
 			 @Nullable String message) throws IllegalArgumentException {
-		this(0, originatingSocket, packetType, null, message, null, null, null, null);
+		this(0, originatingSocket, packetType, null, message, null, null, null, null, null, null, null);
 	}
 
 	/**
@@ -189,7 +208,7 @@ public class Response implements JsonObject {
 			 @NotNull ResultType type,
 			 @Nullable String message,
 			 @Nullable Duration timeRemaining) throws IllegalArgumentException {
-		this(id, originatingSocket, ExceptionUtil.validateNotNull(type, "type").isStatus() ? PacketType.EFFECT_STATUS : PacketType.EFFECT_RESULT, type, message, timeRemaining, null, null, null);
+		this(id, originatingSocket, ExceptionUtil.validateNotNull(type, "type").isStatus() ? PacketType.EFFECT_STATUS : PacketType.EFFECT_RESULT, type, message, timeRemaining, null, null, null, null, null, null);
 	}
 
 	/**
@@ -222,7 +241,7 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	private Response(@NotNull Builder builder) {
 		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect, builder.method, builder.args.toArray());
+				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect, builder.method, builder.args.toArray(), builder.data.toArray(), builder.eventType, builder.internal);
 	}
 
 	/**
@@ -361,6 +380,7 @@ public class Response implements JsonObject {
 
 	/**
 	 * Gets the name of the remote function to be executed.
+	 * Null if the packet type is not {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION}.
 	 *
 	 * @return remote function name
 	 * @since 3.6.0
@@ -374,6 +394,7 @@ public class Response implements JsonObject {
 
 	/**
 	 * Gets a copy of the arguments to be passed to the remote function.
+	 * Null if the packet type is not {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION}.
 	 *
 	 * @return remote function arguments
 	 * @since 3.6.0
@@ -384,6 +405,48 @@ public class Response implements JsonObject {
 	public Object @Nullable [] getArguments() {
 		if (args == null) return null;
 		return Arrays.copyOf(args, args.length);
+	}
+
+	/**
+	 * Gets a copy of the event data.
+	 * Null if the packet type is not {@link PacketType#GENERIC_EVENT GENERIC_EVENT}.
+	 *
+	 * @return event data
+	 * @since 3.6.1
+	 */
+	@ApiStatus.AvailableSince("3.6.1")
+	@CheckReturnValue
+	@Nullable
+	public Object @Nullable [] getData() {
+		if (data == null) return null;
+		return Arrays.copyOf(data, data.length);
+	}
+
+	/**
+	 * Gets the name of the event being fired.
+	 * Null if the packet type is not {@link PacketType#GENERIC_EVENT GENERIC_EVENT}.
+	 *
+	 * @return event name
+	 * @since 3.6.1
+	 */
+	@ApiStatus.AvailableSince("3.6.1")
+	@CheckReturnValue
+	@Nullable
+	public String getEventType() {
+		return eventType;
+	}
+
+	/**
+	 * Gets whether this packet is internal.
+	 *
+	 * @return true if this packet is internal, false if not, null if unknown or not applicable
+	 * @since 3.6.1
+	 */
+	@ApiStatus.AvailableSince("3.6.1")
+	@CheckReturnValue
+	@Nullable
+	public Boolean isInternal() {
+		return internal;
 	}
 
 	/**
@@ -436,12 +499,21 @@ public class Response implements JsonObject {
 				&& packetType == response.packetType
 				&& type == response.type
 				&& Objects.equals(message, response.message)
-				&& Objects.equals(effect, response.effect);
+				&& Objects.equals(effect, response.effect)
+				&& Objects.equals(method, response.method)
+				&& Arrays.equals(args, response.args)
+				&& Arrays.equals(data, response.data)
+				&& Objects.equals(eventType, response.eventType)
+				&& Objects.equals(internal, response.internal)
+				&& Objects.equals(originatingSocket, response.originatingSocket);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(packetType, id, type, message, timeRemaining, effect);
+		int result = Objects.hash(packetType, originatingSocket, id, type, message, timeRemaining, effect, method, eventType, internal);
+		result = 31 * result + Arrays.hashCode(args);
+		result = 31 * result + Arrays.hashCode(data);
+		return result;
 	}
 
 	/**
@@ -519,6 +591,13 @@ public class Response implements JsonObject {
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
 		EFFECT_STATUS(false, true), // 1
+		/**
+		 * The packet is a generic event.
+		 *
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		GENERIC_EVENT(false, false, (byte) 0x10), // 16
 		/**
 		 * The packet is triggering a remote function to be run in the CS.
 		 * This should be used with an {@link Builder#id(int) id} of 0 and should specify the function name to execute
@@ -840,6 +919,9 @@ public class Response implements JsonObject {
 		private String effect;
 		private String method;
 		private final List<Object> args = new ArrayList<>();
+		private final List<Object> data = new ArrayList<>();
+		private String eventType;
+		private Boolean internal;
 
 		/**
 		 * Creates a new empty builder.
@@ -870,6 +952,10 @@ public class Response implements JsonObject {
 			this.method = source.method;
 			if (source.args != null)
 				Collections.addAll(this.args, source.args);
+			if (source.data != null)
+				Collections.addAll(this.data, source.data);
+			this.eventType = source.eventType;
+			this.internal = source.internal;
 		}
 
 		/**
@@ -907,6 +993,9 @@ public class Response implements JsonObject {
 			this.effect = builder.effect;
 			this.method = builder.method;
 			this.args.addAll(builder.args);
+			this.data.addAll(builder.data);
+			this.eventType = builder.eventType;
+			this.internal = builder.internal;
 		}
 
 		/**
@@ -1158,6 +1247,71 @@ public class Response implements JsonObject {
 			return this;
 		}
 
+		/**
+		 * Adds data to be passed in this event.
+		 * To be used with {@link PacketType#GENERIC_EVENT}.
+		 *
+		 * @param data data to pass
+		 * @return this builder
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder addData(@Nullable Object @Nullable ... data) {
+			if (data != null)
+				Collections.addAll(this.data, data);
+			return this;
+		}
+
+		/**
+		 * Adds data to be passed in this event.
+		 * To be used with {@link PacketType#GENERIC_EVENT}.
+		 *
+		 * @param data data to pass
+		 * @return this builder
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder addData(@Nullable Collection<@Nullable Object> data) {
+			if (data != null)
+				this.data.addAll(data);
+			return this;
+		}
+
+		/**
+		 * Sets the type of event being fired.
+		 * To be used with {@link PacketType#GENERIC_EVENT}.
+		 *
+		 * @param eventType event type
+		 * @return this builder
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder eventType(@Nullable String eventType) {
+			this.eventType = eventType;
+			return this;
+		}
+
+		/**
+		 * Sets whether the packet is internal.
+		 *
+		 * @param internal whether the packet is internal
+		 * @return this builder
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder internal(@Nullable Boolean internal) {
+			this.internal = internal;
+			return this;
+		}
+
 		// getters
 
 		/**
@@ -1275,6 +1429,47 @@ public class Response implements JsonObject {
 		@CheckReturnValue
 		public List<Object> arguments() {
 			return Collections.unmodifiableList(args);
+		}
+
+		/**
+		 * Gets a view of the data to be passed in this event.
+		 * To be used with {@link PacketType#GENERIC_EVENT}.
+		 *
+		 * @return data to pass
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@NotNull
+		@CheckReturnValue
+		public List<Object> data() {
+			return Collections.unmodifiableList(data);
+		}
+
+		/**
+		 * Gets the type of event being fired.
+		 * To be used with {@link PacketType#GENERIC_EVENT}.
+		 *
+		 * @return event type
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@Nullable
+		@CheckReturnValue
+		public String eventType() {
+			return eventType;
+		}
+
+		/**
+		 * Gets whether the packet is internal.
+		 *
+		 * @return whether the packet is internal
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@Nullable
+		@CheckReturnValue
+		public Boolean internal() {
+			return internal;
 		}
 
 		// miscellaneous

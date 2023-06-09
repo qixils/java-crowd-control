@@ -12,9 +12,9 @@ import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -130,9 +130,14 @@ public final class ClientSocketManager implements SocketManager {
 	}
 
 	@Override
-	public @NotNull Collection<Request.Source> getSources() {
-		if (effectExecutor == null)
+	public @NotNull Set<Request.Source> getSources() {
+		if (effectExecutor == null || effectExecutor.getSource() == null)
 			return Collections.emptySet();
 		return Collections.singleton(effectExecutor.getSource());
+	}
+
+	@Override
+	public Request.@Nullable Source getSource() {
+		return effectExecutor == null ? null : effectExecutor.getSource();
 	}
 }

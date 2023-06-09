@@ -25,6 +25,7 @@ final class EffectExecutor {
 	private final RequestManager crowdControl;
 	private final @Nullable String password;
 	private boolean loggedIn = false;
+	private @Nullable String login = null;
 	private Request.@Nullable Source player = null;
 
 	EffectExecutor(SocketThread socketThread) throws IOException {
@@ -76,6 +77,7 @@ final class EffectExecutor {
 			Request.Source.Builder source = new Request.Source.Builder();
 			source.target(request.getTargets()[0]);
 			source.ip(socket.getInetAddress());
+			source.login(login);
 			player = source.build();
 		} else if (player != null) {
 			request.setSource(player);
@@ -92,9 +94,12 @@ final class EffectExecutor {
 		if (!loggedIn && password != null && socketThread != null) {
 			if (request.getType() != Request.Type.LOGIN) {
 				request.buildResponse().type(Response.ResultType.NOT_READY).message("Client has not logged in").send();
-			} else if (password.equalsIgnoreCase(request.getMessage())) {
+			} else if (password.equalsIgnoreCase(request.getPassword())) {
 				logger.info("New client successfully logged in (" + socketThread.displayName + ")");
 				new Response(socket, Response.PacketType.LOGIN_SUCCESS, "Successfully logged in").send();
+				login = request.getLogin();
+				if (player != null)
+					player = player.toBuilder().login(login).build();
 				loggedIn = true;
 			} else {
 				logger.info("Aborting connection due to incorrect password (" + socketThread.displayName + ")");

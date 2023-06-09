@@ -51,6 +51,10 @@ public class Request implements JsonObject, Respondable {
 	private Object value;
 	@Nullable
 	private Integer quantity;
+	@Nullable
+	private String login;
+	@Nullable
+	private String password;
 
 	/**
 	 * Instantiates an empty {@link Request}.
@@ -72,7 +76,7 @@ public class Request implements JsonObject, Respondable {
 	 *                                      <li>if the given packet type is null</li>
 	 *                                      <li>if the given packet type is an {@link Type#isEffectType() effect type} and the effect or viewer is null</li>
 	 *                                      <li>if the given packet type is not an {@link Type#isEffectType()} effect type} and the effect, viewer, cost, or targets is non-null</li>
-	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the message is null</li>
+	 *                                      <li>if the given packet type is {@link Type#LOGIN} and the password is null</li>
 	 *                                  </ul>
 	 */
 	private Request(Request.@NotNull Builder builder) throws IllegalArgumentException {
@@ -100,8 +104,8 @@ public class Request implements JsonObject, Respondable {
 			if (builder.quantity != null)
 				throw new IllegalArgumentException("quantity cannot be non-null for non-effect packets");
 
-			if (builder.message == null && this.type == Type.LOGIN)
-				throw new IllegalArgumentException("message (password) cannot be null for login packets");
+			if (builder.password == null && this.type == Type.LOGIN)
+				throw new IllegalArgumentException("password cannot be null for login packets");
 		}
 
 		// other arguments
@@ -125,6 +129,8 @@ public class Request implements JsonObject, Respondable {
 		this.quantity = builder.quantity;
 		this.source = builder.source;
 		this.originatingSocket = builder.originatingSocket;
+		this.login = builder.login;
+		this.password = builder.password;
 
 		// validate targets are not null
 		if (builder.targets != null) {
@@ -326,6 +332,34 @@ public class Request implements JsonObject, Respondable {
 	@CheckReturnValue
 	public boolean isGlobal() {
 		return targets == null || targets.length == 0;
+	}
+
+	/**
+	 * Gets the name or ID of the streamer in the game.
+	 * Null when {@link #getType()} is not {@link Type#LOGIN}.
+	 *
+	 * @return streamer name or ID
+	 * @since 3.6.1
+	 */
+	@ApiStatus.AvailableSince("3.6.1")
+	@Nullable
+	@CheckReturnValue
+	public String getLogin() {
+		return login;
+	}
+
+	/**
+	 * Gets the submitted password.
+	 * Non-null when {@link #getType()} is {@link Type#LOGIN}.
+	 *
+	 * @return password
+	 * @since 3.6.1
+	 */
+	@ApiStatus.AvailableSince("3.6.1")
+	@Nullable
+	@CheckReturnValue
+	public String getPassword() {
+		return password;
 	}
 
 	/**
@@ -957,10 +991,12 @@ public class Request implements JsonObject, Respondable {
 	public static final class Source {
 		private final @Nullable Target target;
 		private final @Nullable InetAddress ip;
+		private final @Nullable String login;
 
 		private Source(@NotNull Builder builder) {
 			this.target = builder.target;
 			this.ip = builder.ip;
+			this.login = builder.login;
 		}
 
 		/**
@@ -989,6 +1025,19 @@ public class Request implements JsonObject, Respondable {
 			return ip;
 		}
 
+		/**
+		 * The name or ID of the streamer in the game.
+		 *
+		 * @return the name or ID of the streamer in the game
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@Nullable
+		@CheckReturnValue
+		public String login() {
+			return login;
+		}
+
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
@@ -1007,6 +1056,7 @@ public class Request implements JsonObject, Respondable {
 			return "Source{" +
 					"target=" + target +
 					", ip=" + ip +
+					", login=" + repr(login) +
 					'}';
 		}
 
@@ -1032,6 +1082,7 @@ public class Request implements JsonObject, Respondable {
 		public static final class Builder implements Cloneable {
 			private @Nullable Target target;
 			private @Nullable InetAddress ip;
+			private @Nullable String login;
 
 			/**
 			 * Creates a new builder.
@@ -1046,11 +1097,13 @@ public class Request implements JsonObject, Respondable {
 			private Builder(@NotNull Source source) {
 				this.target = source.target;
 				this.ip = source.ip;
+				this.login = source.login;
 			}
 
 			private Builder(@NotNull Builder builder) {
 				this.target = builder.target;
 				this.ip = builder.ip;
+				this.login = builder.login;
 			}
 
 			/**
@@ -1099,6 +1152,21 @@ public class Request implements JsonObject, Respondable {
 				return this;
 			}
 
+			/**
+			 * Sets the name or ID of the streamer in the game.
+			 *
+			 * @param login the name or ID of the streamer in the game
+			 * @return this builder
+			 * @since 3.6.1
+			 */
+			@ApiStatus.AvailableSince("3.6.1")
+			@NotNull
+			@Contract("_ -> this")
+			public Builder login(@Nullable String login) {
+				this.login = login;
+				return this;
+			}
+
 			// getters
 
 			/**
@@ -1125,6 +1193,19 @@ public class Request implements JsonObject, Respondable {
 			@CheckReturnValue
 			public InetAddress ip() {
 				return ip;
+			}
+
+			/**
+			 * Gets the name or ID of the streamer in the game.
+			 *
+			 * @return the name or ID of the streamer in the game
+			 * @since 3.6.1
+			 */
+			@ApiStatus.AvailableSince("3.6.1")
+			@Nullable
+			@CheckReturnValue
+			public String login() {
+				return login;
 			}
 
 			// misc
@@ -1177,6 +1258,8 @@ public class Request implements JsonObject, Respondable {
 		private @Nullable Source source;
 		private @Nullable Object value;
 		private @Nullable Integer quantity;
+		private @Nullable String login;
+		private @Nullable String password;
 
 		/**
 		 * Creates a new builder.
@@ -1209,6 +1292,8 @@ public class Request implements JsonObject, Respondable {
 			this.source = source.source;
 			this.value = source.value;
 			this.quantity = source.quantity;
+			this.login = source.login;
+			this.password = source.password;
 		}
 
 		/**
@@ -1233,6 +1318,8 @@ public class Request implements JsonObject, Respondable {
 			this.source = builder.source;
 			this.value = builder.value;
 			this.quantity = builder.quantity;
+			this.login = builder.login;
+			this.password = builder.password;
 		}
 
 		// setters
@@ -1433,6 +1520,36 @@ public class Request implements JsonObject, Respondable {
 			return this;
 		}
 
+		/**
+		 * Sets the name or ID of the streamer in the game.
+		 *
+		 * @param login name or ID of the streamer in the game
+		 * @return this builder
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder login(@Nullable String login) {
+			this.login = login;
+			return this;
+		}
+
+		/**
+		 * Sets the submitted password.
+		 *
+		 * @param password submitted password
+		 * @return this builder
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder password(@Nullable String password) {
+			this.password = password;
+			return this;
+		}
+
 		// getters
 
 		/**
@@ -1600,6 +1717,32 @@ public class Request implements JsonObject, Respondable {
 		@CheckReturnValue
 		public Integer quantity() {
 			return quantity;
+		}
+
+		/**
+		 * Gets the name or ID of the streamer in the game.
+		 *
+		 * @return name or ID of the streamer in the game
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@Nullable
+		@CheckReturnValue
+		public String login() {
+			return login;
+		}
+
+		/**
+		 * Gets the submitted password.
+		 *
+		 * @return submitted password
+		 * @since 3.6.1
+		 */
+		@ApiStatus.AvailableSince("3.6.1")
+		@Nullable
+		@CheckReturnValue
+		public String password() {
+			return password;
 		}
 
 		// build
