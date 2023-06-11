@@ -789,6 +789,7 @@ public class Request implements JsonObject, Respondable {
 		 * An object is roughly equal if its ID is non-null and equal to this {@link Target}'s, or if they are equal via
 		 * {@link #equals(Object)}.
 		 *
+		 * @param o object to compare
 		 * @return if the provided object is roughly equal to this {@link Target}
 		 * @since 3.6.2
 		 */
