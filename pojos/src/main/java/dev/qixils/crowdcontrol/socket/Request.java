@@ -41,6 +41,7 @@ public class Request implements JsonObject, Respondable {
 	private String effect;
 	private String message;
 	private String viewer;
+	// TODO: private Target[] viewers;
 	@Nullable
 	private Integer cost;
 	private Target[] targets;
@@ -737,6 +738,23 @@ public class Request implements JsonObject, Respondable {
 					&& Objects.equals(getLogin(), target.getLogin())
 					&& Objects.equals(getAvatar(), target.getAvatar())
 					&& Objects.equals(getService(), target.getService());
+		}
+
+		/**
+		 * Determines if the provided object is roughly equal to this {@link Target}.
+		 * An object is roughly equal if its ID is non-null and equal to this {@link Target}'s, or if they are equal via
+		 * {@link #equals(Object)}.
+		 *
+		 * @return if the provided object is roughly equal to this {@link Target}
+		 * @since 3.6.2
+		 */
+		@ApiStatus.AvailableSince("3.6.2")
+		@CheckReturnValue
+		public boolean equalsRoughly(@Nullable Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Target target = (Target) o;
+			return (getId() != null && getId().equals(target.getId())) || equals(o);
 		}
 
 		@Override
