@@ -184,6 +184,8 @@ public class RequestTests {
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", targetBuilder.avatar("https://i.qixils.dev/favicon.png").clone().build().toBuilder().avatar());
 		Assertions.assertNull(targetBuilder.service());
 		Assertions.assertEquals("TWITCH", targetBuilder.service("TWITCH").clone().build().toBuilder().service());
+		Assertions.assertNull(targetBuilder.ccUID());
+		Assertions.assertEquals("blahblah", targetBuilder.ccUID("blahblah").clone().build().toBuilder().ccUID());
 
 		// targets test
 		Assertions.assertNull(builder.targets());
@@ -198,6 +200,7 @@ public class RequestTests {
 		Assertions.assertEquals("streamer", builder.targets()[0].getLogin());
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.targets()[0].getAvatar());
 		Assertions.assertEquals("TWITCH", builder.targets()[0].getService());
+		Assertions.assertEquals("blahblah", builder.targets()[0].getCCUID());
 		// target 2
 		Assertions.assertNull(builder.targets()[1].getId());
 		Assertions.assertNull(builder.targets()[1].getName());
@@ -213,6 +216,7 @@ public class RequestTests {
 		Assertions.assertEquals("streamer", sourceBuilder.target().getLogin());
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", sourceBuilder.target().getAvatar());
 		Assertions.assertEquals("TWITCH", sourceBuilder.target().getService());
+		Assertions.assertEquals("blahblah", sourceBuilder.target().getCCUID());
 		Assertions.assertEquals(targetBuilder.build(), sourceBuilder.target());
 		Assertions.assertNull(sourceBuilder.ip());
 		InetAddress ip = Assertions.assertDoesNotThrow(() -> InetAddress.getByName("127.0.0.1")); // lol
@@ -261,6 +265,7 @@ public class RequestTests {
 		Assertions.assertEquals("streamer", builder.targets()[0].getLogin());
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.targets()[0].getAvatar());
 		Assertions.assertEquals("TWITCH", builder.targets()[0].getService());
+		Assertions.assertEquals("blahblah", builder.targets()[0].getCCUID());
 		// target 2
 		Assertions.assertNull(builder.targets()[1].getId());
 		Assertions.assertNull(builder.targets()[1].getName());
@@ -274,6 +279,7 @@ public class RequestTests {
 		Assertions.assertEquals("streamer", builder.source().target().getLogin());
 		Assertions.assertEquals("https://i.qixils.dev/favicon.png", builder.source().target().getAvatar());
 		Assertions.assertEquals("TWITCH", builder.source().target().getService());
+		Assertions.assertEquals("blahblah", builder.source().target().getCCUID());
 		Assertions.assertEquals(targetBuilder.build(), builder.source().target());
 		Assertions.assertEquals(ip, builder.source().ip());
 		Assertions.assertEquals("qixils", builder.source().login());
