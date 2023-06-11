@@ -124,7 +124,7 @@ final class SocketThread extends Thread implements SocketManager {
 
 	@Override
 	public @NotNull Set<Request.Source> getSources() {
-		if (effectExecutor == null || effectExecutor.getSource() == null)
+		if (effectExecutor == null)
 			return Collections.emptySet();
 		return Collections.singleton(effectExecutor.getSource());
 	}

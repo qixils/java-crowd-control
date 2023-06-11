@@ -4,6 +4,7 @@ import com.google.gson.JsonParseException;
 import dev.qixils.crowdcontrol.RequestManager;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
 import dev.qixils.crowdcontrol.exceptions.NoApplicableTarget;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,6 @@ final class EffectExecutor {
 	private final RequestManager crowdControl;
 	private final @Nullable String password;
 	private boolean loggedIn = false;
-	private @Nullable String login = null;
 	private Request.@Nullable Source player = null;
 
 	EffectExecutor(SocketThread socketThread) throws IOException {
@@ -46,7 +46,9 @@ final class EffectExecutor {
 		this.password = crowdControl.getPassword();
 	}
 
-	Request.Source getSource() {
+	Request.@NotNull Source getSource() {
+		if (player == null)
+			player = new Request.Source.Builder().ip(socket.getInetAddress()).build();
 		return player;
 	}
 
@@ -73,14 +75,15 @@ final class EffectExecutor {
 			return;
 		}
 
-		if (request.getType() == Request.Type.PLAYER_INFO && request.getTargets().length == 1) {
-			Request.Source.Builder source = new Request.Source.Builder();
-			source.target(request.getTargets()[0]);
-			source.ip(socket.getInetAddress());
-			source.login(login);
+		if (request.getType() == Request.Type.PLAYER_INFO) {
+			Request.Source.Builder source = getSource().toBuilder();
+			if (request.getPlayer() != null)
+				source.target(request.getPlayer());
+			else if (request.getTargets().length == 1)
+				source.target(request.getTargets()[0]);
 			player = source.build();
 		} else if (player != null) {
-			request.setSource(player);
+			request.setSource(getSource());
 		}
 
 		request.setOriginatingSocket(socket);
@@ -97,9 +100,7 @@ final class EffectExecutor {
 			} else if (password.equalsIgnoreCase(request.getPassword())) {
 				logger.info("New client successfully logged in (" + socketThread.displayName + ")");
 				new Response(socket, Response.PacketType.LOGIN_SUCCESS, "Successfully logged in").send();
-				login = request.getLogin();
-				if (player != null)
-					player = player.toBuilder().login(login).build();
+				player = getSource().toBuilder().login(request.getLogin()).build();
 				loggedIn = true;
 			} else {
 				logger.info("Aborting connection due to incorrect password (" + socketThread.displayName + ")");

@@ -34,6 +34,9 @@ public class RequestTests {
 		// using value with non-remote function result test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request.Builder().id(1).type(Request.Type.START).effect("summon").viewer("qixils").value(true).build());
+		// null player test
+		Assertions.assertThrows(IllegalArgumentException.class,
+				() -> new Request.Builder().type(Request.Type.PLAYER_INFO).build());
 		// valid builder test
 		Assertions.assertDoesNotThrow(
 				() -> new Request.Builder().id(1).type(Request.Type.START).effect("summon").viewer("qixils").build());
@@ -87,6 +90,7 @@ public class RequestTests {
 				.source(new Request.Source.Builder().target(source).build())
 				.login("qixils")
 				.password("password")
+				.player(source)
 				.build();
 		Assertions.assertEquals(1, request.getId());
 		Assertions.assertEquals(Request.Type.START, request.getType());
@@ -100,6 +104,7 @@ public class RequestTests {
 		Assertions.assertFalse(request.isGlobal());
 		Assertions.assertEquals("qixils", request.getLogin());
 		Assertions.assertEquals("password", request.getPassword());
+		Assertions.assertEquals(source, request.getPlayer());
 		Assertions.assertEquals(2, request.getTargets().length);
 		Assertions.assertEquals(3, request.getQuantity());
 		// target 1
@@ -227,6 +232,10 @@ public class RequestTests {
 		Assertions.assertNull(builder.quantity());
 		Assertions.assertEquals(4, builder.quantity(4).quantity());
 
+		// player test
+		Assertions.assertNull(builder.player());
+		Assertions.assertEquals(targetBuilder.build(), builder.player(targetBuilder.build()).player());
+
 		// test cloning and building/toBuilder
 		Request request = builder.clone().build().toBuilder().build();
 		Assertions.assertEquals(1, request.getId());
@@ -241,6 +250,7 @@ public class RequestTests {
 		Assertions.assertFalse(request.isGlobal());
 		Assertions.assertEquals("qixils", request.getLogin());
 		Assertions.assertEquals("password", request.getPassword());
+		Assertions.assertEquals(targetBuilder.build(), request.getPlayer());
 		Assertions.assertEquals(2, builder.targets().length);
 		Assertions.assertEquals(4, request.getQuantity());
 		Assertions.assertEquals(1, request.toBuilder().quantity(null).build().getQuantityOrDefault());
@@ -290,9 +300,10 @@ public class RequestTests {
 				.quantity(3)
 				.login("qixils")
 				.password("password")
+				.player(new Request.Target.Builder().id("493").name("epic streamer 493").ccUID("blahblah").avatar("https://i.qixils.dev/favicon.png").service("TWITCH").clone().build().toBuilder().build())
 				.clone()
 				.build();
-		String json = "{\"id\":1,\"type\":1,\"code\":\"summon\",\"viewer\":\"qixils\",\"message\":\"Hello\",\"cost\":10,\"duration\":10000,\"targets\":[{\"id\":\"493\",\"name\":\"epic streamer 493\",\"login\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\",\"service\":\"TWITCH\"},{}],\"parameters\":[5.0],\"quantity\":3,\"login\":\"qixils\",\"password\":\"password\"}";
+		String json = "{\"id\":1,\"type\":1,\"code\":\"summon\",\"viewer\":\"qixils\",\"message\":\"Hello\",\"cost\":10,\"duration\":10000,\"targets\":[{\"id\":\"493\",\"name\":\"epic streamer 493\",\"login\":\"streamer\",\"avatar\":\"https://i.qixils.dev/favicon.png\",\"service\":\"TWITCH\"},{}],\"parameters\":[5.0],\"quantity\":3,\"login\":\"qixils\",\"password\":\"password\",\"player\":{\"originID\":\"493\",\"name\":\"epic streamer 493\",\"image\":\"https://i.qixils.dev/favicon.png\",\"profile\":\"TWITCH\",\"ccUID\":\"blahblah\"}}";
 		Assertions.assertEquals(request, Request.fromJSON(json), () -> "JSONs: " + request.toJSON() + " vs " + json);
 		Assertions.assertEquals(Request.fromJSON(request.toJSON()), Request.fromJSON(json), () -> "JSONs: " + request.toJSON() + " vs " + json);
 	}

@@ -56,6 +56,8 @@ public class Request implements JsonObject, Respondable {
 	private String login;
 	@Nullable
 	private String password;
+	@Nullable
+	private Target player;
 
 	/**
 	 * Instantiates an empty {@link Request}.
@@ -107,6 +109,9 @@ public class Request implements JsonObject, Respondable {
 
 			if (builder.password == null && this.type == Type.LOGIN)
 				throw new IllegalArgumentException("password cannot be null for login packets");
+
+			if (builder.player == null && this.type == Type.PLAYER_INFO)
+				throw new IllegalArgumentException("player cannot be null for player info packets");
 		}
 
 		// other arguments
@@ -132,6 +137,7 @@ public class Request implements JsonObject, Respondable {
 		this.originatingSocket = builder.originatingSocket;
 		this.login = builder.login;
 		this.password = builder.password;
+		this.player = builder.player;
 
 		// validate targets are not null
 		if (builder.targets != null) {
@@ -364,6 +370,19 @@ public class Request implements JsonObject, Respondable {
 	}
 
 	/**
+	 * If this is a {@link Type#PLAYER_INFO} packet, gets the player's info.
+	 *
+	 * @return player info
+	 * @since 3.6.2
+	 */
+	@ApiStatus.AvailableSince("3.6.2")
+	@Nullable
+	@CheckReturnValue
+	public Target getPlayer() {
+		return player;
+	}
+
+	/**
 	 * Gets the {@link Socket} that this {@link Request} originated from.
 	 *
 	 * @return originating socket
@@ -469,12 +488,15 @@ public class Request implements JsonObject, Respondable {
 				&& Objects.equals(duration, request.duration)
 //				&& Objects.equals(originatingSocket, request.originatingSocket)
 				&& Objects.equals(source, request.source)
-				&& Objects.equals(value, request.value);
+				&& Objects.equals(value, request.value)
+				&& Objects.equals(login, request.login)
+				&& Objects.equals(password, request.password)
+				&& Objects.equals(player, request.player);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hash(id, type, effect, message, viewer, cost, duration, source, value);
+		int result = Objects.hash(id, type, effect, message, viewer, cost, duration, source, value, login, password, player);
 		result = 31 * result + Arrays.hashCode(getTargets());
 		result = 31 * result + Arrays.hashCode(getParameters());
 		return result;
@@ -495,6 +517,9 @@ public class Request implements JsonObject, Respondable {
 				", parameters=" + Arrays.toString(parameters) +
 				", source=" + source +
 				", value=" + value +
+				", login=" + repr(login) +
+				", password=" + repr(password) +
+				", player=" + player +
 				'}';
 	}
 
@@ -632,11 +657,15 @@ public class Request implements JsonObject, Respondable {
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	public static final class Target {
+		@SerializedName(value = "id", alternate = {"originID"})
 		private @Nullable String id;
 		private @Nullable String name;
 		private @Nullable String login;
+		@SerializedName(value = "avatar", alternate = {"image"})
 		private @Nullable String avatar;
+		@SerializedName(value = "service", alternate = {"profile"})
 		private @Nullable String service;
+		private @Nullable String ccUID;
 
 		/**
 		 * Instantiates an empty {@link Target}.
@@ -653,6 +682,7 @@ public class Request implements JsonObject, Respondable {
 			this.login = builder.login;
 			this.avatar = builder.avatar;
 			this.service = builder.service;
+			this.ccUID = builder.ccUID;
 		}
 
 		/**
@@ -727,6 +757,19 @@ public class Request implements JsonObject, Respondable {
 			return service;
 		}
 
+		/**
+		 * Gets the Crowd Control user ID of the recipient.
+		 *
+		 * @return Crowd Control user ID
+		 * @since 3.6.2
+		 */
+		@ApiStatus.AvailableSince("3.6.2")
+		@Nullable
+		@CheckReturnValue
+		public String getCCUID() {
+			return ccUID;
+		}
+
 		@Override
 		@CheckReturnValue
 		public boolean equals(@Nullable Object o) {
@@ -737,7 +780,8 @@ public class Request implements JsonObject, Respondable {
 					&& Objects.equals(getName(), target.getName())
 					&& Objects.equals(getLogin(), target.getLogin())
 					&& Objects.equals(getAvatar(), target.getAvatar())
-					&& Objects.equals(getService(), target.getService());
+					&& Objects.equals(getService(), target.getService())
+					&& Objects.equals(getCCUID(), target.getCCUID());
 		}
 
 		/**
@@ -754,13 +798,15 @@ public class Request implements JsonObject, Respondable {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			Target target = (Target) o;
-			return (getId() != null && getId().equals(target.getId())) || equals(o);
+			return (getId() != null && getId().equals(target.getId()))
+					|| (getCCUID() != null && getCCUID().equals(target.getCCUID()))
+					|| equals(o);
 		}
 
 		@Override
 		@CheckReturnValue
 		public int hashCode() {
-			return Objects.hash(getId(), getName(), getLogin(), getAvatar(), getService());
+			return Objects.hash(getId(), getName(), getLogin(), getAvatar(), getService(), getCCUID());
 		}
 
 		@Override
@@ -771,6 +817,7 @@ public class Request implements JsonObject, Respondable {
 					", login=" + repr(login) +
 					", avatar=" + repr(avatar) +
 					", service=" + repr(service) +
+					", ccUID=" + repr(ccUID) +
 					'}';
 		}
 
@@ -798,6 +845,7 @@ public class Request implements JsonObject, Respondable {
 			private @Nullable String login;
 			private @Nullable String avatar;
 			private @Nullable String service;
+			private @Nullable String ccUID;
 
 			// constructors //
 
@@ -815,6 +863,7 @@ public class Request implements JsonObject, Respondable {
 				this.login = target.login;
 				this.avatar = target.avatar;
 				this.service = target.service;
+				this.ccUID = target.ccUID;
 			}
 
 			private Builder(@NotNull Builder builder) {
@@ -823,6 +872,7 @@ public class Request implements JsonObject, Respondable {
 				this.login = builder.login;
 				this.avatar = builder.avatar;
 				this.service = builder.service;
+				this.ccUID = builder.ccUID;
 			}
 
 			// setters //
@@ -902,6 +952,21 @@ public class Request implements JsonObject, Respondable {
 				return this;
 			}
 
+			/**
+			 * Sets the Crowd Control user ID of the recipient.
+			 *
+			 * @param ccUID Crowd Control user ID
+			 * @return this builder
+			 * @since 3.6.2
+			 */
+			@ApiStatus.AvailableSince("3.6.2")
+			@NotNull
+			@Contract("_ -> this")
+			public Builder ccUID(@Nullable String ccUID) {
+				this.ccUID = ccUID;
+				return this;
+			}
+
 			// getters //
 
 			/**
@@ -967,6 +1032,19 @@ public class Request implements JsonObject, Respondable {
 			@CheckReturnValue
 			public String service() {
 				return service;
+			}
+
+			/**
+			 * Gets the Crowd Control user ID of the recipient.
+			 *
+			 * @return Crowd Control user ID
+			 * @since 3.6.2
+			 */
+			@ApiStatus.AvailableSince("3.6.2")
+			@Nullable
+			@CheckReturnValue
+			public String ccUID() {
+				return ccUID;
 			}
 
 			// misc
@@ -1278,6 +1356,7 @@ public class Request implements JsonObject, Respondable {
 		private @Nullable Integer quantity;
 		private @Nullable String login;
 		private @Nullable String password;
+		private @Nullable Target player;
 
 		/**
 		 * Creates a new builder.
@@ -1312,6 +1391,7 @@ public class Request implements JsonObject, Respondable {
 			this.quantity = source.quantity;
 			this.login = source.login;
 			this.password = source.password;
+			this.player = source.player;
 		}
 
 		/**
@@ -1338,6 +1418,7 @@ public class Request implements JsonObject, Respondable {
 			this.quantity = builder.quantity;
 			this.login = builder.login;
 			this.password = builder.password;
+			this.player = builder.player;
 		}
 
 		// setters
@@ -1568,6 +1649,21 @@ public class Request implements JsonObject, Respondable {
 			return this;
 		}
 
+		/**
+		 * Sets the {@link Type#PLAYER_INFO} data.
+		 *
+		 * @param player a player target
+		 * @return this builder
+		 * @since 3.6.2
+		 */
+		@ApiStatus.AvailableSince("3.6.2")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder player(@Nullable Target player) {
+			this.player = player;
+			return this;
+		}
+
 		// getters
 
 		/**
@@ -1761,6 +1857,19 @@ public class Request implements JsonObject, Respondable {
 		@CheckReturnValue
 		public String password() {
 			return password;
+		}
+
+		/**
+		 * Gets the {@link Type#PLAYER_INFO} data.
+		 *
+		 * @return a player target
+		 * @since 3.6.2
+		 */
+		@ApiStatus.AvailableSince("3.6.2")
+		@Nullable
+		@CheckReturnValue
+		public Target player() {
+			return player;
 		}
 
 		// build
