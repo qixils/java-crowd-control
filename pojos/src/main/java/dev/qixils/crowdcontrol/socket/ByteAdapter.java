@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
+import dev.qixils.crowdcontrol.util.PostProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.function.Function;
 
 class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
 	static final @NotNull Gson GSON = new GsonBuilder()
+			.registerTypeAdapterFactory(new PostProcessor())
 			.registerTypeAdapter(Request.Type.class, new ByteAdapter<>(Request.Type::from))
 			.registerTypeAdapter(Response.ResultType.class, new ByteAdapter<>(Response.ResultType::from))
 			.registerTypeAdapter(Response.PacketType.class, new ByteAdapter<>(Response.PacketType::from))

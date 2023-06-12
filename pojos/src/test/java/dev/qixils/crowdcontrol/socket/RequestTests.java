@@ -8,6 +8,12 @@ import java.time.Duration;
 
 @SuppressWarnings("ConstantConditions")
 public class RequestTests {
+	@Test
+	public void postProcessorTest() {
+		Request.Target target = ByteAdapter.GSON.fromJson("{\"originID\":\"twitch_12345\",\"profile\":\"TWITCH\"}", Request.Target.class);
+		Assertions.assertEquals("12345", target.getId(), String.valueOf(target));
+	}
+
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	@Test
 	public void constructorTest() {

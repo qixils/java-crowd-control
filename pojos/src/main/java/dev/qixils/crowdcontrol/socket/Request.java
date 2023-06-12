@@ -4,6 +4,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
+import dev.qixils.crowdcontrol.util.PostProcessable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -656,7 +657,7 @@ public class Request implements JsonObject, Respondable {
 	 * @since 3.0.0
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
-	public static final class Target {
+	public static final class Target implements PostProcessable {
 		@SerializedName(value = "id", alternate = {"originID"})
 		private @Nullable String id;
 		private @Nullable String name;
@@ -674,6 +675,16 @@ public class Request implements JsonObject, Respondable {
 		 */
 		@SuppressWarnings("unused") // used by GSON
 		Target() {
+		}
+
+		@Override
+		@ApiStatus.Internal
+		public void postProcess() {
+			if (id != null && service != null) {
+				String[] split = id.split("_", 2);
+				if (split.length == 2 && split[0].equalsIgnoreCase(service))
+					id = split[1];
+			}
 		}
 
 		private Target(@NotNull Builder builder) {
