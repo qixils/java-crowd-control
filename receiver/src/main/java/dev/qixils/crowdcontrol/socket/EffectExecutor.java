@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 
 /**
@@ -19,7 +21,7 @@ import java.util.concurrent.Executor;
  */
 final class EffectExecutor {
 	private static final Logger logger = LoggerFactory.getLogger("CC-EffectExecutor");
-	private final @Nullable SocketThread socketThread;
+	private final @Nullable SocketManager socketThread;
 	private final Socket socket;
 	private final Executor effectPool;
 	private final InputStream input;
@@ -37,12 +39,14 @@ final class EffectExecutor {
 		this.password = crowdControl.getPassword();
 	}
 
-	EffectExecutor(Socket socket, Executor effectPool, RequestManager crowdControl) throws IOException {
-		this.socketThread = null;
-		this.socket = socket;
-		this.effectPool = effectPool;
+	EffectExecutor(ClientSocketManager csm) throws IOException {
+		this.socketThread = csm;
+		this.socket = csm.socket;
+		if (this.socket == null)
+			throw new IOException("Socket is null");
+		this.effectPool = csm.effectPool;
 		this.input = socket.getInputStream();
-		this.crowdControl = crowdControl;
+		this.crowdControl = csm.crowdControl;
 		this.password = crowdControl.getPassword();
 	}
 
@@ -75,6 +79,8 @@ final class EffectExecutor {
 			return;
 		}
 
+		request.setOriginatingSocket(socketThread);
+
 		if (request.getType() == Request.Type.PLAYER_INFO) {
 			Request.Source.Builder source = getSource().toBuilder();
 			if (request.getPlayer() != null)
@@ -86,8 +92,6 @@ final class EffectExecutor {
 			request.setSource(getSource());
 		}
 
-		request.setOriginatingSocket(socket);
-
 		if (request.getType() == Request.Type.KEEP_ALIVE) {
 			request.buildResponse().packetType(Response.PacketType.KEEP_ALIVE).send();
 			return;
@@ -98,12 +102,12 @@ final class EffectExecutor {
 			if (request.getType() != Request.Type.LOGIN) {
 				request.buildResponse().type(Response.ResultType.NOT_READY).message("Client has not logged in").send();
 			} else if (password.equalsIgnoreCase(request.getPassword())) {
-				logger.info("New client successfully logged in (" + socketThread.displayName + ")");
-				new Response(socket, Response.PacketType.LOGIN_SUCCESS, "Successfully logged in").send();
+				logger.info("New client successfully logged in (" + socketThread.getDisplayName() + ")");
+				request.buildResponse().packetType(Response.PacketType.LOGIN_SUCCESS).message("Successfully logged in").send();
 				player = getSource().toBuilder().login(request.getLogin()).build();
 				loggedIn = true;
 			} else {
-				logger.info("Aborting connection due to incorrect password (" + socketThread.displayName + ")");
+				logger.info("Aborting connection due to incorrect password (" + socketThread.getDisplayName() + ")");
 				socketThread.shutdown(request, "Incorrect password");
 			}
 			return;
@@ -122,5 +126,20 @@ final class EffectExecutor {
 				}
 			}
 		});
+	}
+
+	boolean isClosed() {
+		return socket.isClosed() || !socket.isConnected() || socket.isOutputShutdown();
+	}
+
+	void write(@NotNull Response response) throws IOException {
+		String json = response.toJSON();
+		logger.debug("Sending response to client: " + json);
+		synchronized (socket) {
+			OutputStream output = socket.getOutputStream();
+			output.write(json.getBytes(StandardCharsets.UTF_8));
+			output.write(0x00);
+			output.flush();
+		}
 	}
 }

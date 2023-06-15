@@ -34,7 +34,7 @@ import static dev.qixils.crowdcontrol.util.StringUtils.repr;
 @ApiStatus.AvailableSince("1.0.0")
 public class Request implements JsonObject, Respondable {
 	private static final Logger logger = LoggerFactory.getLogger(Request.class);
-	private transient @Nullable Socket originatingSocket;
+	private transient @Nullable SocketManager originatingSocket;
 	private transient @Nullable Source source;
 	private int id;
 	private Type type;
@@ -392,20 +392,20 @@ public class Request implements JsonObject, Respondable {
 	@ApiStatus.AvailableSince("3.6.0")
 	@ApiStatus.Internal
 	@Nullable
-	public Socket getOriginatingSocket() {
+	public SocketManager getOriginatingSocket() {
 		return originatingSocket;
 	}
 
 	/**
 	 * Sets the {@link Socket} that this {@link Request} originated from.
 	 * <p>
-	 * This method is for internal use only, see {@link Builder#originatingSocket(Socket)} if you need to set this value.
+	 * This method is for internal use only, see {@link Builder#originatingSocket(SocketManager)} if you need to set this value.
 	 *
 	 * @param originatingSocket originating socket
 	 * @since 3.6.0
 	 */
 	@ApiStatus.Internal
-	public void setOriginatingSocket(@Nullable Socket originatingSocket) {
+	public void setOriginatingSocket(@Nullable SocketManager originatingSocket) {
 		this.originatingSocket = originatingSocket;
 	}
 
@@ -1353,7 +1353,7 @@ public class Request implements JsonObject, Respondable {
 	@ApiStatus.AvailableSince("3.3.0")
 	@SuppressWarnings("DuplicatedCode") // not really fixable unless I added a getter interface (which is silly do to for this one constructor)
 	public static class Builder implements Cloneable {
-		private transient Socket originatingSocket;
+		private transient SocketManager originatingSocket;
 		private int id = 0;
 		private String effect;
 		private String message;
@@ -1551,7 +1551,7 @@ public class Request implements JsonObject, Respondable {
 		@ApiStatus.Internal
 		@NotNull
 		@Contract("_ -> this")
-		public Builder originatingSocket(@Nullable Socket originatingSocket) {
+		public Builder originatingSocket(@Nullable SocketManager originatingSocket) {
 			this.originatingSocket = originatingSocket;
 			return this;
 		}
@@ -1777,7 +1777,7 @@ public class Request implements JsonObject, Respondable {
 		@ApiStatus.Internal
 		@Nullable
 		@CheckReturnValue
-		public Socket originatingSocket() {
+		public SocketManager originatingSocket() {
 			return originatingSocket;
 		}
 

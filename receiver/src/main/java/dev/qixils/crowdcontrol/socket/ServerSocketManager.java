@@ -118,4 +118,23 @@ public final class ServerSocketManager implements SocketManager {
 	public @NotNull List<? extends SocketManager> getConnections() {
 		return getSocketThreads();
 	}
+
+	@Override
+	public boolean isClosed() {
+		return !running;
+	}
+
+	@Override
+	public void write(@NotNull Response response) throws IOException {
+		for (SocketThread socketThread : getSocketThreads()) {
+			if (socketThread.isClosed())
+				continue;
+			socketThread.write(response);
+		}
+	}
+
+	@Override
+	public @NotNull String getDisplayName() {
+		return "Server";
+	}
 }

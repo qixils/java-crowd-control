@@ -27,10 +27,10 @@ import java.util.function.Consumer;
 @ApiStatus.AvailableSince("3.0.0")
 public final class ClientSocketManager implements SocketManager {
 	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-ClientSocket");
-	private final @NotNull RequestManager crowdControl;
-	private final @NotNull Executor effectPool = Executors.newCachedThreadPool();
+	final @NotNull RequestManager crowdControl;
+	final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	private final @NotNull List<Consumer<SocketManager>> onConnectListeners = new ArrayList<>();
-	private @Nullable Socket socket;
+	@Nullable Socket socket;
 	private volatile boolean running = true;
 	private int sleep = 1;
 	private boolean connected = false;
@@ -57,7 +57,7 @@ public final class ClientSocketManager implements SocketManager {
 
 	@Override
 	public Response.@NotNull Builder buildResponse() {
-		return new Response.Builder().originatingSocket(socket);
+		return new Response.Builder().originatingSocket(this);
 	}
 
 	private void loop() {
@@ -75,9 +75,7 @@ public final class ClientSocketManager implements SocketManager {
 				sleep = 1;
 				connected = true;
 				effectExecutor = new EffectExecutor(
-						socket,
-						effectPool,
-						crowdControl
+						this
 				);
 
 				while (running) {
@@ -85,13 +83,13 @@ public final class ClientSocketManager implements SocketManager {
 				}
 
 				logger.info("Crowd Control socket shutting down");
-				Response.ofDisconnectMessage(socket, "Server is shutting down").send();
+				Response.ofDisconnectMessage(this, "Server is shutting down").send();
 			} catch (IOException e) {
 				if ("Connection reset".equals(e.getMessage())) {
 					logger.info("Server terminated connection");
 				} else if (socket != null && !socket.isClosed()) {
 					// send error message
-					Response.ofDisconnectMessage(socket, running ? "Server encountered an error" : "Server is shutting down").send();
+					Response.ofDisconnectMessage(this, running ? "Server encountered an error" : "Server is shutting down").send();
 
 					// ensure socket is closed
 					try {
@@ -124,7 +122,7 @@ public final class ClientSocketManager implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (socket != null && !socket.isClosed()) {
-			Response.ofDisconnectMessage(socket, reason).send();
+			Response.ofDisconnectMessage(this, reason).send();
 			socket.close();
 		}
 	}
@@ -139,5 +137,22 @@ public final class ClientSocketManager implements SocketManager {
 	@Override
 	public Request.@Nullable Source getSource() {
 		return effectExecutor == null ? null : effectExecutor.getSource();
+	}
+
+	@Override
+	public boolean isClosed() {
+		return !running;
+	}
+
+	@Override
+	public void write(@NotNull Response response) throws IOException {
+		if (effectExecutor == null)
+			throw new IOException("Socket is not connected");
+		effectExecutor.write(response);
+	}
+
+	@Override
+	public @NotNull String getDisplayName() {
+		return "Client";
 	}
 }

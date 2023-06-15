@@ -488,4 +488,19 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	public @NotNull List<? extends SocketManager> getConnections() {
 		return socketManager.getConnections();
 	}
+
+	@Override
+	public boolean isClosed() {
+		return socketManager.isClosed();
+	}
+
+	@Override
+	public void write(@NotNull Response response) throws IOException {
+		socketManager.write(response);
+	}
+
+	@Override
+	public @NotNull String getDisplayName() {
+		return "Crowd Control";
+	}
 }

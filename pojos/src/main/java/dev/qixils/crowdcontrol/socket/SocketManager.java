@@ -19,6 +19,15 @@ import java.util.function.Consumer;
 public interface SocketManager extends Respondable {
 
 	/**
+	 * Gets a unique display name for this {@link SocketManager}.
+	 *
+	 * @return a unique display name
+	 * @since 3.7.0
+	 */
+	@ApiStatus.AvailableSince("3.7.0")
+	@NotNull String getDisplayName();
+
+	/**
 	 * Creates a {@link Response} {@link Response.Builder builder} which will be dispatched to
 	 * the connected server or clients upon calling {@link Response#send()}.
 	 * <p>
@@ -116,4 +125,23 @@ public interface SocketManager extends Respondable {
 	default @NotNull List<? extends SocketManager> getConnections() {
 		return Collections.singletonList(this);
 	}
+
+	/**
+	 * Determines whether this socket is closed.
+	 *
+	 * @return {@code true} if this socket is closed, {@code false} otherwise
+	 * @since 3.7.0
+	 */
+	@ApiStatus.AvailableSince("3.7.0")
+	boolean isClosed();
+
+	/**
+	 * Writes a {@link Response} to the connected server or clients.
+	 *
+	 * @param response the response to write
+	 * @throws IOException an I/O exception occurred while trying to write the response
+	 * @since 3.7.0
+	 */
+	@ApiStatus.AvailableSince("3.7.0")
+	void write(@NotNull Response response) throws IOException;
 }

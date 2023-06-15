@@ -25,7 +25,7 @@ final class SocketThread extends Thread implements SocketManager {
 	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-SocketThread");
 
 	static {
-		Response resp = new Response((Socket) null, Response.PacketType.LOGIN, null);
+		Response resp = new Response.Builder().packetType(Response.PacketType.LOGIN).build();
 		RAW_PASSWORD_REQUEST = resp.toJSON();
 		byte[] json = RAW_PASSWORD_REQUEST.getBytes(StandardCharsets.UTF_8);
 		// array copy adds an extra 0x00 byte to the end, indicating the end of the packet
@@ -51,7 +51,7 @@ final class SocketThread extends Thread implements SocketManager {
 
 	@Override
 	public Response.@NotNull Builder buildResponse() {
-		return new Response.Builder().originatingSocket(socket);
+		return new Response.Builder().originatingSocket(this);
 	}
 
 	public void run() {
@@ -78,7 +78,7 @@ final class SocketThread extends Thread implements SocketManager {
 
 			logger.info("Disconnecting from client socket (" + displayName + ")");
 			try {
-				Response.ofDisconnectMessage(socket, "Server is shutting down").rawSend();
+				Response.ofDisconnectMessage(this, "Server is shutting down").rawSend();
 			} catch (IOException exc) {
 				logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");
 			}
@@ -115,7 +115,7 @@ final class SocketThread extends Thread implements SocketManager {
 		if (!running) return;
 		running = false;
 		if (!socket.isClosed()) {
-			try {Response.ofDisconnectMessage(socket, reason).rawSend();}
+			try {Response.ofDisconnectMessage(this, reason).rawSend();}
 			catch (IOException exc) {logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");}
 			try {socket.close();}
 			catch (IOException exc) {logger.debug("Ignoring exception thrown by socket; likely just a result of the socket terminating");}
@@ -132,5 +132,22 @@ final class SocketThread extends Thread implements SocketManager {
 	@Override
 	public Request.@Nullable Source getSource() {
 		return effectExecutor == null ? null : effectExecutor.getSource();
+	}
+
+	@Override
+	public boolean isClosed() {
+		return effectExecutor == null || effectExecutor.isClosed();
+	}
+
+	@Override
+	public void write(@NotNull Response response) throws IOException {
+		if (isClosed()) throw new IOException("Socket is closed");
+		effectExecutor.write(response);
+	}
+
+	@NotNull
+	@Override
+	public String getDisplayName() {
+		return displayName;
 	}
 }

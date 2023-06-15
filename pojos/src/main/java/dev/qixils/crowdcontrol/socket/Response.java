@@ -13,9 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
@@ -43,7 +41,7 @@ public class Response implements JsonObject {
 	@SerializedName("type")
 	private PacketType packetType;
 	@Nullable
-	private transient Socket originatingSocket;
+	private transient SocketManager originatingSocket;
 	private int id = 0;
 	@SerializedName("status")
 	@Nullable
@@ -76,70 +74,33 @@ public class Response implements JsonObject {
 	}
 
 	/**
-	 * Instantiates a new {@link Response} given an ID, the {@link Socket} that originated the
-	 * {@link Request}, and information about the result of the execution.
+	 * Constructs a response to a {@link Request} from a {@link Builder}.
 	 *
-	 * @param id                ID of the {@link Request} that was executed
-	 * @param originatingSocket the socket that originated the request
-	 * @param packetType        type of the packet
-	 * @param type              result of the execution
-	 * @param message           result message; defaults to the {@link ResultType#name() name} of the {@code type} if null
-	 * @param timeRemaining     time remaining until the effect completes or {@code null} if the effect is not time-based
-	 * @param effect            the code of the effect that was executed
-	 * @param method            the remote function to execute if the packet type is {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION}
-	 * @param args              the arguments to pass to the remote function
-	 * @param data              the data of an {@link PacketType#GENERIC_EVENT event}
-	 * @param eventType         the type of an {@link PacketType#GENERIC_EVENT event}
-	 * @param internal          whether the packet is internal or not
-	 * @throws IllegalArgumentException May be thrown in various circumstances:
-	 *                                  <ul>
-	 *                                      <li>if the {@code id} is negative</li>
-	 *                                      <li>if the {@code id} is non-zero and {@code packetType} is not {@link PacketType#EFFECT_RESULT EFFECT_RESULT}</li>
-	 *                                      <li>if the {@code id} is zero and {@code packetType} is {@link PacketType#EFFECT_RESULT EFFECT_RESULT}</li>
-	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
-	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() requires a result type} and {@code type} is null</li>
-	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() does not require a result type} and {@code type} is not null</li>
-	 *                                      <li>if the {@code message} is null and {@code packetType} {@link PacketType#isMessageRequired() requires a message}</li>
-	 *                                      <li>if the {@code effect} is null and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
-	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is not a status} and {@code packetType} is {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
-	 *                                      <li>if the {@code type} {@link ResultType#isStatus() is a status} and {@code packetType} is not {@link PacketType#EFFECT_STATUS EFFECT_STATUS}</li>
-	 *                                      <li>if the {@code packetType} is {@link PacketType#REMOTE_FUNCTION REMOTE_FUNCTION} and {@code method} is null</li>
-	 *                                      <li>if the {@code eventType} is null and the {@code packetType} is {@link PacketType#GENERIC_EVENT GENERIC_EVENT}</li>
-	 *                                  </ul>
+	 * @param builder {@link Response} builder
 	 */
-	Response(int id,
-			 @Nullable Socket originatingSocket,
-			 @Nullable PacketType packetType,
-			 @Nullable ResultType type,
-			 @Nullable String message,
-			 @Nullable Duration timeRemaining,
-			 @Nullable String effect,
-			 @Nullable String method,
-			 @Nullable Object @Nullable [] args,
-			 @Nullable Map<@NotNull String, @Nullable Object> data,
-			 @Nullable String eventType,
-			 @Nullable Boolean internal) throws IllegalArgumentException {
-		this.id = id;
+	@CheckReturnValue
+	Response(@NotNull Builder builder) {
+		this.id = builder.id;
 		if (this.id < 0)
 			throw new IllegalArgumentException("ID cannot be negative");
 
-		this.timeRemaining = timeRemaining;
+		this.timeRemaining = builder.timeRemaining;
 		if (this.timeRemaining != null && (this.timeRemaining.isNegative() || this.timeRemaining.isZero()))
 			throw new IllegalArgumentException("timeRemaining must be positive or null");
 
-		this.originatingSocket = originatingSocket;
-		this.effect = effect;
-		this.method = method;
-		if (args != null && args.length != 0)
-			this.args = args;
-		if (data != null && !data.isEmpty())
-			this.data = data;
-		this.eventType = eventType;
-		this.internal = internal;
+		this.originatingSocket = builder.originatingSocket;
+		this.effect = builder.effect;
+		this.method = builder.method;
+		if (!builder.args.isEmpty())
+			this.args = builder.args.toArray();
+		if (!builder.data.isEmpty())
+			this.data = builder.data;
+		this.eventType = builder.eventType;
+		this.internal = builder.internal;
 
 		// validate packet type and result type
-		this.packetType = ExceptionUtil.validateNotNullElse(packetType, PacketType.EFFECT_RESULT);
-		this.type = type;
+		this.packetType = ExceptionUtil.validateNotNullElse(builder.packetType, PacketType.EFFECT_RESULT);
+		this.type = builder.type;
 		if (this.packetType.hasResultType() && this.type == null)
 			throw new IllegalArgumentException("type cannot be null if packetType requires a result type");
 		if (!this.packetType.hasResultType() && this.type != null)
@@ -163,87 +124,10 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("eventType cannot be null if packetType is GENERIC_EVENT");
 
 		// set message
-		if (message != null)
-			this.message = message;
+		if (builder.message != null)
+			this.message = builder.message;
 		if (this.message == null && this.packetType.isMessageRequired())
 			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
-	}
-
-	/**
-	 * Instantiates a new {@link Response} with the given {@link PacketType}.
-	 *
-	 * @param originatingSocket the socket that originated the request
-	 * @param packetType        type of the packet (must not {@link PacketType#hasResultType() require a result type})
-	 * @param message           result message
-	 * @throws IllegalArgumentException May be thrown in various circumstances:
-	 *                                  <ul>
-	 *                                      <li>if the {@code packetType} is null</li>
-	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() requires a result type}</li>
-	 *                                      <li>if the {@code message} is null and {@code packetType} {@link PacketType#isMessageRequired() requires a message}</li>
-	 *                                  </ul>
-	 */
-	Response(@Nullable Socket originatingSocket,
-			 @NotNull PacketType packetType,
-			 @Nullable String message) throws IllegalArgumentException {
-		this(0, originatingSocket, packetType, null, message, null, null, null, null, null, null, null);
-	}
-
-	/**
-	 * Instantiates a new {@link Response} given an ID, the {@link Socket} that originated the
-	 * {@link Request}, and information about the result of the execution.
-	 *
-	 * @param id                ID of the {@link Request} that was executed
-	 * @param originatingSocket the socket that originated the request
-	 * @param type              result of the execution
-	 * @param message           result message
-	 * @param timeRemaining     time remaining until the effect completes
-	 *                          or {@code null} if the effect is not time-based
-	 * @throws IllegalArgumentException May be thrown in various circumstances:
-	 *                                  <ul>
-	 *                                      <li>if the {@code id} is negative</li>
-	 *                                      <li>if the {@code timeRemaining} is negative or zero</li>
-	 *                                      <li>if the {@code type} is null</li>
-	 *                                  </ul>
-	 */
-	Response(int id,
-			 @Nullable Socket originatingSocket,
-			 @NotNull ResultType type,
-			 @Nullable String message,
-			 @Nullable Duration timeRemaining) throws IllegalArgumentException {
-		this(id, originatingSocket, ExceptionUtil.validateNotNull(type, "type").isStatus() ? PacketType.EFFECT_STATUS : PacketType.EFFECT_RESULT, type, message, timeRemaining, null, null, null, null, null, null);
-	}
-
-	/**
-	 * Instantiates a new non-{@link PacketType#EFFECT_RESULT EFFECT_RESULT} {@link Response} to a given
-	 * {@link Request}.
-	 *
-	 * @param request    originating request
-	 * @param packetType type of packet (must not be {@link PacketType#EFFECT_RESULT})
-	 * @param message    result message
-	 * @throws IllegalArgumentException May be thrown in various circumstances:
-	 *                                  <ul>
-	 *                                      <li>if the {@code request} is null</li>
-	 *                                      <li>if the {@code packetType} is null</li>
-	 *                                      <li>if the {@code packetType} {@link PacketType#hasResultType() requires a result type}</li>
-	 *                                      <li>if the {@code message} is null and {@code packetType} {@link PacketType#isMessageRequired() requires a message}</li>
-	 *                                  </ul>
-	 */
-	Response(@NotNull Request request,
-			 @NotNull PacketType packetType,
-			 @Nullable String message) throws IllegalArgumentException {
-		this(ExceptionUtil.validateNotNull(request, "request").getOriginatingSocket(), packetType, message);
-		this.effect = request.getEffect();
-	}
-
-	/**
-	 * Constructs a response to a {@link Request} from a {@link Builder}.
-	 *
-	 * @param builder {@link Response} builder
-	 */
-	@CheckReturnValue
-	private Response(@NotNull Builder builder) {
-		this(ExceptionUtil.validateNotNull(builder, "builder").id,
-				builder.originatingSocket, builder.packetType, builder.type, builder.message, builder.timeRemaining, builder.effect, builder.method, builder.args.toArray(), new HashMap<>(builder.data), builder.eventType, builder.internal);
 	}
 
 	/**
@@ -274,8 +158,12 @@ public class Response implements JsonObject {
 	@ApiStatus.AvailableSince("3.3.2")
 	@CheckReturnValue
 	@NotNull
-	static Response ofDisconnectMessage(@NotNull Socket originatingSocket, @Nullable String message) {
-		return new Response(originatingSocket, PacketType.DISCONNECT, ExceptionUtil.validateNotNullElse(message, "Disconnected"));
+	static Response ofDisconnectMessage(@NotNull SocketManager originatingSocket, @Nullable String message) {
+		return new Response.Builder()
+				.originatingSocket(originatingSocket)
+				.packetType(PacketType.DISCONNECT)
+				.message(ExceptionUtil.validateNotNullElse(message, "Disconnected"))
+				.build();
 	}
 
 	/**
@@ -291,8 +179,11 @@ public class Response implements JsonObject {
 	@CheckReturnValue
 	@NotNull
 	static Response ofDisconnectMessage(@NotNull Request request, @Nullable String message) {
-		//noinspection DataFlowIssue - null check is performed in constructor; checking again would be redundant
-		return ofDisconnectMessage(ExceptionUtil.validateNotNull(request, "request").getOriginatingSocket(), message);
+		return new Response.Builder()
+				.originatingSocket(ExceptionUtil.validateNotNull(request, "request").getOriginatingSocket())
+				.packetType(PacketType.DISCONNECT)
+				.message(ExceptionUtil.validateNotNullElse(message, "Disconnected"))
+				.build();
 	}
 
 	/**
@@ -554,20 +445,11 @@ public class Response implements JsonObject {
 			throw new IllegalStateException("Response was constructed without a Request and thus cannot find where to be sent");
 		}
 
-		if (originatingSocket.isClosed() || !originatingSocket.isConnected() || originatingSocket.isOutputShutdown()) {
+		if (originatingSocket.isClosed()) {
 			return;
 		}
 
-		logger.debug("Outgoing Packet: " + toJSON());
-
-		//object is never updated after assignment, so we can ignore this error:
-		//noinspection SynchronizeOnNonFinalField
-		synchronized (originatingSocket) {
-			OutputStream output = originatingSocket.getOutputStream();
-			output.write(toJSON().getBytes(StandardCharsets.UTF_8));
-			output.write(0x00);
-			output.flush();
-		}
+		originatingSocket.write(this);
 	}
 
 	/**
@@ -912,7 +794,7 @@ public class Response implements JsonObject {
 		// id & originatingSocket fields are final because the only way to construct this is via
 		// a Request (i.e. third parties don't have access to the originating socket)
 		private int id;
-		private Socket originatingSocket;
+		private SocketManager originatingSocket;
 		private ResultType type;
 		private String message;
 		private Duration timeRemaining;
@@ -1025,7 +907,7 @@ public class Response implements JsonObject {
 		@ApiStatus.Internal
 		@NotNull
 		@Contract("_ -> this")
-		public Builder originatingSocket(@Nullable Socket originatingSocket) {
+		public Builder originatingSocket(@Nullable SocketManager originatingSocket) {
 			this.originatingSocket = originatingSocket;
 			return this;
 		}
@@ -1320,7 +1202,7 @@ public class Response implements JsonObject {
 		@ApiStatus.Internal
 		@Nullable
 		@CheckReturnValue
-		public Socket originatingSocket() {
+		public SocketManager originatingSocket() {
 			return originatingSocket;
 		}
 

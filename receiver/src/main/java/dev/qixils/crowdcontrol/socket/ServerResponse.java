@@ -2,40 +2,19 @@ package dev.qixils.crowdcontrol.socket;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 final class ServerResponse extends Response {
 	private final transient @NotNull ServerSocketManager manager;
 
-	ServerResponse(int id, @NotNull ServerSocketManager manager, @Nullable PacketType packetType, @Nullable ResultType type, @Nullable String message, @Nullable Duration timeRemaining, @Nullable String effect, @Nullable String method, @Nullable Object @Nullable [] args, @Nullable Map<@NotNull String, @Nullable Object> data, @Nullable String eventType, @Nullable Boolean internal) throws IllegalArgumentException {
-		super(id, null, packetType, type, message, timeRemaining, effect, method, args, data, eventType, internal);
-		this.manager = manager;
-	}
-
 	private ServerResponse(@NotNull Builder builder) {
-		this(
-				builder.id(),
-				builder.manager,
-				builder.packetType(),
-				builder.type(),
-				builder.message(),
-				builder.timeRemaining(),
-				builder.effect(),
-				builder.method(),
-				builder.arguments().toArray(),
-				new HashMap<>(builder.data()),
-				builder.eventType(),
-				builder.internal()
-		);
+		super(builder);
+		this.manager = builder.manager;
 	}
 
 	@Override
@@ -54,7 +33,7 @@ final class ServerResponse extends Response {
 		List<IOException> exceptions = new ArrayList<>(threads.size());
 		for (SocketThread thread : threads) {
 			try {
-				new Response.Builder(this).originatingSocket(thread.socket).build().rawSend();
+				new Response.Builder(this).originatingSocket(thread).build().rawSend();
 			} catch (IOException e) {
 				exceptions.add(e);
 			}

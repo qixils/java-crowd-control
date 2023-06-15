@@ -189,13 +189,11 @@ final class RequestHandler implements SimulatedService<Response> {
 							data.scheduledFuture = scheduledExecutor.schedule(
 									() -> {
 										// send fake FINISHED packet to flux stream
-										data.sink.next(new Response(
-												response.getId(),
-												null,
-												Response.ResultType.FINISHED,
-												null,
-												null
-										));
+										data.sink.next(new Response.Builder()
+												.id(response.getId())
+												.type(Response.ResultType.FINISHED)
+												.build()
+										);
 										// complete flux stream
 										data.sink.complete();
 									},
