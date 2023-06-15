@@ -14,7 +14,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
 /**
  * Processes incoming requests from a Crowd Control socket and executes them.
@@ -27,6 +31,8 @@ final class EffectExecutor {
 	private final InputStream input;
 	private final RequestManager crowdControl;
 	private final @Nullable String password;
+	private final @NotNull Set<@NotNull Id> notVisible = new HashSet<>();
+	private final @NotNull Set<@NotNull Id> notSelectable = new HashSet<>();
 	private boolean loggedIn = false;
 	private Request.@Nullable Source player = null;
 
@@ -132,7 +138,79 @@ final class EffectExecutor {
 		return socket.isClosed() || !socket.isConnected() || socket.isOutputShutdown();
 	}
 
+	@Nullable
+	private Response update(@NotNull Response response) {
+		// determine if this response should be sent
+		if (response.getPacketType() == Response.PacketType.EFFECT_STATUS) {
+			// create variables
+			Response.Builder builder = response.toBuilder();
+			// get variables
+			IdType type = builder.idType();
+			// create filter to remove IDs whose state has not changed
+			// (return true to remove, i.e. the ID is already in the set, and false to keep)
+			// TODO: this is so verbose
+			Predicate<Id> idFilter;
+			switch (Objects.requireNonNull(builder.type(), "Result type cannot be null")) {
+				case VISIBLE:
+					idFilter = id -> {
+						if (notVisible.contains(id)) {
+							notVisible.remove(id);
+							return false;
+						}
+						return true;
+					};
+					break;
+				case NOT_VISIBLE:
+					idFilter = id -> {
+						if (!notVisible.contains(id)) {
+							notVisible.add(id);
+							return false;
+						}
+						return true;
+					};
+					break;
+				case SELECTABLE:
+					idFilter = id -> {
+						if (notSelectable.contains(id)) {
+							notSelectable.remove(id);
+							return false;
+						}
+						return true;
+					};
+					break;
+				case NOT_SELECTABLE:
+					idFilter = id -> {
+						if (!notSelectable.contains(id)) {
+							notSelectable.add(id);
+							return false;
+						}
+						return true;
+					};
+					break;
+				default:
+					idFilter = id -> false;
+			}
+			// filter IDs
+			builder.ids().removeIf(id -> idFilter.test(new Id(id, type)));
+			// rebuild
+			try {
+				return builder.build();
+			} catch (Exception e) {
+				// there were probably no IDs left, it's fine
+				logger.debug("Failed to rebuild response", e);
+				return null;
+			}
+		}
+		return response;
+	}
+
 	void write(@NotNull Response response) throws IOException {
+		// update response
+		response = update(response);
+		if (response == null)
+			return;
+
+		// send response
 		String json = response.toJSON();
 		logger.debug("Sending response to client: " + json);
 		synchronized (socket) {

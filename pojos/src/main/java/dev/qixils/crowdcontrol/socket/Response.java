@@ -1365,7 +1365,7 @@ public class Response implements JsonObject {
 		 * @since 3.7.0
 		 */
 		@ApiStatus.AvailableSince("3.7.0")
-		@Nullable
+		@NotNull
 		@CheckReturnValue
 		public List<String> ids() {
 			return ids;
