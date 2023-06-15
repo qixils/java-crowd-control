@@ -21,6 +21,7 @@ class ByteAdapter<T extends ByteObject> extends TypeAdapter<T> {
 			.registerTypeAdapter(Request.Type.class, new ByteAdapter<>(Request.Type::from))
 			.registerTypeAdapter(Response.ResultType.class, new ByteAdapter<>(Response.ResultType::from))
 			.registerTypeAdapter(Response.PacketType.class, new ByteAdapter<>(Response.PacketType::from))
+			.registerTypeAdapter(IdType.class, new ByteAdapter<>(IdType::from))
 			.registerTypeAdapter(Duration.class, new DurationAdapter())
 			.create();
 

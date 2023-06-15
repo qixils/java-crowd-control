@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static dev.qixils.crowdcontrol.util.StringUtils.repr;
+
 /**
  * An outgoing packet to the Crowd Control TCP server carrying the result of executing
  * a {@link Request requested} effect.
@@ -50,9 +52,9 @@ public class Response implements JsonObject {
 	private String message;
 	@Nullable
 	private Duration timeRemaining; // millis
+	private String @Nullable [] ids;
 	@Nullable
-	@SerializedName("code")
-	private String effect;
+	private IdType idType;
 	@Nullable
 	private String method;
 	@Nullable
@@ -89,7 +91,6 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("timeRemaining must be positive or null");
 
 		this.originatingSocket = builder.originatingSocket;
-		this.effect = builder.effect;
 		this.method = builder.method;
 		if (!builder.args.isEmpty())
 			this.args = builder.args.toArray();
@@ -110,8 +111,8 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("type must be a status if packetType is EFFECT_STATUS");
 		if (this.packetType != PacketType.EFFECT_STATUS && this.type != null && this.type.isStatus())
 			throw new IllegalArgumentException("type must not be a status if packetType is not EFFECT_STATUS");
-		if (this.packetType == PacketType.EFFECT_STATUS && this.effect == null)
-			throw new IllegalArgumentException("effect cannot be null if packetType is EFFECT_STATUS");
+		if (this.packetType == PacketType.EFFECT_STATUS && builder.ids.isEmpty())
+			throw new IllegalArgumentException("ids cannot be empty if packetType is EFFECT_STATUS");
 		if (this.packetType != PacketType.EFFECT_RESULT && this.id != 0)
 			throw new IllegalArgumentException("id must be 0 if packetType is not EFFECT_RESULT");
 		if (this.packetType == PacketType.EFFECT_RESULT && this.id == 0)
@@ -128,6 +129,10 @@ public class Response implements JsonObject {
 			this.message = builder.message;
 		if (this.message == null && this.packetType.isMessageRequired())
 			throw new IllegalArgumentException("message cannot be null if packetType requires a message");
+
+		// set IDs
+		this.ids = this.packetType != PacketType.EFFECT_STATUS ? null : builder.ids.toArray(new String[0]);
+		this.idType = this.ids == null ? null : ExceptionUtil.validateNotNullElse(builder.idType, IdType.EFFECT);
 	}
 
 	/**
@@ -259,16 +264,29 @@ public class Response implements JsonObject {
 	}
 
 	/**
-	 * Gets the effect that was referenced by the request.
+	 * Gets the IDs receiving a status update.
 	 *
-	 * @return effect code
-	 * @since 3.5.2
+	 * @return effect IDs
+	 * @since 3.7.0
 	 */
-	@ApiStatus.AvailableSince("3.5.2")
+	@ApiStatus.AvailableSince("3.7.0")
+	@CheckReturnValue
+	public String @Nullable [] getIds() {
+		if (ids == null) return null;
+		return Arrays.copyOf(ids, ids.length);
+	}
+
+	/**
+	 * Gets the type of effect receiving a status update.
+	 *
+	 * @return effect type
+	 * @since 3.7.0
+	 */
+	@ApiStatus.AvailableSince("3.7.0")
 	@CheckReturnValue
 	@Nullable
-	public String getEffect() {
-		return effect;
+	public IdType getIdType() {
+		return idType;
 	}
 
 	/**
@@ -392,7 +410,8 @@ public class Response implements JsonObject {
 				&& packetType == response.packetType
 				&& type == response.type
 				&& Objects.equals(message, response.message)
-				&& Objects.equals(effect, response.effect)
+				&& Arrays.equals(ids, response.ids)
+				&& Objects.equals(idType, response.idType)
 				&& Objects.equals(method, response.method)
 				&& Arrays.equals(args, response.args)
 				&& Objects.equals(data, response.data)
@@ -403,9 +422,29 @@ public class Response implements JsonObject {
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hash(packetType, originatingSocket, id, type, message, timeRemaining, effect, method, eventType, internal, data);
+		int result = Objects.hash(packetType, originatingSocket, id, type, message, timeRemaining, idType, method, eventType, internal, data);
+		result = 31 * result + Arrays.hashCode(ids);
 		result = 31 * result + Arrays.hashCode(args);
 		return result;
+	}
+
+	@Override
+	public String toString() {
+		return "Response{" +
+				"packetType=" + packetType +
+				", originatingSocket=" + originatingSocket +
+				", id=" + id +
+				", type=" + type +
+				", message=" + repr(message) +
+				", timeRemaining=" + timeRemaining +
+				", ids=" + Arrays.toString(ids) +
+				", idType=" + idType +
+				", method=" + repr(method) +
+				", args=" + Arrays.toString(args) +
+				", data=" + data +
+				", eventType=" + repr(eventType) +
+				", internal=" + internal +
+				'}';
 	}
 
 	/**
@@ -467,7 +506,7 @@ public class Response implements JsonObject {
 		@ApiStatus.AvailableSince("3.0.0")
 		EFFECT_RESULT(false, true), // 0
 		/**
-		 * The packet is updating the status of an effect.
+		 * The packet is updating the status of effects.
 		 * This should be used with an {@link Builder#id(int) id} of 0.
 		 *
 		 * @since 3.5.2
@@ -799,7 +838,8 @@ public class Response implements JsonObject {
 		private String message;
 		private Duration timeRemaining;
 		private PacketType packetType;
-		private String effect;
+		private final List<String> ids = new ArrayList<>();
+		private IdType idType;
 		private String method;
 		private final List<Object> args = new ArrayList<>();
 		private final Map<String, Object> data = new HashMap<>();
@@ -831,7 +871,9 @@ public class Response implements JsonObject {
 			this.type = source.type;
 			this.timeRemaining = source.timeRemaining;
 			this.packetType = source.packetType;
-			this.effect = source.effect;
+			if (source.ids != null)
+				Collections.addAll(this.ids, source.ids);
+			this.idType = source.idType;
 			this.method = source.method;
 			if (source.args != null)
 				Collections.addAll(this.args, source.args);
@@ -855,7 +897,8 @@ public class Response implements JsonObject {
 		protected Builder(@NotNull Request request) {
 			this.id = request.getId();
 			this.originatingSocket = request.getOriginatingSocket();
-			this.effect = request.getEffect();
+			if (request.getEffect() != null)
+				this.ids.add(request.getEffect());
 		}
 
 		/**
@@ -873,7 +916,8 @@ public class Response implements JsonObject {
 			this.message = builder.message;
 			this.timeRemaining = builder.timeRemaining;
 			this.packetType = builder.packetType;
-			this.effect = builder.effect;
+			this.ids.addAll(builder.ids);
+			this.idType = builder.idType;
 			this.method = builder.method;
 			this.args.addAll(builder.args);
 			this.data.putAll(builder.data);
@@ -1071,12 +1115,68 @@ public class Response implements JsonObject {
 		 * @param effect effect code
 		 * @return this builder
 		 * @since 3.5.2
+		 * @deprecated Replaced by {@link #ids(String...)}.
 		 */
 		@ApiStatus.AvailableSince("3.5.2")
 		@NotNull
 		@Contract("_ -> this")
 		public Builder effect(@Nullable String effect) {
-			this.effect = effect;
+			this.ids.clear();
+			if (effect != null)
+				this.ids.add(effect);
+			return this;
+		}
+
+		/**
+		 * Adds effects whose status is being reported on.
+		 *
+		 * @param effects effects codes
+		 * @return this builder
+		 * @since 3.7.0
+		 */
+		@ApiStatus.AvailableSince("3.7.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder ids(String @NotNull ... effects) {
+			for (String effect : effects) {
+				if (effect != null) {
+					this.ids.add(effect);
+				}
+			}
+			return this;
+		}
+
+		/**
+		 * Adds effects whose status is being reported on.
+		 *
+		 * @param effects effects codes
+		 * @return this builder
+		 * @since 3.7.0
+		 */
+		@ApiStatus.AvailableSince("3.7.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder ids(@NotNull Iterable<String> effects) {
+			for (String effect : effects) {
+				if (effect != null) {
+					this.ids.add(effect);
+				}
+			}
+			return this;
+		}
+
+		/**
+		 * Sets the type of ID which is being reported on.
+		 *
+		 * @param idType type of ID
+		 * @return this builder
+		 * @since 3.7.0
+		 */
+		@ApiStatus.AvailableSince("3.7.0")
+		@NotNull
+		@Contract("_ -> this")
+		public Builder idType(@Nullable IdType idType) {
+			this.idType = idType;
 			return this;
 		}
 
@@ -1259,16 +1359,29 @@ public class Response implements JsonObject {
 		}
 
 		/**
-		 * Gets the effect that was referenced by the request.
+		 * Gets the effects whose status is being reported on.
 		 *
-		 * @return effect code
-		 * @since 3.5.2
+		 * @return effect codes
+		 * @since 3.7.0
 		 */
-		@ApiStatus.AvailableSince("3.5.2")
+		@ApiStatus.AvailableSince("3.7.0")
 		@Nullable
 		@CheckReturnValue
-		public String effect() {
-			return effect;
+		public List<String> ids() {
+			return ids;
+		}
+
+		/**
+		 * Gets the type of ID whose status is being reported on.
+		 *
+		 * @return ID type
+		 * @since 3.7.0
+		 */
+		@ApiStatus.AvailableSince("3.7.0")
+		@Nullable
+		@CheckReturnValue
+		public IdType idType() {
+			return idType;
 		}
 
 		/**
@@ -1285,7 +1398,7 @@ public class Response implements JsonObject {
 		}
 
 		/**
-		 * Gets a view of the arguments to be passed to the remote function.
+		 * Gets the arguments to be passed to the remote function.
 		 *
 		 * @return arguments to pass
 		 * @since 3.6.0
@@ -1294,11 +1407,11 @@ public class Response implements JsonObject {
 		@NotNull
 		@CheckReturnValue
 		public List<Object> arguments() {
-			return Collections.unmodifiableList(args);
+			return args;
 		}
 
 		/**
-		 * Gets a view of the data to be passed in this event.
+		 * Gets the data to be passed in this event.
 		 * To be used with {@link PacketType#GENERIC_EVENT}.
 		 *
 		 * @return data to pass
@@ -1308,7 +1421,7 @@ public class Response implements JsonObject {
 		@NotNull
 		@CheckReturnValue
 		public Map<String, Object> data() {
-			return Collections.unmodifiableMap(data);
+			return data;
 		}
 
 		/**
