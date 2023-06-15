@@ -19,9 +19,6 @@ public class RequestTests {
 	public void constructorTest() {
 		// new constructor tests //
 
-		// negative ID test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request.Builder().id(-1).type(Request.Type.START).effect("summon").viewer("qixils").build());
 		// null effect test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request.Builder().id(1).type(Request.Type.START).viewer("qixils").build());

@@ -113,10 +113,6 @@ public class Response implements JsonObject {
 			throw new IllegalArgumentException("type must not be a status if packetType is not EFFECT_STATUS");
 		if (this.packetType == PacketType.EFFECT_STATUS && builder.ids.isEmpty())
 			throw new IllegalArgumentException("ids cannot be empty if packetType is EFFECT_STATUS");
-		if (this.packetType != PacketType.EFFECT_RESULT && this.id != 0)
-			throw new IllegalArgumentException("id must be 0 if packetType is not EFFECT_RESULT");
-		if (this.packetType == PacketType.EFFECT_RESULT && this.id == 0)
-			throw new IllegalArgumentException("id must be non-zero if packetType is EFFECT_RESULT");
 
 		if (this.packetType == PacketType.REMOTE_FUNCTION && this.method == null)
 			throw new IllegalArgumentException("method cannot be null if packetType is REMOTE_FUNCTION");

@@ -86,8 +86,6 @@ public class Request implements JsonObject, Respondable {
 	private Request(Request.@NotNull Builder builder) throws IllegalArgumentException {
 		// validate request ID
 		this.id = builder.id;
-		if (this.id < 0)
-			throw new IllegalArgumentException("ID cannot be negative");
 
 		// validate type & related arguments
 		this.type = ExceptionUtil.validateNotNull(builder.type, "type");
@@ -126,10 +124,6 @@ public class Request implements JsonObject, Respondable {
 			throw new IllegalArgumentException("duration cannot be negative");
 		this.duration = builder.duration;
 		this.parameters = builder.parameters;
-		if (this.id == 0 && this.type.usesIncrementalIds() == TriState.TRUE)
-			throw new IllegalArgumentException("ID cannot be 0 for effect packets");
-		if (this.id != 0 && this.type.usesIncrementalIds() == TriState.FALSE)
-			throw new IllegalArgumentException("ID must be 0 for non-effect packets");
 		if (this.type != Type.REMOTE_FUNCTION_RESULT && builder.value != null)
 			throw new IllegalArgumentException("value cannot be non-null for non-remote function result packets");
 		this.value = builder.value;
