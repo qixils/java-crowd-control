@@ -107,7 +107,7 @@ final class EffectExecutor {
 		if (!loggedIn && password != null && socketThread != null) {
 			if (request.getType() != Request.Type.LOGIN) {
 				request.buildResponse().type(Response.ResultType.NOT_READY).message("Client has not logged in").send();
-			} else if (password.equalsIgnoreCase(request.getPassword())) {
+			} else if (password.equalsIgnoreCase(request.getPassword()) || password.equalsIgnoreCase(request.getMessage())) {
 				logger.info("New client successfully logged in (" + socketThread.getDisplayName() + ")");
 				request.buildResponse().packetType(Response.PacketType.LOGIN_SUCCESS).message("Successfully logged in").send();
 				player = getSource().toBuilder().login(request.getLogin()).build();
