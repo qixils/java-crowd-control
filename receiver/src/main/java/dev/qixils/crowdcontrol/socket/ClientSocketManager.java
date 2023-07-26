@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  */
 @ApiStatus.AvailableSince("3.0.0")
 public final class ClientSocketManager implements SocketManager {
-	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-ClientSocket");
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CrowdControl/ClientSocket");
 	final @NotNull RequestManager crowdControl;
 	final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	private final @NotNull List<Consumer<SocketManager>> onConnectListeners = new ArrayList<>();

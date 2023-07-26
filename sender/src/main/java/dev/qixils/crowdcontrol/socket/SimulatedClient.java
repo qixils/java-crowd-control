@@ -4,12 +4,7 @@ import dev.qixils.crowdcontrol.ServiceManager;
 import dev.qixils.crowdcontrol.StartableService;
 import dev.qixils.crowdcontrol.TriState;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Blocking;
-import org.jetbrains.annotations.NonBlocking;
-import org.jetbrains.annotations.NonBlockingExecutor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -29,7 +24,7 @@ import java.util.concurrent.Executors;
  */
 @ApiStatus.AvailableSince("3.3.0")
 public final class SimulatedClient implements StartableService<Response>, ServiceManager {
-	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Client");
+	private static final Logger logger = LoggerFactory.getLogger("CrowdControl/SimulatedClient");
 	private final @NonBlockingExecutor Executor executor = Executors.newSingleThreadExecutor();
 	private final String ip;
 	private final int port;

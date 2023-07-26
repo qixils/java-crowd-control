@@ -29,7 +29,7 @@ import java.util.List;
  */
 @ApiStatus.AvailableSince("3.3.0")
 public final class SimulatedServer implements StartableService<@NotNull Flux<@NotNull Response>>, ServiceManager {
-	private static final Logger logger = LoggerFactory.getLogger("CC-Simul-Server");
+	private static final Logger logger = LoggerFactory.getLogger("CrowdControl/SimulatedServer");
 	private final int port;
 	private final List<RequestHandler> rawHandlers = Collections.synchronizedList(new ArrayList<>(1));
 	private @Nullable ServerSocket serverSocket;

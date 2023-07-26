@@ -7,12 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -234,6 +229,7 @@ abstract class Game {
 	 * Gets a collection of players being targeted by an effect.
 	 */
 	Collection<Player> getPlayersFromRequest(Request request) {
+		// TODO: Use new Sources API
 		// Global requests apply to every player on the server
 		if (request.isGlobal()) {
 			return getLivingPlayers();

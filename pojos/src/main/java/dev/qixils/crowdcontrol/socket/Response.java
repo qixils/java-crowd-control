@@ -3,11 +3,7 @@ package dev.qixils.crowdcontrol.socket;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import dev.qixils.crowdcontrol.exceptions.ExceptionUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
+import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,14 +14,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static dev.qixils.crowdcontrol.util.StringUtils.repr;
@@ -39,7 +28,7 @@ import static dev.qixils.crowdcontrol.util.StringUtils.repr;
  */
 @ApiStatus.AvailableSince("1.0.0")
 public class Response implements JsonObject {
-	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-Response");
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CrowdControl/Response");
 	@SerializedName("type")
 	private PacketType packetType;
 	@Nullable

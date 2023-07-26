@@ -12,11 +12,7 @@ import javax.annotation.CheckReturnValue;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -28,7 +24,7 @@ import java.util.function.Consumer;
  */
 @ApiStatus.AvailableSince("3.0.0")
 public final class ServerSocketManager implements SocketManager {
-	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-ServerSocket");
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CrowdControl/ServerSocket");
 	final @NotNull RequestManager crowdControl;
 	final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	final @NotNull List<Consumer<SocketManager>> onConnectListeners = new ArrayList<>();

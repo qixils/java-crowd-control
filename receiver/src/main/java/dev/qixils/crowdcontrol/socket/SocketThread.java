@@ -9,11 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -22,7 +18,7 @@ import java.util.function.Consumer;
 final class SocketThread extends Thread implements SocketManager {
 	private static final @NotNull String RAW_PASSWORD_REQUEST;
 	private static final byte @NotNull [] PASSWORD_REQUEST;
-	private static final @NotNull Logger logger = LoggerFactory.getLogger("CC-SocketThread");
+	private static final @NotNull Logger logger = LoggerFactory.getLogger("CrowdControl/SocketThread");
 
 	static {
 		Response resp = new Response.Builder().packetType(Response.PacketType.LOGIN).build();

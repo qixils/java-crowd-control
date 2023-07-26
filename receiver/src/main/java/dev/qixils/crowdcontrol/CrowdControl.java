@@ -17,13 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -79,7 +73,7 @@ import java.util.function.Supplier;
 @ApiStatus.AvailableSince("1.0.0")
 public final class CrowdControl implements SocketManager, RequestManager {
 
-	private static final Logger logger = LoggerFactory.getLogger("CC-Core");
+	private static final Logger logger = LoggerFactory.getLogger("CrowdControl/Core");
 	private static final Map<Class<?>, Function<Object, Response>> RETURN_TYPE_PARSERS;
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();

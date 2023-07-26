@@ -24,7 +24,7 @@ import java.util.function.Predicate;
  * Processes incoming requests from a Crowd Control socket and executes them.
  */
 final class EffectExecutor {
-	private static final Logger logger = LoggerFactory.getLogger("CC-EffectExecutor");
+	private static final Logger logger = LoggerFactory.getLogger("CrowdControl/EffectExecutor");
 	private final @Nullable SocketManager socketThread;
 	private final Socket socket;
 	private final Executor effectPool;

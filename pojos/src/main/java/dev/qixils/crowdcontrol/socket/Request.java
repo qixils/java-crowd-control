@@ -17,11 +17,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static dev.qixils.crowdcontrol.util.StringUtils.repr;
 
@@ -33,7 +29,7 @@ import static dev.qixils.crowdcontrol.util.StringUtils.repr;
  */
 @ApiStatus.AvailableSince("1.0.0")
 public class Request implements JsonObject, Respondable {
-	private static final Logger logger = LoggerFactory.getLogger(Request.class);
+	private static final Logger logger = LoggerFactory.getLogger("CrowdControl/Request");
 	private transient @Nullable SocketManager originatingSocket;
 	private transient @Nullable Source source;
 	private int id;
