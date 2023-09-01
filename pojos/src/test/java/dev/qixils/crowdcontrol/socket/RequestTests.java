@@ -48,7 +48,8 @@ public class RequestTests {
 		Assertions.assertDoesNotThrow(
 				() -> new Request.Builder().id(1).type(Request.Type.START).effect("summon").viewer("qixils")
 						.message("Purchased effect").cost(10).duration(Duration.ofSeconds(10))
-						.targets(target).parameters(1d).quantity(3)
+						.targets(target).quantity(3)
+//					    .parameters(1d)
 						.source(new Request.Source.Builder().target(target).build()).build());
 		// remote function result test
 		Assertions.assertDoesNotThrow(
@@ -88,7 +89,7 @@ public class RequestTests {
 						source,
 						new Request.Target.Builder().clone().build()
 				)
-				.parameters(5d)
+//				.parameters(5d)
 				.quantity(3)
 				.source(new Request.Source.Builder().target(source).build())
 				.login("qixils")
@@ -102,8 +103,8 @@ public class RequestTests {
 		Assertions.assertEquals("Hello", request.getMessage());
 		Assertions.assertEquals(10, request.getCost());
 		Assertions.assertEquals(Duration.ofSeconds(10), request.getDuration());
-		Assertions.assertEquals(1, request.getParameters().length);
-		Assertions.assertEquals(5d, request.getParameters()[0]);
+//		Assertions.assertEquals(1, request.getParameters().length);
+//		Assertions.assertEquals(5d, request.getParameters()[0]);
 		Assertions.assertFalse(request.isGlobal());
 		Assertions.assertEquals("qixils", request.getLogin());
 		Assertions.assertEquals("password", request.getPassword());
@@ -230,10 +231,10 @@ public class RequestTests {
 		builder = builder.source(sourceBuilder.build());
 
 		// parameters test
-		Assertions.assertNull(builder.parameters());
-		builder = builder.parameters(5d);
-		Assertions.assertEquals(1, builder.parameters().length);
-		Assertions.assertEquals(5d, builder.parameters()[0]);
+//		Assertions.assertNull(builder.parameters());
+//		builder = builder.parameters(5d);
+//		Assertions.assertEquals(1, builder.parameters().length);
+//		Assertions.assertEquals(5d, builder.parameters()[0]);
 
 		// quantity test
 		Assertions.assertNull(builder.quantity());
@@ -252,8 +253,8 @@ public class RequestTests {
 		Assertions.assertEquals("Hello", request.getMessage());
 		Assertions.assertEquals(10, request.getCost());
 		Assertions.assertEquals(Duration.ofSeconds(10), request.getDuration());
-		Assertions.assertEquals(1, request.getParameters().length);
-		Assertions.assertEquals(5d, request.getParameters()[0]);
+//		Assertions.assertEquals(1, request.getParameters().length);
+//		Assertions.assertEquals(5d, request.getParameters()[0]);
 		Assertions.assertFalse(request.isGlobal());
 		Assertions.assertEquals("qixils", request.getLogin());
 		Assertions.assertEquals("password", request.getPassword());
@@ -305,7 +306,7 @@ public class RequestTests {
 				.targets(
 						target,
 						new Request.Target.Builder().clone().build().toBuilder().build())
-				.parameters(5.0d) // json treats number params as doubles by default
+//				.parameters(5.0d) // json treats number params as doubles by default
 				.quantity(3)
 				.login("qixils")
 				.password("password")

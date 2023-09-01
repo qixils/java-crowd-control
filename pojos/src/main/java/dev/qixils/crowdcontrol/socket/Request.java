@@ -44,7 +44,7 @@ public class Request implements JsonObject, Respondable {
 	private Target[] targets;
 	@Nullable
 	private Duration duration;
-	private Object @Nullable [] parameters;
+	//private Object @Nullable [] parameters;
 	@Nullable
 	private Object value;
 	@Nullable
@@ -119,7 +119,7 @@ public class Request implements JsonObject, Respondable {
 		if (builder.duration != null && builder.duration.isNegative())
 			throw new IllegalArgumentException("duration cannot be negative");
 		this.duration = builder.duration;
-		this.parameters = builder.parameters;
+//		this.parameters = builder.parameters;
 		if (this.type != Type.REMOTE_FUNCTION_RESULT && builder.value != null)
 			throw new IllegalArgumentException("value cannot be non-null for non-remote function result packets");
 		this.value = builder.value;
@@ -272,11 +272,11 @@ public class Request implements JsonObject, Respondable {
 	 * @return array of objects if applicable, null otherwise
 	 * @since 3.5.0
 	 */
-	@ApiStatus.AvailableSince("3.5.0")
-	@CheckReturnValue
-	public Object @Nullable [] getParameters() {
-		return parameters;
-	}
+//	@ApiStatus.AvailableSince("3.5.0")
+//	@CheckReturnValue
+//	public Object @Nullable [] getParameters() {
+//		return parameters;
+//	}
 
 	/**
 	 * Gets the value returned by the remote function.
@@ -475,7 +475,7 @@ public class Request implements JsonObject, Respondable {
 				&& Objects.equals(viewer, request.viewer)
 				&& Objects.equals(cost, request.cost)
 				&& Arrays.equals(getTargets(), request.getTargets())
-				&& Arrays.equals(getParameters(), request.getParameters())
+//				&& Arrays.equals(getParameters(), request.getParameters())
 				&& Objects.equals(duration, request.duration)
 //				&& Objects.equals(originatingSocket, request.originatingSocket)
 				&& Objects.equals(source, request.source)
@@ -489,7 +489,7 @@ public class Request implements JsonObject, Respondable {
 	public int hashCode() {
 		int result = Objects.hash(id, type, effect, message, viewer, cost, duration, source, value, login, password, player);
 		result = 31 * result + Arrays.hashCode(getTargets());
-		result = 31 * result + Arrays.hashCode(getParameters());
+//		result = 31 * result + Arrays.hashCode(getParameters());
 		return result;
 	}
 
@@ -505,7 +505,7 @@ public class Request implements JsonObject, Respondable {
 				", cost=" + cost +
 				", targets=" + Arrays.toString(targets) +
 				", duration=" + duration +
-				", parameters=" + Arrays.toString(parameters) +
+//				", parameters=" + Arrays.toString(parameters) +
 				", source=" + source +
 				", value=" + value +
 				", login=" + repr(login) +
@@ -1352,7 +1352,7 @@ public class Request implements JsonObject, Respondable {
 		private Type type = Type.START;
 		private Target @Nullable [] targets;
 		private @Nullable Duration duration;
-		private Object @Nullable [] parameters;
+//		private Object @Nullable [] parameters;
 		private @Nullable Source source;
 		private @Nullable Object value;
 		private @Nullable Integer quantity;
@@ -1387,7 +1387,7 @@ public class Request implements JsonObject, Respondable {
 			this.type = source.type;
 			this.targets = source.targets;
 			this.duration = source.duration;
-			this.parameters = source.parameters;
+//			this.parameters = source.parameters;
 			this.source = source.source;
 			this.value = source.value;
 			this.quantity = source.quantity;
@@ -1414,7 +1414,7 @@ public class Request implements JsonObject, Respondable {
 			this.type = builder.type;
 			this.targets = builder.targets;
 			this.duration = builder.duration;
-			this.parameters = builder.parameters;
+//			this.parameters = builder.parameters;
 			this.source = builder.source;
 			this.value = builder.value;
 			this.quantity = builder.quantity;
@@ -1568,13 +1568,13 @@ public class Request implements JsonObject, Respondable {
 		 * @return this builder
 		 * @since 3.5.0
 		 */
-		@ApiStatus.AvailableSince("3.5.0")
-		@NotNull
-		@Contract("_ -> this")
-		public Builder parameters(Object @Nullable ... parameters) {
-			this.parameters = parameters;
-			return this;
-		}
+//		@ApiStatus.AvailableSince("3.5.0")
+//		@NotNull
+//		@Contract("_ -> this")
+//		public Builder parameters(Object @Nullable ... parameters) {
+//			this.parameters = parameters;
+//			return this;
+//		}
 
 		/**
 		 * Sets the streamer through which the effect was requested.
@@ -1790,11 +1790,11 @@ public class Request implements JsonObject, Respondable {
 		 * @return parameters of the effect
 		 * @since 3.5.0
 		 */
-		@ApiStatus.AvailableSince("3.5.0")
-		@CheckReturnValue
-		public Object @Nullable [] parameters() {
-			return parameters;
-		}
+//		@ApiStatus.AvailableSince("3.5.0")
+//		@CheckReturnValue
+//		public Object @Nullable [] parameters() {
+//			return parameters;
+//		}
 
 		/**
 		 * Gets the streamer through which the effect was requested.

@@ -26,7 +26,7 @@ public class TimedEffectTests {
 			.cost(10)
 			.duration(Duration.ofSeconds(15))
 			.targets(SOURCE.target())
-			.parameters(5)
+//			.parameters(5)
 			.quantity(3)
 			.source(SOURCE)
 			.build();

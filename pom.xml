@@ -7,7 +7,7 @@
 
     <groupId>dev.qixils.crowdcontrol</groupId>
     <artifactId>java-crowd-control</artifactId>
-    <version>3.7.3</version>  <!-- don't forget to update scm tags & submodule versions -->
+    <version>3.7.4</version>  <!-- don't forget to update scm tags & submodule versions -->
     <packaging>pom</packaging>
 
     <modules>
@@ -25,7 +25,7 @@
         <developerConnection>scm:git:https://github.com/qixils/java-crowd-control
         </developerConnection>
         <url>https://github.com/qixils/java-crowd-control.git</url>
-        <tag>v3.7.3</tag>
+        <tag>v3.7.4</tag>
     </scm>
     <licenses>
         <license>
