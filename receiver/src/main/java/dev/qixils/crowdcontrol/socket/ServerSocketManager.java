@@ -28,6 +28,7 @@ public final class ServerSocketManager implements SocketManager {
 	final @NotNull RequestManager crowdControl;
 	final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	final @NotNull List<Consumer<SocketManager>> onConnectListeners = new ArrayList<>();
+	final @NotNull List<Consumer<SocketManager>> onLoginListeners = new ArrayList<>();
 	private final @NotNull List<SocketThread> socketThreads = new ArrayList<>();
 	volatile boolean running = true;
 	private ServerSocket serverSocket;
@@ -49,6 +50,11 @@ public final class ServerSocketManager implements SocketManager {
 	@Override
 	public void addConnectListener(@NotNull Consumer<SocketManager> consumer) {
 		onConnectListeners.add(ExceptionUtil.validateNotNull(consumer, "consumer"));
+	}
+
+	@Override
+	public void addLoginListener(@NotNull Consumer<SocketManager> consumer) {
+		onLoginListeners.add(ExceptionUtil.validateNotNull(consumer, "consumer"));
 	}
 
 	@Override

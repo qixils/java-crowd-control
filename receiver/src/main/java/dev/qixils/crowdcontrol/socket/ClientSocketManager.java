@@ -30,6 +30,7 @@ public final class ClientSocketManager implements SocketManager {
 	final @NotNull RequestManager crowdControl;
 	final @NotNull Executor effectPool = Executors.newCachedThreadPool();
 	private final @NotNull List<Consumer<SocketManager>> onConnectListeners = new ArrayList<>();
+	final @NotNull List<Consumer<SocketManager>> onLoginListeners = new ArrayList<>();
 	@Nullable Socket socket;
 	private volatile boolean running = true;
 	private int sleep = 1;
@@ -53,6 +54,11 @@ public final class ClientSocketManager implements SocketManager {
 	@Override
 	public void addConnectListener(@NotNull Consumer<SocketManager> consumer) {
 		onConnectListeners.add(ExceptionUtil.validateNotNull(consumer, "consumer"));
+	}
+
+	@Override
+	public void addLoginListener(@NotNull Consumer<SocketManager> consumer) {
+		onLoginListeners.add(ExceptionUtil.validateNotNull(consumer, "consumer"));
 	}
 
 	@Override

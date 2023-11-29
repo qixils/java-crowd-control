@@ -46,6 +46,11 @@ final class SocketThread extends Thread implements SocketManager {
 	}
 
 	@Override
+	public void addLoginListener(@NotNull Consumer<SocketManager> consumer) {
+		socketManager.addLoginListener(consumer);
+	}
+
+	@Override
 	public Response.@NotNull Builder buildResponse() {
 		return new Response.Builder().originatingSocket(this);
 	}

@@ -89,6 +89,16 @@ public interface SocketManager extends Respondable {
 	void addConnectListener(@NotNull Consumer<SocketManager> consumer); // TODO: unit tests
 
 	/**
+	 * Sets a consumer to be called when a new {@link SocketManager Crowd Control instance}
+	 * logs in.
+	 *
+	 * @param consumer consumer to be called
+	 * @since 3.8.1
+	 */
+	@ApiStatus.AvailableSince("3.8.1")
+	void addLoginListener(@NotNull Consumer<SocketManager> consumer); // TODO: unit tests
+
+	/**
 	 * Gets the {@link Request.Source}s that this {@link SocketManager} is connected to.
 	 * The returned collection is unmodifiable.
 	 *

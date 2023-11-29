@@ -14,10 +14,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -35,6 +34,7 @@ final class EffectExecutor {
 	private final @NotNull Set<@NotNull Id> notSelectable = new HashSet<>();
 	private boolean loggedIn = false;
 	private Request.@Nullable Source player = null;
+	private final @NotNull List<Consumer<SocketManager>> onLoginListeners;
 
 	EffectExecutor(SocketThread socketThread) throws IOException {
 		this.socketThread = socketThread;
@@ -43,6 +43,7 @@ final class EffectExecutor {
 		this.input = socket.getInputStream();
 		this.crowdControl = socketThread.socketManager.crowdControl;
 		this.password = crowdControl.getPassword();
+		this.onLoginListeners = Collections.unmodifiableList(socketThread.socketManager.onLoginListeners);
 	}
 
 	EffectExecutor(ClientSocketManager csm) throws IOException {
@@ -54,6 +55,7 @@ final class EffectExecutor {
 		this.input = socket.getInputStream();
 		this.crowdControl = csm.crowdControl;
 		this.password = crowdControl.getPassword();
+		this.onLoginListeners = Collections.unmodifiableList(csm.onLoginListeners);
 	}
 
 	Request.@NotNull Source getSource() {
@@ -112,6 +114,13 @@ final class EffectExecutor {
 				request.buildResponse().packetType(Response.PacketType.LOGIN_SUCCESS).message("Successfully logged in").send();
 				player = getSource().toBuilder().login(request.getLogin()).build();
 				loggedIn = true;
+				for (Consumer<SocketManager> onLoginListener : onLoginListeners) {
+					try {
+						onLoginListener.accept(socketThread);
+					} catch (Exception e) {
+						logger.error("Error while calling login listener", e);
+					}
+				}
 			} else {
 				logger.info("Aborting connection due to incorrect password (" + socketThread.getDisplayName() + ")");
 				socketThread.shutdown(request, "Incorrect password");
