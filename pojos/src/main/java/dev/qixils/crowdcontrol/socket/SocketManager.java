@@ -84,6 +84,7 @@ public interface SocketManager extends Respondable {
 	 *
 	 * @param consumer consumer to be called
 	 * @since 3.4.0
+	 * @see #addLoginListener(Consumer)
 	 */
 	@ApiStatus.AvailableSince("3.4.0")
 	void addConnectListener(@NotNull Consumer<SocketManager> consumer); // TODO: unit tests
@@ -94,6 +95,7 @@ public interface SocketManager extends Respondable {
 	 *
 	 * @param consumer consumer to be called
 	 * @since 3.8.1
+	 * @see #addConnectListener(Consumer)
 	 */
 	@ApiStatus.AvailableSince("3.8.1")
 	void addLoginListener(@NotNull Consumer<SocketManager> consumer); // TODO: unit tests
