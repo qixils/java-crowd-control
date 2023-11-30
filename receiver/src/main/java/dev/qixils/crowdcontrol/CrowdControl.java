@@ -208,7 +208,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 *
 	 * @param consumer consumer to be called
 	 * @since 3.4.0
-	 * @see #addLoginListener(Consumer) 
+	 * @see #addLoginListener(Consumer)
 	 */
 	@ApiStatus.AvailableSince("3.4.0")
 	@Override
@@ -222,7 +222,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 *
 	 * @param consumer consumer to be called
 	 * @since 3.8.1
-	 * @see #addConnectListener(Consumer) 
+	 * @see #addConnectListener(Consumer)
 	 */
 	@ApiStatus.AvailableSince("3.8.1")
 	public void addLoginListener(@NotNull Consumer<SocketManager> consumer) {
