@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -63,8 +64,8 @@ public interface ServiceManager {
 	}
 
 	/**
-	 * Returns the IP that the {@link SocketManager} will listen on.
-	 * If running in server mode, this will be null.
+	 * Returns the IP that the {@link SocketManager} will listen on or bind to.
+	 * May be null for servers to bind to all local IPs.
 	 *
 	 * @return IP if available
 	 * @since 3.3.0
@@ -72,7 +73,7 @@ public interface ServiceManager {
 	@ApiStatus.AvailableSince("3.3.0")
 	@Nullable
 	@CheckReturnValue
-	String getIP();
+	InetAddress getIP();
 
 	/**
 	 * Returns the port that the {@link SocketManager} will listen on.

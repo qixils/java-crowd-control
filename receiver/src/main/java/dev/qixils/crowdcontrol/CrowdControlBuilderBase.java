@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.CheckReturnValue;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.function.Function;
 
 /**
@@ -14,9 +16,10 @@ import java.util.function.Function;
  *
  * @since 3.0.0
  */
+@SuppressWarnings("unchecked")
 @ApiStatus.AvailableSince("3.0.0")
 @ApiStatus.Internal
-abstract class CrowdControlBuilderBase implements CrowdControlBuilder {
+abstract class CrowdControlBuilderBase<B extends CrowdControlBuilderBase<B>> implements CrowdControlBuilder<B> {
 	/**
 	 * A function (usually a constructor) that creates a new {@link SocketManager}
 	 * given a {@link CrowdControl} instance.
@@ -25,6 +28,14 @@ abstract class CrowdControlBuilderBase implements CrowdControlBuilder {
 	 */
 	@ApiStatus.AvailableSince("3.0.0")
 	protected final @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator;
+
+	/**
+	 * The IP that the client/server will connect to or bind on.
+	 *
+	 * @since 3.9.0
+	 */
+	@ApiStatus.AvailableSince("3.9.0")
+	protected InetAddress IP;
 
 	/**
 	 * The port that the client/server will connect to or listen on.
@@ -50,11 +61,51 @@ abstract class CrowdControlBuilderBase implements CrowdControlBuilder {
 	@CheckReturnValue
 	@Contract("_ -> this")
 	@ApiStatus.AvailableSince("3.0.0")
-	public @NotNull CrowdControlBuilderBase port(int port) throws IllegalArgumentException {
+	public @NotNull B port(int port) throws IllegalArgumentException {
 		if (port < 1 || port > 65536) {
 			throw new IllegalArgumentException("Port should be within [1,65536]");
 		}
 		this.port = port;
-		return this;
+		return (B) this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param IP IP to connect to
+	 * @return this builder
+	 * @throws IllegalArgumentException the IP was null or blank
+	 * @since 3.9.0
+	 */
+	@ApiStatus.AvailableSince("3.9.0")
+	@CheckReturnValue
+	@Contract("_ -> this")
+	public @NotNull B ip(@NotNull InetAddress IP) throws IllegalArgumentException {
+		this.IP = ExceptionUtil.validateNotNull(IP, "IP");
+		return (B) this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param IP IP to connect to
+	 * @return this builder
+	 * @throws IllegalArgumentException the IP was null or blank
+	 * @since 3.9.0
+	 */
+	@ApiStatus.AvailableSince("3.9.0")
+	@CheckReturnValue
+	@Contract("_ -> this")
+	public @NotNull B ip(@NotNull String IP) throws IllegalArgumentException {
+		ExceptionUtil.validateNotNull(IP, "IP");
+		if (IP.isEmpty()) {
+			throw new IllegalArgumentException("IP cannot be blank");
+		}
+		try {
+			this.IP = InetAddress.getByName(IP);
+		} catch (UnknownHostException e) {
+			throw new IllegalArgumentException("Invalid IP address " + IP, e);
+		}
+		return (B) this;
 	}
 }

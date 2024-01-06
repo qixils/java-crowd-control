@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.CheckReturnValue;
+import java.net.InetAddress;
 
 /**
  * Builds a new {@link CrowdControl} instance.
@@ -13,7 +14,36 @@ import javax.annotation.CheckReturnValue;
  */
 @ApiStatus.AvailableSince("3.0.0")
 @ApiStatus.Internal
-interface CrowdControlBuilder {
+interface CrowdControlBuilder<B extends CrowdControlBuilder<B>> {
+
+	/**
+	 * Sets the IP that the Crowd Control client will connect to.
+	 *
+	 * @param IP IP to connect to
+	 * @return this builder
+	 * @throws IllegalArgumentException the IP was null or blank
+	 * @since 3.9.0
+	 */
+	@ApiStatus.AvailableSince("3.9.0")
+	@CheckReturnValue
+	@Contract("_ -> this")
+	@NotNull
+	B ip(@NotNull InetAddress IP);
+
+	/**
+	 * Sets the IP that the Crowd Control client will connect to.
+	 *
+	 * @param IP IP to connect to
+	 * @return this builder
+	 * @throws IllegalArgumentException the IP was null or blank
+	 * @since 3.9.0
+	 */
+	@ApiStatus.AvailableSince("3.9.0")
+	@CheckReturnValue
+	@Contract("_ -> this")
+	@NotNull
+	B ip(@NotNull String IP) throws IllegalArgumentException;
+
 	/**
 	 * Sets the port that will be used by the Crowd Control client or server.
 	 *
@@ -26,7 +56,7 @@ interface CrowdControlBuilder {
 	@CheckReturnValue
 	@NotNull
 	@Contract("_ -> this")
-	CrowdControlBuilder port(int port) throws IllegalArgumentException;
+	B port(int port) throws IllegalArgumentException;
 
 	/**
 	 * Builds a new {@link CrowdControl} instance using the provided variables.

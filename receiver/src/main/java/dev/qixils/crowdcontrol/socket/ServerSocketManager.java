@@ -72,7 +72,7 @@ public final class ServerSocketManager implements SocketManager {
 			return;
 
 		try {
-			serverSocket = new ServerSocket(crowdControl.getPort());
+			serverSocket = new ServerSocket(crowdControl.getPort(), 0, crowdControl.getIP());
 		} catch (IOException exc) {
 			logger.error("Could not register port " + crowdControl.getPort() + ". This is a fatal exception; attempts to reconnect will not be made.", exc);
 			return;

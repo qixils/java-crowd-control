@@ -11,15 +11,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 @SuppressWarnings("BusyWait")
@@ -629,7 +625,7 @@ public final class EffectResponseTests {
 	}
 
 	@Test
-	public void successfulServerResponseBuilder() throws InterruptedException {
+	public void successfulServerResponseBuilder() throws InterruptedException, UnknownHostException {
 		// init server & client
 		CrowdControl server = CrowdControl.server().port(PORT).password(PASSWORD).build();
 		server.registerHandlers(EFFECT_HANDLERS);

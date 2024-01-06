@@ -6,6 +6,7 @@ import dev.qixils.crowdcontrol.socket.SimulatedClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public final class SimpleTCPClientConnectorTests {
 	private static final String INCORRECT_PASSWORD = "incorrect";
 
 	@Test
-	public void singleClientTest() throws InterruptedException {
+	public void singleClientTest() throws InterruptedException, UnknownHostException {
 		CrowdControl server = CrowdControl.server().port(PORT).password(CORRECT_PASSWORD).build();
 		server.registerHandlers(EFFECT_HANDLERS);
 
@@ -52,7 +53,7 @@ public final class SimpleTCPClientConnectorTests {
 	}
 
 	@Test
-	public void multipleClientsTest() throws InterruptedException {
+	public void multipleClientsTest() throws InterruptedException, UnknownHostException {
 		CrowdControl server = CrowdControl.server().port(PORT).password(CORRECT_PASSWORD).build();
 		server.registerHandlers(EFFECT_HANDLERS);
 
@@ -89,7 +90,7 @@ public final class SimpleTCPClientConnectorTests {
 	}
 
 	@Test
-	public void incorrectPasswordTest() throws InterruptedException {
+	public void incorrectPasswordTest() throws InterruptedException, UnknownHostException {
 		CrowdControl server = CrowdControl.server().port(PORT).password(CORRECT_PASSWORD).build();
 		server.registerHandlers(EFFECT_HANDLERS);
 

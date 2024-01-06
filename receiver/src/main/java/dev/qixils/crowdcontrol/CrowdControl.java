@@ -17,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -78,7 +79,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	private final Map<String, Function<Request, Response>> effectHandlers = new HashMap<>();
 	private final Map<String, Consumer<Request>> asyncHandlers = new HashMap<>();
 	private final List<Function<Request, CheckResult>> globalChecks = new ArrayList<>();
-	private final @Nullable String IP;
+	private final @Nullable InetAddress IP;
 	private final int port;
 	private final @Nullable String password;
 	private final SocketManager socketManager;
@@ -94,11 +95,11 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * Creates a new receiver client that receives {@link Request}s from a streamer's Crowd Control
 	 * desktop application.
 	 *
-	 * @param IP                   IP address to connect to (if applicable)
+	 * @param IP                   IP address to connect to
 	 * @param port                 port to listen on or connect to
 	 * @param socketManagerCreator creator of a new {@link SocketManager}
 	 */
-	CrowdControl(@NotNull String IP,
+	CrowdControl(@NotNull InetAddress IP,
 				 int port,
 				 @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
 		this.IP = ExceptionUtil.validateNotNull(IP, "IP");
@@ -110,14 +111,16 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	/**
 	 * Creates a new receiver server that receives {@link Request}s from multiple streamers.
 	 *
+	 * @param IP                   IP address to bind to (if applicable)
 	 * @param port                 port to listen on or connect to
 	 * @param password             password to use to connect to the server
 	 * @param socketManagerCreator creator of a new {@link SocketManager}
 	 */
-	CrowdControl(int port,
+	CrowdControl(@Nullable InetAddress IP,
+				 int port,
 				 @NotNull String password,
 				 @NotNull Function<@NotNull CrowdControl, @NotNull SocketManager> socketManagerCreator) {
-		this.IP = null;
+		this.IP = IP;
 		this.port = port;
 		this.password = ServiceManager.encryptPassword(ExceptionUtil.validateNotNull(password, "password"));
 		this.socketManager = ExceptionUtil.validateNotNull(socketManagerCreator, "socketManagerCreator").apply(this);
@@ -163,8 +166,8 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	}
 
 	/**
-	 * Returns the IP that the {@link SocketManager} will listen on.
-	 * If running in server mode, this will be null.
+	 * Returns the IP that the {@link SocketManager} will listen on or bind to.
+	 * May be null for servers to bind to all local IPs.
 	 *
 	 * @return IP if available
 	 * @since 1.0.0
@@ -172,7 +175,7 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	@ApiStatus.AvailableSince("1.0.0")
 	@Nullable
 	@CheckReturnValue
-	public String getIP() {
+	public InetAddress getIP() {
 		return IP;
 	}
 

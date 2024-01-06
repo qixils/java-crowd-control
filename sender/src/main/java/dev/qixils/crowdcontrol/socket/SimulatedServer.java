@@ -14,6 +14,7 @@ import reactor.core.publisher.Flux;
 
 import javax.annotation.CheckReturnValue;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Duration;
@@ -30,11 +31,25 @@ import java.util.List;
 @ApiStatus.AvailableSince("3.3.0")
 public final class SimulatedServer implements StartableService<@NotNull Flux<@NotNull Response>>, ServiceManager {
 	private static final Logger logger = LoggerFactory.getLogger("CrowdControl/SimulatedServer");
+	private final @Nullable InetAddress ip;
 	private final int port;
 	private final List<RequestHandler> rawHandlers = Collections.synchronizedList(new ArrayList<>(1));
 	private @Nullable ServerSocket serverSocket;
 	private @Nullable Thread loopThread = null;
 	private volatile boolean running = true;
+
+	/**
+	 * Creates a new {@link SimulatedServer} that binds to the given IP and listens on the given port.
+	 *
+	 * @param ip   IP to bind to
+	 * @param port port to listen on
+	 * @since 3.9.0
+	 */
+	@ApiStatus.AvailableSince("3.9.0")
+	public SimulatedServer(@Nullable InetAddress ip, int port) {
+		this.ip = ip;
+		this.port = port;
+	}
 
 	/**
 	 * Creates a new {@link SimulatedServer} that listens on the given port.
@@ -44,14 +59,14 @@ public final class SimulatedServer implements StartableService<@NotNull Flux<@No
 	 */
 	@ApiStatus.AvailableSince("3.3.0")
 	public SimulatedServer(int port) {
-		this.port = port;
+		this(null, port);
 	}
 
 	@Nullable
 	@Override
 	@ApiStatus.AvailableSince("3.3.0")
-	public String getIP() {
-		return null;
+	public InetAddress getIP() {
+		return ip;
 	}
 
 	@Override

@@ -15,7 +15,7 @@ import javax.annotation.CheckReturnValue;
  * @since 3.0.0
  */
 @ApiStatus.AvailableSince("3.0.0")
-public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
+public final class CrowdControlServerBuilder extends CrowdControlBuilderBase<CrowdControlServerBuilder> {
 	private String password;
 
 	/**
@@ -50,22 +50,6 @@ public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
 	}
 
 	/**
-	 * Sets the port that will be used by the Crowd Control server.
-	 *
-	 * @param port port to listen for new connections on
-	 * @return this builder
-	 * @throws IllegalArgumentException the port was outside the expected bounds of [1,65536]
-	 * @since 3.0.0
-	 */
-	@ApiStatus.AvailableSince("3.0.0")
-	@Override
-	@CheckReturnValue
-	@Contract("_ -> this")
-	public @NotNull CrowdControlServerBuilder port(int port) throws IllegalArgumentException {
-		return (CrowdControlServerBuilder) super.port(port);
-	}
-
-	/**
 	 * {@inheritDoc}
 	 *
 	 * @return new CrowdControl instance
@@ -83,6 +67,6 @@ public final class CrowdControlServerBuilder extends CrowdControlBuilderBase {
 		if (password == null) {
 			throw new IllegalStateException("Password must be set using #password(String)");
 		}
-		return new CrowdControl(port, password, socketManagerCreator);
+		return new CrowdControl(IP, port, password, socketManagerCreator);
 	}
 }
