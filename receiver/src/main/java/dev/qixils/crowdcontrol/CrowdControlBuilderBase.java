@@ -5,6 +5,9 @@ import dev.qixils.crowdcontrol.socket.SocketManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckReturnValue;
 import java.net.InetAddress;
@@ -19,6 +22,9 @@ import java.util.function.Function;
 @SuppressWarnings("unchecked")
 @ApiStatus.AvailableSince("3.0.0")
 abstract class CrowdControlBuilderBase<B extends CrowdControlBuilderBase<B>> implements CrowdControlBuilder<B> {
+
+	protected final Logger logger = LoggerFactory.getLogger("CrowdControl/Builder");
+
 	/**
 	 * A function (usually a constructor) that creates a new {@link SocketManager}
 	 * given a {@link CrowdControl} instance.
@@ -73,14 +79,13 @@ abstract class CrowdControlBuilderBase<B extends CrowdControlBuilderBase<B>> imp
 	 *
 	 * @param IP IP to connect to
 	 * @return this builder
-	 * @throws IllegalArgumentException the IP was null or blank
 	 * @since 3.9.0
 	 */
 	@ApiStatus.AvailableSince("3.9.0")
 	@CheckReturnValue
 	@Contract("_ -> this")
-	public @NotNull B ip(@NotNull InetAddress IP) throws IllegalArgumentException {
-		this.IP = ExceptionUtil.validateNotNull(IP, "IP");
+	public @NotNull B ip(@Nullable InetAddress IP) throws IllegalArgumentException {
+		this.IP = IP;
 		return (B) this;
 	}
 
@@ -89,16 +94,17 @@ abstract class CrowdControlBuilderBase<B extends CrowdControlBuilderBase<B>> imp
 	 *
 	 * @param IP IP to connect to
 	 * @return this builder
-	 * @throws IllegalArgumentException the IP was null or blank
+	 * @throws IllegalArgumentException the IP was invalid
 	 * @since 3.9.0
 	 */
 	@ApiStatus.AvailableSince("3.9.0")
 	@CheckReturnValue
 	@Contract("_ -> this")
-	public @NotNull B ip(@NotNull String IP) throws IllegalArgumentException {
-		ExceptionUtil.validateNotNull(IP, "IP");
-		if (IP.isEmpty()) {
-			throw new IllegalArgumentException("IP cannot be blank");
+	public @NotNull B ip(@Nullable String IP) throws IllegalArgumentException {
+		if (IP == null || IP.isEmpty()) {
+			logger.warn("Received null IP; ignoring");
+			this.IP = null;
+			return (B) this;
 		}
 		try {
 			this.IP = InetAddress.getByName(IP);
