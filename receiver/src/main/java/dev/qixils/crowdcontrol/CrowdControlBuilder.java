@@ -13,7 +13,6 @@ import java.net.InetAddress;
  * @since 3.0.0
  */
 @ApiStatus.AvailableSince("3.0.0")
-@ApiStatus.Internal
 interface CrowdControlBuilder<B extends CrowdControlBuilder<B>> {
 
 	/**

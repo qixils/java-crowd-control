@@ -18,7 +18,6 @@ import java.util.function.Function;
  */
 @SuppressWarnings("unchecked")
 @ApiStatus.AvailableSince("3.0.0")
-@ApiStatus.Internal
 abstract class CrowdControlBuilderBase<B extends CrowdControlBuilderBase<B>> implements CrowdControlBuilder<B> {
 	/**
 	 * A function (usually a constructor) that creates a new {@link SocketManager}
