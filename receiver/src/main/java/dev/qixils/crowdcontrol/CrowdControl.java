@@ -328,8 +328,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @since 1.0.0
 	 */
 	@ApiStatus.AvailableSince("1.0.0")
-	public void registerHandler(@NotNull String effect, @NotNull Function<Request, Response> handler) {
-		effect = effect.toLowerCase(Locale.ENGLISH);
+	public void registerHandler(@Nullable String effect, @NotNull Function<Request, Response> handler) {
+		if (effect != null)
+			effect = effect.toLowerCase(Locale.ENGLISH);
 		if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
 			throw new IllegalArgumentException("The effect \"" + effect + "\" already has a handler.");
 		}
@@ -346,8 +347,9 @@ public final class CrowdControl implements SocketManager, RequestManager {
 	 * @since 2.0.0
 	 */
 	@ApiStatus.AvailableSince("2.0.0")
-	public void registerHandler(@NotNull String effect, @NotNull Consumer<Request> handler) {
-		effect = effect.toLowerCase(Locale.ENGLISH);
+	public void registerHandler(@Nullable String effect, @NotNull Consumer<Request> handler) {
+		if (effect != null)
+			effect = effect.toLowerCase(Locale.ENGLISH);
 		if (effectHandlers.containsKey(effect) || asyncHandlers.containsKey(effect)) {
 			throw new IllegalArgumentException("The effect \"" + effect + "\" already has a handler.");
 		}

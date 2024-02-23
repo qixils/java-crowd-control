@@ -19,12 +19,6 @@ public class RequestTests {
 	public void constructorTest() {
 		// new constructor tests //
 
-		// null effect test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request.Builder().id(1).type(Request.Type.START).viewer("qixils").build());
-		// null viewer test
-		Assertions.assertThrows(IllegalArgumentException.class,
-				() -> new Request.Builder().id(1).type(Request.Type.START).effect("summon").build());
 		// negative cost test
 		Assertions.assertThrows(IllegalArgumentException.class,
 				() -> new Request.Builder().id(1).type(Request.Type.START).effect("summon").viewer("qixils").cost(-1).build());

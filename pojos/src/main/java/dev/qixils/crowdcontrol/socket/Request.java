@@ -85,31 +85,26 @@ public class Request implements JsonObject, Respondable {
 
 		// validate type & related arguments
 		this.type = ExceptionUtil.validateNotNull(builder.type, "type");
-		if (this.type.isEffectType()) {
-			if (builder.effect == null)
-				throw new IllegalArgumentException("effect cannot be null for effect packets");
-			if (builder.viewer == null)
-				throw new IllegalArgumentException("viewer cannot be null for effect packets");
-		} else {
-			if (builder.effect != null)
-				throw new IllegalArgumentException("effect cannot be non-null for non-effect packets");
-			if (builder.viewer != null)
-				throw new IllegalArgumentException("viewer cannot be non-null for non-effect packets");
-			if (builder.cost != null)
-				throw new IllegalArgumentException("cost cannot be non-null for non-effect packets");
-			if (builder.targets != null)
-				throw new IllegalArgumentException("targets cannot be non-null for non-effect packets");
-			if (builder.quantity != null)
-				throw new IllegalArgumentException("quantity cannot be non-null for non-effect packets");
+        if (!this.type.isEffectType()) {
+            if (builder.effect != null)
+                throw new IllegalArgumentException("effect cannot be non-null for non-effect packets");
+            if (builder.viewer != null)
+                throw new IllegalArgumentException("viewer cannot be non-null for non-effect packets");
+            if (builder.cost != null)
+                throw new IllegalArgumentException("cost cannot be non-null for non-effect packets");
+            if (builder.targets != null)
+                throw new IllegalArgumentException("targets cannot be non-null for non-effect packets");
+            if (builder.quantity != null)
+                throw new IllegalArgumentException("quantity cannot be non-null for non-effect packets");
 
-			if (builder.password == null && this.type == Type.LOGIN)
-				throw new IllegalArgumentException("password cannot be null for login packets");
+            if (builder.password == null && this.type == Type.LOGIN)
+                throw new IllegalArgumentException("password cannot be null for login packets");
 
-			if (builder.player == null && this.type == Type.PLAYER_INFO)
-				throw new IllegalArgumentException("player cannot be null for player info packets");
-		}
+            if (builder.player == null && this.type == Type.PLAYER_INFO)
+                throw new IllegalArgumentException("player cannot be null for player info packets");
+        }
 
-		// other arguments
+        // other arguments
 		this.effect = builder.effect == null ? null : builder.effect.toLowerCase(Locale.ENGLISH);
 		this.viewer = builder.viewer;
 		this.message = builder.message;
