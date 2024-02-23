@@ -99,6 +99,31 @@ public final class TimedEffect {
 		}
 	}
 
+	/**
+	 * Stops all effects active for the specified target.
+	 *
+	 * @param target the streamer to target; may be null for global effects
+	 * @since 3.9.0
+	 */
+	@ApiStatus.AvailableSince("3.9.0")
+	public static void stopAll(Request.@Nullable Target target) {
+		Iterator<Map.Entry<UUID, TimedEffect>> iterator = ALL_ACTIVE_EFFECTS.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Map.Entry<UUID, TimedEffect> entry = iterator.next();
+			boolean stop = false;
+			for (MapKey key : entry.getValue().mapKeys) {
+				if (Objects.equals(target, key.target)) {
+					stop = true;
+					break;
+				}
+			}
+			if (stop) {
+				iterator.remove(); // remove first to prevent CME from #complete
+				entry.getValue().complete();
+			}
+		}
+	}
+
 	private TimedEffect(@NotNull Request request,
 						@Nullable String effectGroup,
 						@Nullable Duration duration,
@@ -404,6 +429,7 @@ public final class TimedEffect {
 		duration = -1;
 
 		ALL_ACTIVE_EFFECTS.remove(id, this);
+		ALL_PAUSED_EFFECTS.remove(id, this);
 		if (blocksOthers) {
 			if (mapKeys.length == 0)
 				ACTIVE_EFFECTS.remove(globalKey, this);
@@ -545,13 +571,13 @@ public final class TimedEffect {
 
 	private static final class MapKey {
 		private final @NotNull String effectGroup;
-		private final @Nullable Request.Target target;
+		private final Request.@Nullable Target target;
 
 		private MapKey(@NotNull String effectGroup) {
 			this(effectGroup, null);
 		}
 
-		private MapKey(@NotNull String effectGroup, @Nullable Request.Target target) {
+		private MapKey(@NotNull String effectGroup, Request.@Nullable Target target) {
 			this.effectGroup = effectGroup;
 			this.target = target;
 		}
