@@ -102,7 +102,7 @@ abstract class CrowdControlBuilderBase<B extends CrowdControlBuilderBase<B>> imp
 	@Contract("_ -> this")
 	public @NotNull B ip(@Nullable String IP) throws IllegalArgumentException {
 		if (IP == null || IP.isEmpty()) {
-			logger.warn("Received null IP; ignoring");
+			logger.debug("Received null IP; ignoring");
 			this.IP = null;
 			return (B) this;
 		}
