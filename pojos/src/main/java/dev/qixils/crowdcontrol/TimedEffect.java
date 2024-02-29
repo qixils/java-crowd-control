@@ -354,9 +354,10 @@ public final class TimedEffect {
 
 		future.cancel(false);
 
-		if (pauseCallback != null) {
+		Consumer<TimedEffect> callback = pauseCallback != null ? pauseCallback : completionCallback;
+		if (callback != null) {
 			try {
-				pauseCallback.accept(this);
+				callback.accept(this);
 			} catch (Exception e) {
 				logger.error("Exception occurred during pause callback", e);
 			}
@@ -381,12 +382,11 @@ public final class TimedEffect {
 		if (startedAt == -1)
 			throw new IllegalStateException("Effect has not started");
 
-		if (resumeCallback != null) {
-			try {
-				resumeCallback.accept(this);
-			} catch (Exception e) {
-				logger.error("Exception occurred during resume callback", e);
-			}
+		Consumer<TimedEffect> callback = resumeCallback != null ? resumeCallback : this.callback::apply;
+		try {
+			callback.accept(this);
+		} catch (Exception e) {
+			logger.error("Exception occurred during resume callback", e);
 		}
 
 		paused = false;
