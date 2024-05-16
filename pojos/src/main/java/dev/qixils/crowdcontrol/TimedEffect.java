@@ -265,7 +265,11 @@ public final class TimedEffect {
 		// check if a global effect is running
 		TimedEffect globalActiveEffect = ACTIVE_EFFECTS.get(globalKey);
 		if (globalActiveEffect != null && !globalActiveEffect.isComplete()) {
-			request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
+			try {
+				request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
+			} catch (Exception e) {
+				logger.error("Failed to send retry response", e);
+			}
 			return;
 		}
 
@@ -273,7 +277,11 @@ public final class TimedEffect {
 		for (MapKey mapKey : mapKeys) {
 			TimedEffect activeEffect = ACTIVE_EFFECTS.get(mapKey);
 			if (activeEffect != null && !activeEffect.isComplete()) {
-				request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
+				try {
+					request.buildResponse().type(Response.ResultType.RETRY).message("Timed effect is already running").send();
+				} catch (Exception e) {
+					logger.error("Failed to send retry response", e);
+				}
 				return;
 			}
 		}
@@ -301,7 +309,11 @@ public final class TimedEffect {
 			response = callback.apply(this);
 		} catch (Throwable exception) {
 			logger.error("Exception occurred during starting callback", exception);
-			request.buildResponse().type(Response.ResultType.FAILURE).message("Requested effect failed to execute").send();
+			try {
+				request.buildResponse().type(Response.ResultType.FAILURE).message("Requested effect failed to execute").send();
+			} catch (Exception e) {
+				logger.error("Failed to send failure response", e);
+			}
 
 			duration = -1;
 			if (blocksOthers) {
@@ -330,7 +342,11 @@ public final class TimedEffect {
 			future = EXECUTOR.schedule(() -> complete(), duration, TimeUnit.MILLISECONDS);
 		}
 
-		response.send();
+		try {
+			response.send();
+		} catch (Exception e) {
+			logger.error("Failed to send start response", e);
+		}
 	}
 
 	/**
@@ -364,7 +380,11 @@ public final class TimedEffect {
 		}
 
 		paused = true;
-		request.buildResponse().type(Response.ResultType.PAUSED).timeRemaining(duration).send();
+		try {
+			request.buildResponse().type(Response.ResultType.PAUSED).timeRemaining(duration).send();
+		} catch (Exception e) {
+			logger.error("Failed to send pause response", e);
+		}
 	}
 
 	/**
@@ -391,7 +411,11 @@ public final class TimedEffect {
 
 		paused = false;
 		startedAt = System.currentTimeMillis();
-		request.buildResponse().type(Response.ResultType.RESUMED).timeRemaining(duration).send();
+		try {
+			request.buildResponse().type(Response.ResultType.RESUMED).timeRemaining(duration).send();
+		} catch (Exception e) {
+			logger.error("Failed to send resumed response", e);
+		}
 		future = EXECUTOR.schedule(() -> complete(), duration, TimeUnit.MILLISECONDS);
 	}
 
@@ -439,7 +463,11 @@ public final class TimedEffect {
 			}
 		}
 
-		request.buildResponse().type(Response.ResultType.FINISHED).send();
+		try {
+			request.buildResponse().type(Response.ResultType.FINISHED).send();
+		} catch (Exception e) {
+			logger.error("Failed to send finished response", e);
+		}
 		if (executeCompletionCallback && completionCallback != null) {
 			try {
 				completionCallback.accept(this);
