@@ -71,6 +71,8 @@ public interface JsonObject {
 		if (!eligible)
 			return null;
 
+		//LoggerFactory.getLogger("CrowdControl/JsonObject").info(inJSON);
+
 		// convert to POJO
 		return jsonMapper.apply(inJSON);
 	}

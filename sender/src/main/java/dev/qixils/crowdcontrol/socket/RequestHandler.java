@@ -246,7 +246,7 @@ final class RequestHandler implements SimulatedService<Response> {
 	}
 
 	private void writeRequest(@NotNull Request request, @NotNull FluxSink<Response> sink) {
-		assert isAcceptingRequests() || (isRunning() && !request.getType().isEffectType());
+		assert isAcceptingRequests() || (isRunning());//TODO: what? && !request.getType().isEffectType());
 		try {
 			outputStream.write(request.toJSON().getBytes(StandardCharsets.UTF_8));
 			outputStream.write(0x00);

@@ -220,12 +220,13 @@ public class Request implements JsonObject, Respondable {
 
 	/**
 	 * Gets the {@link Type Type} of the request.
+	 * May be null for unknown types.
 	 *
 	 * @return request type
 	 * @since 1.0.0
 	 */
 	@ApiStatus.AvailableSince("1.0.0")
-	@NotNull
+	@Nullable
 	@CheckReturnValue
 	public Type getType() {
 		return type;
@@ -556,6 +557,13 @@ public class Request implements JsonObject, Respondable {
 		@ApiStatus.AvailableSince("3.0.0")
 		@ApiStatus.Internal
 		LOGIN(TriState.UNKNOWN, (byte) 0xF0), // 240
+		/**
+		 * Requests the current state of the game.
+		 *
+		 * @since 3.9.2
+		 */
+		@ApiStatus.AvailableSince("3.9.2")
+		REQUEST_STATE(TriState.UNKNOWN, (byte) 0xFD), // 253
 		/**
 		 * This packet's sole purpose is to establish that the connection with the
 		 * Crowd Control server has not been dropped.

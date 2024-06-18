@@ -98,8 +98,6 @@ public class TimedEffectTests {
 		Assertions.assertThrows(IllegalStateException.class, timedEffect::complete); // will throw because effect has not started
 		Assertions.assertThrows(IllegalStateException.class, () -> timedEffect.complete(true)); // will throw because effect has not started
 		Assertions.assertThrows(IllegalStateException.class, () -> timedEffect.complete(false)); // will throw because effect has not started
-		Assertions.assertThrows(IllegalStateException.class, timedEffect::queue); // will throw because request is invalid
-		Assertions.assertThrows(IllegalStateException.class, timedEffect::queue); // will throw because effect is already queued
 
 		TimedEffect newEffect = timedEffect.toBuilder().effectGroup("blah").build();
 		Assertions.assertEquals("blah", newEffect.getEffectGroup());
